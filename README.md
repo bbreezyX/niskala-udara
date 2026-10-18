@@ -103,6 +103,9 @@ Aplikasi berjalan sebagai server Node (`next start`), cocok untuk Railway, Rende
 2. Start: `npm start` (port dari `PORT`, default 3000)
 3. Set environment variable `GOOGLE_AIR_QUALITY_API_KEY`, `FIRMS_MAP_KEY`, dan `PUBLIC_GOOGLE_MAPS_API_KEY` di platform (bukan di repo).
 
+Untuk VPS Niskala, panduan akses `.env` melalui OpenSSH di atas Tailscale dan
+pendaftaran public key perangkat baru tersedia di [deploy/ACCESS.md](deploy/ACCESS.md).
+
 ## Mengamankan API key di Google Cloud
 
 Key ini hanya dipakai dari server, jadi pembatasannya berbeda dari key untuk browser.
