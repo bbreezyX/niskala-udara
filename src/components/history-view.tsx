@@ -12,7 +12,7 @@ import {
 } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { aqiBand } from '@/lib/aqi';
-import { CITIES, cityNote, REGIONS } from '@/lib/config/cities';
+import { CITIES, cityNote, DEFAULT_REGION } from '@/lib/config/cities';
 import { HISTORY_RANGES, type HistoryRange } from '@/lib/coordinates';
 import { postJson, toRemote, type Remote } from '@/lib/client/api';
 import { ERROR_MESSAGES, formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
@@ -20,12 +20,12 @@ import type { AirQualityData } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
+import { CityPicker, useNearby } from './city-picker';
 import { Attribution, Recommendation, StateMessage } from './info-blocks';
 import { PollutantBreakdown } from './pollutant-breakdown';
 import { TrendChart } from './trend-chart';
@@ -122,20 +122,28 @@ const COLUMN_CLASS: Record<string, string> = {
 const EMPTY: HourRow[] = [];
 
 export function HistoryView({ configured }: { configured: boolean }) {
-	const [cityId, setCityId] = useState(CITIES[0].id);
+	// The city the user picked; until then, the nearest one (when location access was already granted)
+	// or the default region's first city.
+	const [pickedId, setPickedId] = useState<string | null>(null);
+	const { nearby, locate } = useNearby();
 	const [range, setRange] = useState<HistoryRange>(HISTORY_RANGES[0]);
 	const [history, setHistory] = useState<Remote<AirQualityData[]>>({ status: 'idle' });
 	const [selectedTime, setSelectedTime] = useState<number | null>(null);
 	const [reloadVersion, setReloadVersion] = useState(0);
 	const panel = useRef<HTMLElement>(null);
 
-	const city = CITIES.find((c) => c.id === cityId) ?? CITIES[0];
+	const fallback = CITIES.find((c) => c.region === DEFAULT_REGION) ?? CITIES[0];
+	const city =
+		CITIES.find((c) => c.id === pickedId) ?? (nearby.status === 'ready' ? nearby.list[0].city : fallback);
+	// Hold the first request while an automatic location lookup may still change the city.
+	const settling = pickedId === null && (nearby.status === 'checking' || (nearby.status === 'locating' && nearby.auto));
 
 	// One request per city/range; a newer selection aborts the older one.
 	useEffect(() => {
 		if (!configured) return;
-		const controller = new AbortController();
 		setHistory({ status: 'loading' });
+		if (settling) return;
+		const controller = new AbortController();
 		setSelectedTime(null);
 		postJson<AirQualityData[]>(
 			'/api/air-quality/history',
@@ -145,7 +153,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 			if (result) setHistory(toRemote(result));
 		});
 		return () => controller.abort();
-	}, [configured, city.latitude, city.longitude, range, reloadVersion]);
+	}, [configured, settling, city.latitude, city.longitude, range, reloadVersion]);
 
 	const hours = useMemo(() => (history.status === 'success' ? history.data : []), [history]);
 	const rows = useMemo(
@@ -195,29 +203,13 @@ export function HistoryView({ configured }: { configured: boolean }) {
 					</div>
 					{/* Phones: one row where the city picker takes the free space and truncates; the range keeps its size. */}
 					<div className="flex w-full items-center gap-2 sm:w-auto">
-						<Select value={cityId} onValueChange={setCityId}>
-							<SelectTrigger aria-label="Kota" className="h-10! min-w-0 flex-1 rounded-full bg-card px-4 font-semibold sm:w-48 sm:flex-none">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent
-								position="popper"
-								align="start"
-								sideOffset={6}
-								collisionPadding={16}
-								className="max-h-[min(24rem,var(--radix-select-content-available-height))] w-(--radix-select-trigger-width) min-w-56 rounded-2xl p-1"
-							>
-								{REGIONS.map((region) => (
-									<SelectGroup key={region.id}>
-										<SelectLabel>{region.name}</SelectLabel>
-										{CITIES.filter((c) => c.region === region.id).map((option) => (
-											<SelectItem key={option.id} value={option.id} className="min-h-10 rounded-lg">
-												{option.name}
-											</SelectItem>
-										))}
-									</SelectGroup>
-								))}
-							</SelectContent>
-						</Select>
+						<CityPicker
+							value={city}
+							onChange={(next) => setPickedId(next.id)}
+							nearby={nearby}
+							onLocate={() => locate(false, (nearest) => setPickedId(nearest.id))}
+							className="min-w-0 flex-1 sm:w-48 sm:flex-none"
+						/>
 						<ToggleGroup
 							type="single"
 							value={String(range)}

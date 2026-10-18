@@ -236,3 +236,19 @@ export function cityNote(city: City): string {
 export function citiesInRegion(region: RegionId): City[] {
 	return CITIES.filter((city) => city.region === region);
 }
+
+/** Great-circle distance in km (haversine; good to well under 1% at these scales). */
+function distanceKm(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
+	const rad = Math.PI / 180;
+	const dLat = (b.latitude - a.latitude) * rad;
+	const dLon = (b.longitude - a.longitude) * rad;
+	const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.latitude * rad) * Math.cos(b.latitude * rad) * Math.sin(dLon / 2) ** 2;
+	return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+
+/** The `count` locations closest to a point, nearest first. */
+export function nearestCities(from: { latitude: number; longitude: number }, count: number): { city: City; km: number }[] {
+	return CITIES.map((city) => ({ city, km: distanceKm(from, city) }))
+		.toSorted((a, b) => a.km - b.km)
+		.slice(0, count);
+}
