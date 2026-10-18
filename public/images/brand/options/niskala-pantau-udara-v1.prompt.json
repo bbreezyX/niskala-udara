@@ -1,0 +1,17 @@
+{
+  "name": "Pantau Udara",
+  "version": 1,
+  "brand": "Niskala Udara",
+  "file": "/images/brand/options/niskala-pantau-udara-v1.png",
+  "status": "Optional alternative only; not integrated. The active logo remains unchanged.",
+  "generated_with": "built-in image_gen",
+  "transparent_background_requested": true,
+  "design_intent": {
+    "curled_wind_gusts": "Air movement",
+    "calibrated_sensor_ring": "Air-quality monitoring",
+    "detached_particles": "Airborne particles sampled by monitoring",
+    "observation_dot": "A measurement point"
+  },
+  "prompt": "Use case: logo-brand\nAsset type: one optional alternative logomark, transparent PNG artwork for Niskala Udara, an air-quality monitoring website. This is an alternative design only, not a replacement asset.\nPrimary request: make air movement AND air-quality measurement immediately recognizable. The earlier circular logo with two sweeping ribbons looked like ocean waves; create a distinctly different symbol that cannot be read as water or a maritime brand.\nSubject/design: a bold, compact atmospheric monitoring emblem. A familiar WIND GUST glyph sits inside an incomplete circular SENSOR DIAL. The gust is composed of three primarily STRAIGHT, horizontal, staggered shafts: the upper shaft ends in a clear small upward round curl, the middle shaft is straight and shorter, and the lower shaft ends in a clear downward round curl. The shafts must remain predominantly straight like blowing air, not broad sinusoidal curves. The surrounding open sensor dial has two short bold calibration ticks and a single separated round sampling dot at the upper-right. Include just two well-separated round airborne-particle dots in the open right-side interior, clearly detached from the airflow lines, to imply particulate sampling. Integrate it into one balanced emblem with generous negative space. Keep the particle dots large enough to survive reduction to 36 pixels.\nVisual hierarchy: the wind-gust symbol is the primary reading; the incomplete measurement dial and particle dots are the secondary reading. Minimal, distinctive, calm, technical without looking like a complex diagram. Confident moderate-weight rounded strokes, clear gaps, no needle and no numbers.\nStyle/medium: flat graphic brand logo with crisp vector-like edges; a single solid cobalt blue #0b57d0; completely transparent background and internal negative space. Equal optical stroke weight, no texture, no gradients, no shadows, no glow, no 3D.\nComposition/framing: square canvas, one centered emblem only, compact near-circular proportions, occupy approximately 88 percent of the canvas, modest even padding, complete silhouette visible with no cropping. No app-icon square or colored backdrop.\nConstraints: no text, no letters, no wordmark, no labels, no watermark, no mockup. Absolutely no ocean waves, wavy ribbons, swooshes, fluid wave bands, water drops, fish, leaves, lungs, clouds, sun or landscape. Do not reproduce the earlier two-band circular wave symbol. Keep the airflow curls legible and the silhouette simple enough for a small navbar logo. No transparency checkerboard.",
+  "validation": "Not tested or verified on the page"
+}

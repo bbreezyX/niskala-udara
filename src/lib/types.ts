@@ -24,12 +24,25 @@ export interface UniversalAqi {
 	color: string | null;
 }
 
+/** Population groups Google writes health advice for, in the order they are offered in the UI. */
+export const HEALTH_GROUPS = [
+	'generalPopulation',
+	'children',
+	'elderly',
+	'pregnantWomen',
+	'lungDiseasePopulation',
+	'heartDiseasePopulation',
+	'athletes'
+] as const;
+export type HealthGroup = (typeof HEALTH_GROUPS)[number];
+
 export interface AirQualityData {
 	/** Timestamp of the data itself (ISO 8601, UTC), not of the request. */
 	dataTime: string;
 	index: UniversalAqi;
 	pollutants: PollutantReading[];
-	generalRecommendation: string | null;
+	/** Google's advice per group, verbatim; groups Google left out are absent. */
+	recommendations: Partial<Record<HealthGroup, string>>;
 }
 
 export type ApiErrorCode =

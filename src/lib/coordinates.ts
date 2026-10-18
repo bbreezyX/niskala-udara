@@ -1,4 +1,4 @@
-import type { Coordinates } from './types.ts';
+import type { Coordinates } from './types';
 
 function isLatitude(value: unknown): value is number {
 	return typeof value === 'number' && Number.isFinite(value) && value >= -90 && value <= 90;

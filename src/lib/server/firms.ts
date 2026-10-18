@@ -1,6 +1,6 @@
-import { FIRE_AREA, FIRE_WINDOW_HOURS } from '#lib/config/map.ts';
-import type { ApiErrorCode, FireData, Hotspot } from '#lib/types.ts';
-import { AirQualityError } from './google-air-quality.ts';
+import { FIRE_AREA, FIRE_WINDOW_HOURS } from '@/lib/config/map';
+import type { ApiErrorCode, FireData, Hotspot } from '@/lib/types';
+import { AirQualityError } from './google-air-quality';
 
 const BASE_URL = 'https://firms.modaps.eosdis.nasa.gov/api/area/csv';
 /** VIIRS (375 m) from all three satellites; MODIS (1 km) adds little over these. */
