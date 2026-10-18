@@ -14,12 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      # Joins the tailnet as an ephemeral tag:ci node; the VPS only accepts SSH from the tailnet.
+      # Joins the tailnet as an ephemeral tag:niskala-ci node; the VPS only accepts SSH from the tailnet.
       - uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
+          tags: tag:niskala-ci
           ping: ${{ vars.DEPLOY_HOST }}
 
       - name: Deploy over SSH
