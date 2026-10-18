@@ -1,0 +1,32 @@
+{
+  "name": "Atmosfer Niskala",
+  "brand": "Niskala Udara",
+  "file": "/images/brand/niskala-udara-atmosfer.png",
+  "generated_with": "built-in image_gen",
+  "transparent_background_requested": true,
+  "concept": {
+    "open_orbit": "The shared atmosphere around Earth",
+    "flowing_bands": "Invisible moving air",
+    "observation_dot": "A measured air-quality observation point"
+  },
+  "references": [
+    {
+      "title": "Material Symbols guide",
+      "url": "https://developers.google.com/fonts/docs/material_symbols",
+      "use": "Compact symbol construction and visual weight"
+    },
+    {
+      "title": "City of Ann Arbor Sustainability & Innovations",
+      "url": "https://www.a2gov.org/sustainability-innovations-home/",
+      "use": "Airflow as an environmental visual motif"
+    },
+    {
+      "title": "IQAir Air Quality App",
+      "url": "https://www.iqair.com/air-quality-monitors/air-quality-app",
+      "use": "Air monitoring product context"
+    }
+  ],
+  "prompt": "Use case: logo-brand\nAsset type: a single original raster logomark with a genuinely transparent background for the compact navbar of Niskala Udara, an air quality monitoring website.\nPrimary request: create a meaningful, beautifully balanced atmospheric-airflow emblem, bold enough to read at 32 to 36 pixels, with the refinement of an established environmental data brand.\nDesign meaning: an open circular orbital form represents the Earth's shared atmosphere; two flowing parallel currents represent invisible moving air; one detached circular dot in the upper-right orbital gap represents a measured observation point. Integrate these into one cohesive abstract emblem, not three separate little icons.\nSubject: one confident open blue circle constructed as a gently tapered atmospheric ribbon, enclosing two generous flowing air-current bands. The two bands have a subtle directional bend that can hint at an N through negative space without being a literal letter. End the orbit before a single well-proportioned detached blue dot at approximately two o'clock. Prioritize an instantly recognizable silhouette and generous open negative space. Curves feel calm and precise. Avoid tightly coiled wind curls.\nStyle/medium: flat clean logo artwork with crisp vector-like edges and minimal geometry, optically balanced stroke weights, elegant rounded terminals. Solid cobalt blue #0b57d0 only; all negative space and the background are truly transparent. No gradients, bevels, shadows, lighting effects or 3D.\nComposition/framing: square canvas, centered single emblem occupying approximately 88 percent of the canvas width and height, modest even padding, no multiple proposals, no border or app-icon square. All parts of the mark fully visible, no cropping.\nConstraints: no text or wordmark, no letters, no labels, no tagline, no watermark, no mockup, no leaf, no lungs, no cloud or sun symbol, no gauge numbers, no background color, no fake transparency checkerboard. Use bold simple forms rather than fine lines or tiny decorative details. This is an original brand symbol; do not reproduce any existing company logo or an off-the-shelf wind glyph.",
+  "integration": "Shared BrandMark component used in the navbar and footer; browser icon points to the same PNG",
+  "validation": "Not tested or verified in the browser"
+}

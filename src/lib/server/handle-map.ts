@@ -1,7 +1,7 @@
-import { MAP_BOUNDS, MAP_ZOOM, type Bounds } from '#lib/config/map.ts';
-import { getHotspots } from './firms.ts';
-import { AirQualityError } from './google-air-quality.ts';
-import { fail, isCrossSite, log, respond } from './http.ts';
+import { MAP_BOUNDS, MAP_ZOOM, type Bounds } from '@/lib/config/map';
+import { getHotspots } from './firms';
+import { AirQualityError } from './google-air-quality';
+import { fail, isCrossSite, log, respond } from './http';
 
 const TILE_URL = 'https://airquality.googleapis.com/v1/mapTypes/UAQI_RED_GREEN/heatmapTiles';
 const TIMEOUT_MS = 10_000;

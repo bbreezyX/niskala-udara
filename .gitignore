@@ -5,7 +5,9 @@ node_modules
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
+/.next
+next-env.d.ts
+*.tsbuildinfo
 /build
 
 # OS

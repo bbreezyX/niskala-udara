@@ -1,4 +1,4 @@
-import type { ApiErrorCode, PollutantCode } from './types.ts';
+import type { ApiErrorCode, PollutantCode } from './types';
 
 export const POLLUTANT_LABELS: Record<PollutantCode, string> = {
 	pm25: 'PM2.5',
@@ -9,6 +9,40 @@ export const POLLUTANT_LABELS: Record<PollutantCode, string> = {
 	co: 'CO'
 };
 
+/** Plain-language explanations for readers who do not know the pollutant codes. */
+export const POLLUTANT_INFO: Record<PollutantCode, { name: string; about: string; sources: string }> = {
+	pm25: {
+		name: 'Partikel halus',
+		about: 'Debu sangat halus, lebih kecil dari 2,5 mikrometer, sekitar 1/30 tebal rambut. Bisa masuk dalam ke paru-paru hingga aliran darah.',
+		sources: 'Asap kebakaran hutan dan lahan, kendaraan, pembakaran sampah.'
+	},
+	pm10: {
+		name: 'Partikel kasar',
+		about: 'Debu berukuran sampai 10 mikrometer. Tertahan di hidung dan saluran napas atas, bisa memicu batuk dan iritasi.',
+		sources: 'Debu jalan, konstruksi, asap pembakaran.'
+	},
+	no2: {
+		name: 'Nitrogen dioksida',
+		about: 'Gas dari pembakaran bahan bakar. Mengiritasi saluran napas, terutama bagi penderita asma.',
+		sources: 'Kendaraan bermotor, pembangkit listrik, industri.'
+	},
+	o3: {
+		name: 'Ozon permukaan',
+		about: 'Gas yang terbentuk saat polutan lain bereaksi di bawah sinar matahari, biasanya naik di siang hari. Bisa membuat dada terasa sesak.',
+		sources: 'Asap kendaraan dan industri yang bereaksi dengan sinar matahari.'
+	},
+	so2: {
+		name: 'Sulfur dioksida',
+		about: 'Gas berbau tajam dari pembakaran bahan bakar yang mengandung belerang. Mengiritasi mata dan saluran napas.',
+		sources: 'Pembangkit listrik batu bara, industri, gunung api.'
+	},
+	co: {
+		name: 'Karbon monoksida',
+		about: 'Gas tak berwarna dan tak berbau dari pembakaran yang tidak sempurna. Mengurangi kemampuan darah membawa oksigen.',
+		sources: 'Kendaraan, kebakaran, genset dan kompor.'
+	}
+};
+
 export function pollutantLabel(code: string): string {
 	return POLLUTANT_LABELS[code as PollutantCode] ?? code.toUpperCase();
 }
@@ -17,6 +51,15 @@ const UNIT_LABELS: Record<string, string> = {
 	MICROGRAMS_PER_CUBIC_METER: 'µg/m³',
 	PARTS_PER_BILLION: 'ppb'
 };
+
+const UNIT_NAMES: Record<string, string> = {
+	MICROGRAMS_PER_CUBIC_METER: 'mikrogram per meter kubik udara',
+	PARTS_PER_BILLION: 'bagian per miliar bagian udara'
+};
+
+export function unitName(units: string): string {
+	return UNIT_NAMES[units] ?? '';
+}
 
 /** Unknown or unspecified units render as nothing rather than a guess. */
 export function unitLabel(units: string): string {

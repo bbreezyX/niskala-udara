@@ -1,0 +1,16 @@
+{
+  "name": "Awan Ukur",
+  "version": 1,
+  "brand": "Niskala Udara",
+  "file": "/images/brand/options/niskala-awan-ukur-v1.png",
+  "status": "Optional alternative only; not integrated. The active logo remains unchanged.",
+  "generated_with": "built-in image_gen",
+  "transparent_background_requested": true,
+  "design_intent": {
+    "cloud_outline": "Air and the atmosphere",
+    "airborne_particle_dots": "Particles being observed",
+    "integrated_gauge": "Air-quality measurement"
+  },
+  "prompt": "Use case: logo-brand\nAsset type: one new optional logo symbol for Niskala Udara, an air-quality monitoring website; transparent-background raster artwork.\nPrimary request: an entirely different visual direction from a circular wind or ocean-wave logo. Combine an airy cloud silhouette, airborne particles, and a measurement gauge into one compact, distinctive environmental monitoring emblem.\nDesign: a confident, slightly asymmetric rounded cloud outline with only three broad lobes. Its lower-right contour opens into a clearly recognizable compact measuring dial: one bold semicircular arc, a short diagonal needle and a simple round pivot. The gauge is integrated with the cloud contour rather than floating beside it. Three generously spaced solid circular particle dots occupy the upper-left interior, conveying air sampling. Keep open negative space between the particles and the gauge. This is a conceptual air-monitoring symbol, not a weather forecast scene.\nStyle: clean flat geometric brand mark, solid cobalt blue #0b57d0 only, thick smooth rounded strokes and crisp vector-like edges. Strong recognizable silhouette, minimal construction, designed to remain legible in a small navbar. Use only two calibration ticks if needed. No tiny ornament.\nComposition: a single centered emblem on a square canvas, occupying about 86 percent of the width, balanced and fully visible, no surrounding border or app-icon tile.\nBackground: genuinely transparent, including all internal negative space.\nAvoid: ocean waves, swoosh bands, circular globe enclosing wind lines, wind curls, droplets, rain, sun, leaves, buildings, medical lungs, multiple concepts, words, letters, AQI numbers, labels, gradients, shadows, mockups, texture, watermark, transparency checkerboard.",
+  "validation": "Not tested or verified on the page"
+}

@@ -1,12 +1,12 @@
-import { parseCoordinates, parseHistoryRequest } from '#lib/coordinates.ts';
-import type { ApiErrorCode } from '#lib/types.ts';
+import { parseCoordinates, parseHistoryRequest } from '@/lib/coordinates';
+import type { ApiErrorCode } from '@/lib/types';
 import {
 	AirQualityError,
 	fetchCurrentConditions,
 	fetchForecast,
 	fetchHistory
-} from './google-air-quality.ts';
-import { fail, isCrossSite, log as logScoped, respond } from './http.ts';
+} from './google-air-quality';
+import { fail, isCrossSite, log as logScoped, respond } from './http';
 
 const MAX_BODY_BYTES = 1024;
 
@@ -16,7 +16,7 @@ type Handler = (request: Request, apiKey: string | undefined, fetchFn?: typeof f
 
 /**
  * Builds a POST handler that accepts only the input `parse` allows; the upstream
- * target is fixed on the server. Kept free of SvelteKit imports so it can be unit tested.
+ * target is fixed on the server. Kept free of Next.js imports so it can be unit tested.
  */
 function createHandler<Input>(
 	parse: (payload: unknown) => Input | null,

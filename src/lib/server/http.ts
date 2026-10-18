@@ -1,4 +1,4 @@
-import type { ApiErrorCode, ApiResponse } from '#lib/types.ts';
+import type { ApiErrorCode, ApiResponse } from '@/lib/types';
 
 export const STATUS: Record<ApiErrorCode, number> = {
 	invalid_request: 400,

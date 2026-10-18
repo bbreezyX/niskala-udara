@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchForecast, normalizeResponse } from './google-air-quality.ts';
+import { fetchForecast, normalizeResponse } from './google-air-quality';
 import {
 	handleAirQualityRequest,
 	handleForecastRequest,
 	handleHistoryRequest
-} from './handle-air-quality.ts';
+} from './handle-air-quality';
 
 const API_KEY = 'test-key-not-real';
 
@@ -57,7 +57,7 @@ describe('normalizeResponse', () => {
 		expect(data.index.dominantPollutant).toBe('pm25');
 		expect(data.index.color).toBe('rgb(102 204 0)');
 		expect(data.dataTime).toBe('2026-10-18T09:00:00Z');
-		expect(data.generalRecommendation).toBe('Nikmati aktivitas luar ruangan.');
+		expect(data.recommendations).toEqual({ generalPopulation: 'Nikmati aktivitas luar ruangan.', elderly: 'Kurangi aktivitas berat.' });
 	});
 
 	it('keeps zero values, drops invalid readings and unknown pollutants', () => {
@@ -75,7 +75,7 @@ describe('normalizeResponse', () => {
 		});
 		expect(data.index).toMatchObject({ aqi: 40, aqiDisplay: '40', category: null, color: null });
 		expect(data.pollutants).toEqual([]);
-		expect(data.generalRecommendation).toBeNull();
+		expect(data.recommendations).toEqual({});
 	});
 
 	it.each([

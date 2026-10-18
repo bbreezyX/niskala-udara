@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearHotspotCache, fetchHotspots, parseFirmsCsv } from './firms.ts';
-import { handleFiresRequest, handleTileRequest } from './handle-map.ts';
+import { clearHotspotCache, fetchHotspots, parseFirmsCsv } from './firms';
+import { handleFiresRequest, handleTileRequest } from './handle-map';
 
 const MAP_KEY = 'firms-test-key';
 const API_KEY = 'google-test-key';

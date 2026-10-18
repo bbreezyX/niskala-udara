@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCoordinates, parseHistoryRequest, roundCoordinates } from './coordinates.ts';
+import { parseCoordinates, parseHistoryRequest, roundCoordinates } from './coordinates';
 
 describe('parseCoordinates', () => {
 	it('accepts valid coordinates, including the range edges', () => {

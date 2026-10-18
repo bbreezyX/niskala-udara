@@ -1,0 +1,161 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+    --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-success: var(--success);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --color-sky: var(--sky);
+    --color-sky-deep: var(--sky-deep);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Light only: the app has no dark theme yet.
+ * Palette: Google Material 3 baseline. Blue marks what you can click; surfaces, borders, and text
+ * stay neutral; the UAQI scale (red to green, no blue) is the only color that describes air.
+ */
+:root {
+    --background: #f8fafd;
+    --foreground: #1f1f1f;
+    --card: #ffffff;
+    --card-foreground: #1f1f1f;
+    --popover: #ffffff;
+    --popover-foreground: #1f1f1f;
+    --primary: #0b57d0;
+    --primary-foreground: #ffffff;
+    --secondary: #d3e3fd;
+    --secondary-foreground: #041e49;
+    --muted: #f0f4f9;
+    --muted-foreground: #444746;
+    --accent: #e9f1fd;
+    --accent-foreground: #041e49;
+    --destructive: #b3261e;
+    --success: #146c2e;
+    --border: #e1e3e1;
+    --input: #c4c7c5;
+    --ring: #0b57d0;
+    --chart-1: #0b57d0;
+    --chart-2: #00639b;
+    --chart-3: #b3261e;
+    --chart-4: #7c5800;
+    --chart-5: #146c2e;
+    --sky: #d3e3fd;
+    --sky-deep: #a8c7fa;
+    --scrollbar-thumb: #c4c7c5;
+    --scrollbar-thumb-hover: #747775;
+    --radius: 0.75rem;
+    color-scheme: light;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  a {
+    text-underline-offset: 3px;
+  }
+}
+
+/*
+ * Thin, quiet scrollbars for scroll areas inside the page (panels, tables, menus, lists).
+ * The page's own scrollbar (html) is left to the browser.
+ */
+@layer base {
+  body * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+  body *:hover {
+    scrollbar-color: var(--scrollbar-thumb-hover) transparent;
+  }
+}
+
+/* Safari ignores scrollbar-color, so it gets the WebKit pseudo-elements instead. */
+@supports not (scrollbar-color: auto) {
+  body *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  body *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  body *::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: var(--scrollbar-thumb) padding-box;
+  }
+  body *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover) padding-box;
+  }
+  body *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/* Route change: the new page settles in instead of swapping in place. `backwards` fill leaves no
+   transform behind once it ends, so fixed and sticky descendants keep the viewport as their box. */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.page-enter {
+  animation: page-enter 220ms cubic-bezier(0.23, 1, 0.32, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,12 +1,14 @@
 import {
+	HEALTH_GROUPS,
 	POLLUTANT_CODES,
 	type AirQualityData,
 	type ApiErrorCode,
 	type Coordinates,
+	type HealthGroup,
 	type PollutantCode,
 	type PollutantReading,
 	type UniversalAqi
-} from '#lib/types.ts';
+} from '@/lib/types';
 
 const BASE_URL = 'https://airquality.googleapis.com/v1/';
 export const UPSTREAM_TIMEOUT_MS = 10_000;
@@ -89,15 +91,20 @@ export function normalizeResponse(raw: unknown): AirQualityData {
 	const index = parseUniversalAqi(raw.indexes);
 	if (!index) throw new AirQualityError('no_data', 'universal AQI not present');
 
-	const recommendations = raw.healthRecommendations;
+	const advice = raw.healthRecommendations;
+	const recommendations: Partial<Record<HealthGroup, string>> = {};
+	if (isRecord(advice)) {
+		for (const group of HEALTH_GROUPS) {
+			const text = nonEmptyString(advice[group]);
+			if (text) recommendations[group] = text;
+		}
+	}
 
 	return {
 		dataTime,
 		index,
 		pollutants: parsePollutants(raw.pollutants),
-		generalRecommendation: isRecord(recommendations)
-			? nonEmptyString(recommendations.generalPopulation)
-			: null
+		recommendations
 	};
 }
 

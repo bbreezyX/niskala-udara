@@ -1,5 +1,5 @@
-import type { ClientErrorCode } from '#lib/format.ts';
-import type { ApiResponse } from '#lib/types.ts';
+import type { ClientErrorCode } from '@/lib/format';
+import type { ApiResponse } from '@/lib/types';
 
 /** Slightly longer than the server's 10 s upstream timeout, as a last resort. */
 const CLIENT_TIMEOUT_MS = 15_000;
