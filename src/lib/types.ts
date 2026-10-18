@@ -1,0 +1,66 @@
+export interface Coordinates {
+	latitude: number;
+	longitude: number;
+}
+
+export const POLLUTANT_CODES = ['pm25', 'pm10', 'o3', 'no2', 'so2', 'co'] as const;
+export type PollutantCode = (typeof POLLUTANT_CODES)[number];
+
+export interface PollutantReading {
+	code: PollutantCode;
+	value: number;
+	/** Unit enum exactly as returned by Google, e.g. "MICROGRAMS_PER_CUBIC_METER". */
+	units: string;
+}
+
+/** Universal AQI (code "uaqi") picked from the response by code. */
+export interface UniversalAqi {
+	displayName: string;
+	aqi: number;
+	aqiDisplay: string;
+	category: string | null;
+	dominantPollutant: string | null;
+	/** CSS color from the API, used only for a small indicator. */
+	color: string | null;
+}
+
+export interface AirQualityData {
+	/** Timestamp of the data itself (ISO 8601, UTC), not of the request. */
+	dataTime: string;
+	index: UniversalAqi;
+	pollutants: PollutantReading[];
+	generalRecommendation: string | null;
+}
+
+export type ApiErrorCode =
+	| 'invalid_request'
+	| 'not_configured'
+	| 'not_authorized'
+	| 'quota_exceeded'
+	| 'location_unsupported'
+	| 'no_data'
+	| 'timeout'
+	| 'upstream_error';
+
+export type ApiResponse<T> = { data: T } | { error: { code: ApiErrorCode } };
+
+/** A NASA FIRMS VIIRS thermal anomaly: a likely fire, not a confirmed one. */
+export interface Hotspot {
+	latitude: number;
+	longitude: number;
+	/** Satellite overpass time (ISO 8601, UTC). */
+	acquiredAt: string;
+	satellite: string;
+	confidence: 'low' | 'nominal' | 'high';
+	/** Fire radiative power in MW. */
+	frp: number | null;
+}
+
+export interface FireData {
+	hotspots: Hotspot[];
+	windowHours: number;
+	/** When the server fetched FIRMS, not when the satellites passed over. */
+	fetchedAt: string;
+	sources: string[];
+	missingSources: string[];
+}
