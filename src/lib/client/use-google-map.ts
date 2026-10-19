@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState, type RefObject } from 'react';
-import { MAP_BOUNDS, MAP_CENTER, MAP_ZOOM } from '@/lib/config/map';
+import { DEFAULT_REGION } from '@/lib/config/cities';
+import { MAP_BOUNDS, MAP_ZOOM, regionBounds } from '@/lib/config/map';
 import type { Locale } from '@/lib/i18n/config';
 import { loadGoogleMaps, MapsLoadError, onMapsAuthFailure } from './google-maps';
 import { createHeatmapType } from './heatmap-tiles';
+import { rememberedRegion } from './region-memory';
 import { syncOverlays, type HotspotLayer } from './hotspot-layer';
 import { createWindOverlay, type WindField } from './wind-layer';
 
@@ -14,8 +16,11 @@ export type MapState =
 	| { status: 'ready'; map: google.maps.Map; heatmap: google.maps.MapType };
 
 function createMap({ Map }: google.maps.MapsLibrary, element: HTMLElement) {
+	// Open on the region this device last used, as Pantauan and Riwayat do; opening a device's own
+	// location also remembers its region. Without one, the default region.
+	const bounds = regionBounds(rememberedRegion() ?? DEFAULT_REGION);
 	const map = new Map(element, {
-		center: MAP_CENTER,
+		center: { lat: (bounds.south + bounds.north) / 2, lng: (bounds.west + bounds.east) / 2 },
 		zoom: MAP_ZOOM.initial,
 		minZoom: MAP_ZOOM.min,
 		maxZoom: MAP_ZOOM.max,
@@ -31,6 +36,7 @@ function createMap({ Map }: google.maps.MapsLibrary, element: HTMLElement) {
 		clickableIcons: false,
 		gestureHandling: 'greedy'
 	});
+	map.fitBounds(bounds, 0);
 
 	return { map, heatmap: createHeatmapType(0.55) };
 }
