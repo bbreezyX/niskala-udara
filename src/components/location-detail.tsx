@@ -159,9 +159,10 @@ function SummaryCard({
 	// Mirrors IspuChip: a station reading, or Google's once the station lookup has come back empty.
 	const ispuShown = Boolean(station || (station === null && current?.ispu));
 
+	// From lg the verdict keeps the left and the reading's details fill a side panel, so a wide card has no empty half.
 	return (
-		<Card className="mt-2 gap-0 rounded-[20px] py-0">
-			<header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 p-5 [grid-template-areas:'title_title'_'gauge_verdict'_'note_note'] min-[360px]:[grid-template-areas:'gauge_title'_'gauge_verdict'_'note_note'] sm:gap-x-6 sm:p-6 sm:[grid-template-areas:'gauge_title'_'gauge_verdict'_'gauge_note']">
+		<Card className="mt-2 gap-0 rounded-[20px] py-0 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[1fr_auto]">
+			<header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 p-5 [grid-template-areas:'title_title'_'gauge_verdict'_'note_note'] min-[360px]:[grid-template-areas:'gauge_title'_'gauge_verdict'_'note_note'] sm:gap-x-6 sm:p-6 sm:[grid-template-areas:'gauge_title'_'gauge_verdict'_'gauge_note'] lg:row-span-2 lg:content-center">
 				<div className="[grid-area:gauge]">
 					{current ? (
 						<AqiGauge size="md" aqi={current.index.aqi} display={current.index.aqiDisplay} />
@@ -192,10 +193,10 @@ function SummaryCard({
 								station={station}
 								google={current.ispu}
 								timeZone={location.timeZone}
-								className="px-3 py-1.5 text-sm max-[399px]:px-2.5 max-[399px]:text-[13px]"
+								className="px-3 py-1.5 text-sm max-[399px]:px-2.5 max-[399px]:text-[13px] lg:hidden"
 							/>
 							{current.index.dominantPollutant && (
-								<p className="text-sm text-muted-foreground">
+								<p className="text-sm text-muted-foreground lg:hidden">
 									{t.common.dominantPollutant}{' '}
 									<strong className="font-semibold text-foreground">{pollutantLabel(current.index.dominantPollutant)}</strong>
 								</p>
@@ -205,20 +206,53 @@ function SummaryCard({
 				</div>
 				{/* UAQI runs the opposite way from ISPU, so the direction is stated next to the dial. */}
 				<p className="text-xs leading-relaxed text-muted-foreground [grid-area:note] sm:self-start">
-					{ispuShown ? t.common.scaleIspu : t.common.scale}{' '}
+					{ispuShown ? (
+						<>
+							<span className="lg:hidden">{t.common.scaleIspu}</span>
+							<span className="hidden lg:inline">{t.common.scale}</span>
+						</>
+					) : (
+						t.common.scale
+					)}{' '}
 					<Link href="/about" className="font-medium whitespace-nowrap text-primary underline-offset-4 hover:underline">
 						{t.common.howToRead}
 					</Link>
 					{/* The chip's tooltip never reaches touch screens, so the source is also written out here. */}
-					{station ? (
-						<StationSource station={station} timeZone={location.timeZone} />
-					) : (
-						ispuShown && <span className="mt-1 block">{t.ispu.sourceModel}</span>
-					)}
+					<span className="lg:hidden">
+						{station ? (
+							<StationSource station={station} timeZone={location.timeZone} />
+						) : (
+							ispuShown && <span className="mt-1 block">{t.ispu.sourceModel}</span>
+						)}
+					</span>
 				</p>
 			</header>
+			<div className="hidden content-start gap-4 border-l bg-muted/40 px-6 pt-6 lg:col-start-2 lg:row-start-1 lg:grid">
+				{current && (
+					<>
+						{/* ISPU runs the opposite way from the dial on the left, so its direction travels with it. */}
+						{station !== null || current.ispu ? (
+							<div className="grid justify-items-start gap-2">
+								<IspuChip station={station} google={current.ispu} timeZone={location.timeZone} className="px-3 py-1.5 text-sm" />
+								{ispuShown && (
+									<p className="text-xs leading-relaxed text-muted-foreground">
+										{t.ispu.direction}
+										{station ? <StationSource station={station} timeZone={location.timeZone} /> : <span className="mt-1 block">{t.ispu.sourceModel}</span>}
+									</p>
+								)}
+							</div>
+						) : null}
+						{current.index.dominantPollutant && (
+							<p className="flex items-baseline justify-between gap-3 border-t pt-4 text-sm text-muted-foreground first:border-t-0 first:pt-0">
+								{t.common.dominantPollutant}
+								<strong className="font-semibold text-foreground">{pollutantLabel(current.index.dominantPollutant)}</strong>
+							</p>
+						)}
+					</>
+				)}
+			</div>
 			{/* Freshness and the way to renew it share one row, so neither floats on its own. */}
-			<div className="flex items-center justify-between gap-3 border-t px-5 py-3 sm:px-6">
+			<div className="flex items-center justify-between gap-3 border-t px-5 py-3 sm:px-6 lg:col-start-2 lg:row-start-2 lg:border-t-0 lg:border-l lg:bg-muted/40 lg:pt-4 lg:pb-6">
 				<div className="grid min-w-0 gap-0.5">
 					<span className="text-xs text-muted-foreground">{t.location.lastData}</span>
 					{current ? (

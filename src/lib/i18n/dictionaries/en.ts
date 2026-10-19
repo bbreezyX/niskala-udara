@@ -100,7 +100,8 @@ export const en: Dictionary = {
 			hazardous: 'Hazardous'
 		},
 		sourceStation: 'ISPU from KLH/BPLH station {name}, {time}.',
-		sourceModel: 'ISPU computed by Google from model data; no active KLH/BPLH station for this location.'
+		sourceModel: 'ISPU computed by Google from model data; no active KLH/BPLH station for this location.',
+		direction: 'Higher is worse.'
 	},
 	health: {
 		title: 'Health advice',

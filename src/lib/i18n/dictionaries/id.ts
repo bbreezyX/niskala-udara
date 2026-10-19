@@ -99,7 +99,8 @@ export const id = {
 			hazardous: 'Berbahaya'
 		},
 		sourceStation: 'ISPU dari stasiun KLH/BPLH {name}, {time}.',
-		sourceModel: 'ISPU dihitung Google dari data model; belum ada stasiun KLH/BPLH aktif untuk lokasi ini.'
+		sourceModel: 'ISPU dihitung Google dari data model; belum ada stasiun KLH/BPLH aktif untuk lokasi ini.',
+		direction: 'Semakin tinggi semakin buruk.'
 	},
 	health: {
 		title: 'Rekomendasi kesehatan',
