@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { EDGE_CACHE_CONTROL, EDGE_MAX_AGE_S, GOOGLE_MAX_AGE_MS } from '@/lib/config/cache';
 import { citiesInRegion } from '@/lib/config/cities';
 import type { RegionLine } from '@/lib/types';
 import {
@@ -7,7 +8,8 @@ import {
 	FORECAST_CONCURRENCY,
 	getCurrentConditions,
 	getForecast,
-	MAX_AGE_MS
+	MAX_AGE_MS,
+	snapToGrid
 } from './air-quality-cache';
 import { handleAirQualityRequest } from './handle-air-quality';
 import { handleRegionRequest } from './region-air-quality';
@@ -58,17 +60,18 @@ afterEach(() => {
 
 describe('expiresAt', () => {
 	it.each([
-		['10:05 → one hour later', '2026-10-19T10:05:00Z', '2026-10-19T11:05:00Z'],
+		['10:05 → 55 minutes later', '2026-10-19T10:05:00Z', '2026-10-19T11:00:00Z'],
 		['10:30 → ten past the next hour', '2026-10-19T10:30:00Z', '2026-10-19T11:10:00Z'],
 		['10:59 → ten past the next hour', '2026-10-19T10:59:00Z', '2026-10-19T11:10:00Z']
 	])('%s', (_, fetched, expected) => {
 		expect(new Date(expiresAt(Date.parse(fetched))).toISOString()).toBe(new Date(expected).toISOString());
 	});
 
-	it('never exceeds the one hour the terms allow', () => {
+	it('stays inside the hour the terms allow, even with the edge copy on top', () => {
 		for (let minute = 0; minute < 60; minute++) {
 			const fetched = Date.parse('2026-10-19T10:00:00Z') + minute * 60_000;
 			expect(expiresAt(fetched) - fetched).toBeLessThanOrEqual(MAX_AGE_MS);
+			expect(expiresAt(fetched) - fetched + EDGE_MAX_AGE_S * 1000).toBeLessThan(GOOGLE_MAX_AGE_MS);
 		}
 	});
 });
@@ -108,6 +111,25 @@ describe('server cache', () => {
 		vi.setSystemTime(new Date('2026-10-19T11:10:00Z'));
 		await getCurrentConditions(jambi, API_KEY, fetchFn);
 		expect(fetchFn).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe('snapToGrid', () => {
+	it('keeps a configured city at its exact reference point', () => {
+		const kotaJambi = { latitude: -1.6297, longitude: 103.6078 };
+		expect(snapToGrid(kotaJambi)).toEqual(kotaJambi);
+	});
+
+	it('snaps any other point to the nearest 1/200 degree', () => {
+		expect(snapToGrid({ latitude: -1.6312, longitude: 103.6141 })).toEqual({ latitude: -1.63, longitude: 103.615 });
+	});
+
+	it('lets nearby visitors share one Google lookup, sent for the snapped point', async () => {
+		const fetchFn = fakeGoogle();
+		await getCurrentConditions({ latitude: -1.6312, longitude: 103.6141 }, API_KEY, fetchFn);
+		await getCurrentConditions({ latitude: -1.6289, longitude: 103.6162 }, API_KEY, fetchFn);
+		expect(fetchFn).toHaveBeenCalledTimes(1);
+		expect(JSON.parse(String(fetchFn.mock.calls[0][1]?.body)).location).toEqual({ latitude: -1.63, longitude: 103.615 });
 	});
 });
 
@@ -182,7 +204,7 @@ describe('handleRegionRequest', () => {
 	it('streams every city, current conditions before the slower forecasts', async () => {
 		const response = handleRegionRequest(regionRequest(), 'jambi', API_KEY, fakeGoogle(20));
 		expect(response.headers.get('content-type')).toContain('application/x-ndjson');
-		expect(response.headers.get('cache-control')).toBe('no-store');
+		expect(response.headers.get('cache-control')).toBe(EDGE_CACHE_CONTROL);
 
 		const lines = await readLines(response);
 		const cities = citiesInRegion('jambi').map((city) => city.id);

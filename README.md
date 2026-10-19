@@ -83,9 +83,27 @@ Titik kabupaten di Jambi adalah ibu kota kabupaten (mis. Batanghari → Muara Bu
 
 ### Cache server dan streaming Pantauan
 
-Kondisi terkini, prakiraan, dan riwayat disimpan di memori server (`src/lib/server/air-quality-cache.ts`) dan dipakai bersama semua pengunjung. Ketentuan Google Maps Platform (Service Specific Terms, Air Quality API 2.2) mengizinkan cache kondisi terkini dan prakiraan per jam paling lama **1 jam**, lalu wajib dihapus. Entri kedaluwarsa pada yang lebih dulu: 1 jam setelah diambil, atau menit ke-10 jam berikutnya (saat Google sudah menerbitkan nilai jam baru). Entri kedaluwarsa dihapus berkala walau tidak diminta lagi. Request yang sama dan bersamaan dibagi menjadi satu panggilan ke Google, kegagalan tidak di-cache, dan jumlah entri dibatasi 1.000 (sekitar 9 MB). Panggilan `forecast:lookup` dibatasi 6 sekaligus untuk semua pengunjung: diukur di VPS, 11 prakiraan paralel bisa butuh 9,3 detik (hampir menyentuh timeout 10 detik), sedangkan 6 sekaligus tetap di bawah 4 detik dengan total waktu yang sama. Kondisi terkini tidak dibatasi karena tidak melambat. Cache ada di satu proses Node; restart server mengosongkannya.
+Kondisi terkini, prakiraan, dan riwayat disimpan di memori server (`src/lib/server/air-quality-cache.ts`) dan dipakai bersama semua pengunjung. Ketentuan Google Maps Platform (Service Specific Terms, Air Quality API 2.2) mengizinkan cache kondisi terkini dan prakiraan per jam paling lama **1 jam**, lalu wajib dihapus. Entri kedaluwarsa pada yang lebih dulu: 55 menit setelah diambil, atau menit ke-10 jam berikutnya (saat Google sudah menerbitkan nilai jam baru). Lima menit sisanya untuk salinan di Cloudflare (lihat di bawah), jadi total semua lapisan tetap di bawah 1 jam. Semua batas ada di `src/lib/config/cache.ts`. Entri kedaluwarsa dihapus berkala walau tidak diminta lagi. Request yang sama dan bersamaan dibagi menjadi satu panggilan ke Google, kegagalan tidak di-cache, dan jumlah entri dibatasi 1.000 (sekitar 9 MB). Panggilan `forecast:lookup` dibatasi 6 sekaligus untuk semua pengunjung: diukur di VPS, 11 prakiraan paralel bisa butuh 9,3 detik (hampir menyentuh timeout 10 detik), sedangkan 6 sekaligus tetap di bawah 4 detik dengan total waktu yang sama. Kondisi terkini tidak dibatasi karena tidak melambat. Cache ada di satu proses Node; restart server mengosongkannya.
+
+Kota terdaftar selalu dicek di titik referensinya. Titik lain (lokasi perangkat, klik di peta) dibulatkan ke grid 1/200 derajat (sekitar 550 m, paling jauh sekitar 390 m dari titik asli), mendekati resolusi model Google 500 m. Dengan begitu pengunjung yang berdekatan memakai satu hasil cache, dan biaya Google tidak naik sebanding jumlah pengguna.
 
 Pantauan tidak lagi menunggu JavaScript untuk mulai memuat data. Server memulai semua lookup wilayah di URL saat merender halaman dan mengirim hasil per kota begitu selesai (React Suspense streaming). Jika cache hangat, data sudah ada di HTML pertama. Kondisi terkini tampil tanpa menunggu prakiraan yang lebih lambat (prakiraan Google butuh 1–6 detik, kondisi terkini sekitar 1,4 detik dari VPS). Ganti wilayah dan "Perbarui" memakai satu request streaming per wilayah (`/api/air-quality/region/[id]`), satu baris JSON per kota dan bagian, sesuai urutan selesai. Endpoint itu hanya menerima wilayah yang terdaftar, jadi tidak bisa diarahkan ke koordinat sembarang.
+
+### Cache Cloudflare
+
+Satu proses Node di VPS (2 vCPU) hanya sanggup merender Pantauan sekitar 30 kali per detik, karena tiap tampilan merender data 11 kota (diukur dengan cache hangat; endpoint wilayah sekitar 300/detik, halaman statis sekitar 450/detik). Supaya lonjakan pengunjung tidak mengantre di VPS, `/` dan `/api/air-quality/region/[id]` mengirim `Cache-Control: public, max-age=0, s-maxage=60`: Cloudflare boleh menyajikan salinannya 60 detik, browser selalu memeriksa ulang. VPS cukup merender sekali per menit per wilayah, berapa pun jumlah pengunjungnya. Request navigasi klien Next.js (header `RSC` atau query `_rsc`) tidak diberi header ini, karena Cloudflare mengabaikan `Vary` dan tidak boleh menyajikan payload RSC sebagai HTML.
+
+Cloudflare tidak meng-cache HTML secara bawaan. Pasang sekali di dashboard Cloudflare → zona `udaraniskala.web.id`:
+
+1. **Caching → Cache Rules → Create rule**, nama `Pantauan edge cache`, *Custom filter expression* → *Edit expression*:
+   ```
+   (http.request.method eq "GET" and not http.request.uri.query contains "_rsc" and (http.request.uri.path eq "/" or starts_with(http.request.uri.path, "/api/air-quality/region/")))
+   ```
+   *Cache eligibility*: **Eligible for cache**. *Edge TTL*: **Use cache-control header if present, bypass cache if not**. *Browser TTL*: **Respect origin TTL**. Simpan.
+2. **Security → WAF → Rate limiting rules → Create rule**, nama `API air quality`: bila `starts_with(http.request.uri.path, "/api/air-quality")`, hitung per IP, lebih dari 60 request per 10 detik → **Block** selama 10 detik. Ini rem untuk lokasi perangkat dan titik peta, yang tetap memanggil Google untuk setiap sel grid baru.
+3. Cek: `curl -sI https://udaraniskala.web.id/` dua kali; yang kedua harus `cf-cache-status: HIT`.
+
+Jika nanti halaman memilih bahasa dari header `Accept-Language` atau cookie di URL yang sama, cache rule ini harus disesuaikan dulu, karena Cloudflare tidak membedakan salinan berdasarkan header itu.
 
 Tile heatmap diproksikan lewat server agar key Air Quality tidak pernah sampai ke browser. Proksi hanya melayani tile yang bersinggungan dengan Sumatra dan zoom ≤ 14, sehingga tidak bisa dipakai untuk menguras kuota di wilayah lain. Hotspot diambil untuk area Provinsi Jambi plus margin (`FIRE_AREA` di `src/lib/config/map.ts`), 2 hari terakhir dari FIRMS lalu dipangkas ke 24 jam, dan di-cache 10 menit di memori server. Data NASA boleh di-cache, berbeda dengan konten Google.
 
@@ -98,7 +116,7 @@ Key dibaca dari `process.env` saat request lewat `src/lib/server/env.ts` (ditand
 Setiap request di bawah ditagih per SKU Air Quality API; cek harga dan kuota gratis terbaru di halaman pricing Google Maps Platform. Angka di bawah adalah batas atas saat cache server kosong. Selama entri masih berlaku, pengunjung berikutnya tidak menambah request, jadi satu lokasi paling banyak menghabiskan sekitar 1 request per jenis data per jam, berapa pun jumlah pengunjungnya.
 
 - Membuka Pantauan: 2 request per lokasi di wilayah aktif (kondisi terkini + prakiraan). Jambi = 22; provinsi lain 2 sampai 18 (Jawa Barat dan Jawa Timur, 9 lokasi). Data kota disimpan di memori browser selama sesi dan dipakai bersama halaman detail, jadi kembali dari detail tidak memuat ulang; data yang lebih tua dari 30 menit dimuat ulang (dari cache server bila masih berlaku).
-- Membuka halaman detail kota: +1 (history 24 jam), +2 jika data kota itu belum ada di memori. Lokasi perangkat dan titik peta: 3.
+- Membuka halaman detail kota: +1 (history 24 jam), +2 jika data kota itu belum ada di memori. Lokasi perangkat dan titik peta: 3 per sel grid sekitar 550 m yang belum ada di cache.
 - Halaman Riwayat: 1 per pilihan kota/rentang.
 - "Perbarui": 2 per lokasi di wilayah aktif jika cache sudah kedaluwarsa. Selama cache berlaku, hasilnya sama dengan data yang tampil, karena Google memperbarui datanya per jam.
 - Halaman Peta: 1 pemuatan peta (SKU Dynamic Maps, Maps JavaScript API) + 1 request per tile heatmap yang belum ada di cache server (30 menit). Klik titik: membuka halaman detail (3 request).
@@ -134,5 +152,5 @@ Key Maps JavaScript (`PUBLIC_GOOGLE_MAPS_API_KEY`) memang terlihat di browser, j
 ## Kepatuhan Google
 
 - Atribusi "Google Maps" dan "Source: Includes air quality data from Google" tampil di dalam area data, tidak diterjemahkan (`translate="no"`).
-- Data ditampilkan apa adanya. Cache server mengikuti batas Service Specific Terms Air Quality API: kondisi terkini dan prakiraan paling lama 1 jam, tile heatmap 30 menit (browser hanya boleh menyimpan sisa waktunya). Jika batas di ketentuan Google berubah, sesuaikan `MAX_AGE_MS` di `src/lib/server/air-quality-cache.ts` dan `TILE_TTL_MS` di `src/lib/server/handle-map.ts`.
+- Data ditampilkan apa adanya. Cache server mengikuti batas Service Specific Terms Air Quality API: kondisi terkini dan prakiraan paling lama 1 jam untuk semua lapisan (55 menit di server plus paling lama 60 detik di Cloudflare), tile heatmap 30 menit (browser hanya boleh menyimpan sisa waktunya). Jika batas di ketentuan Google berubah, sesuaikan `src/lib/config/cache.ts` dan `TILE_TTL_MS` di `src/lib/server/handle-map.ts`.
 - Halaman `/privacy` dan `/terms` merujuk ke Kebijakan Privasi Google dan Ketentuan Google Maps. Tinjau ulang isinya sebelum rilis publik, terutama jika alamat penagihan Google Cloud berada di EEA (tautan ketentuannya berbeda).

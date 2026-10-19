@@ -1,11 +1,10 @@
+import { SERVER_MAX_AGE_MS } from '@/lib/config/cache';
+import { CITIES } from '@/lib/config/cities';
 import type { AirQualityData, Coordinates } from '@/lib/types';
 import { fetchCurrentConditions, fetchForecast, fetchHistory } from './google-air-quality';
 
-/**
- * Google Maps Platform Service Specific Terms, Air Quality API 2.2: current conditions and hourly
- * forecasts may be cached for one hour, after which they must be deleted. No entry outlives that.
- */
-export const MAX_AGE_MS = 60 * 60_000;
+/** Server entries never outlive this; with Cloudflare's copy on top, the total stays inside Google's hour. */
+export const MAX_AGE_MS = SERVER_MAX_AGE_MS;
 /** Google publishes a new hourly value shortly after the hour; entries are refreshed this long after it. */
 const REFRESH_AFTER_HOUR_MS = 10 * 60_000;
 const HOUR_MS = 60 * 60_000;
@@ -19,7 +18,7 @@ const SWEEP_EVERY_MS = 5 * 60_000;
  */
 export const FORECAST_CONCURRENCY = 6;
 
-/** Whichever comes first: one hour after the fetch, or ten minutes into the next hour. */
+/** Whichever comes first: MAX_AGE_MS after the fetch, or ten minutes into the next hour. */
 export function expiresAt(fetchedAt: number): number {
 	const nextHour = Math.floor(fetchedAt / HOUR_MS) * HOUR_MS + HOUR_MS;
 	return Math.min(fetchedAt + MAX_AGE_MS, nextHour + REFRESH_AFTER_HOUR_MS);
@@ -102,8 +101,26 @@ export function clearAirQualityCache() {
 
 const place = ({ latitude, longitude }: Coordinates) => `${latitude},${longitude}`;
 
+/** 1/200 degree, about 550 m: close to the 500 m grid of Google's air quality model. */
+const GRID = 200;
+const CITY_POINTS = new Set(CITIES.map((city) => place(city)));
+
+/**
+ * Configured cities are looked up at their exact reference points. Any other point (device location,
+ * map click) snaps to the nearest grid point, at most about 390 m away, so nearby visitors share one
+ * cached lookup instead of each costing Google calls.
+ */
+export function snapToGrid(coordinates: Coordinates): Coordinates {
+	if (CITY_POINTS.has(place(coordinates))) return coordinates;
+	return {
+		latitude: Math.round(coordinates.latitude * GRID) / GRID,
+		longitude: Math.round(coordinates.longitude * GRID) / GRID
+	};
+}
+
 export function getCurrentConditions(coordinates: Coordinates, apiKey: string, fetchFn: typeof fetch = fetch): Promise<AirQualityData> {
-	return cached(`current:${place(coordinates)}`, () => fetchCurrentConditions(coordinates, apiKey, fetchFn));
+	const point = snapToGrid(coordinates);
+	return cached(`current:${place(point)}`, () => fetchCurrentConditions(point, apiKey, fetchFn));
 }
 
 /**
@@ -111,7 +128,8 @@ export function getCurrentConditions(coordinates: Coordinates, apiKey: string, f
  * The 10 s timeout starts when the call leaves the queue, so waiting for a slot never counts against it.
  */
 export function getForecast(coordinates: Coordinates, apiKey: string, fetchFn: typeof fetch = fetch): Promise<AirQualityData[]> {
-	return cached(`forecast:${place(coordinates)}`, () => withForecastSlot(() => fetchForecast(coordinates, apiKey, fetchFn)));
+	const point = snapToGrid(coordinates);
+	return cached(`forecast:${place(point)}`, () => withForecastSlot(() => fetchForecast(point, apiKey, fetchFn)));
 }
 
 /** History may be cached indefinitely, but it gains a new hour every hour, so it follows the same expiry. */
@@ -121,5 +139,6 @@ export function getHistory(
 	apiKey: string,
 	fetchFn: typeof fetch = fetch
 ): Promise<AirQualityData[]> {
-	return cached(`history:${hours}:${place(coordinates)}`, () => fetchHistory(coordinates, hours, apiKey, fetchFn));
+	const point = snapToGrid(coordinates);
+	return cached(`history:${hours}:${place(point)}`, () => fetchHistory(point, hours, apiKey, fetchFn));
 }
