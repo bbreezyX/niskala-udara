@@ -171,7 +171,7 @@ function SummaryCard({
 					)}
 				</div>
 				<div className="min-w-0 [grid-area:title] min-[360px]:self-end">
-					<h1 className="font-display text-[1.75rem] leading-[1.1] tracking-[-0.02em] text-balance [overflow-wrap:anywhere] min-[400px]:text-[2rem] sm:text-5xl">
+					<h1 className="page-title text-[1.75rem] [overflow-wrap:anywhere] min-[400px]:text-[2rem] sm:text-5xl">
 						{location.name}
 					</h1>
 					<p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
@@ -187,13 +187,13 @@ function SummaryCard({
 								aqi={current.index.aqi}
 								category={current.index.category}
 								color={current.index.color}
-								className="rounded-2xl px-3 py-1.5 text-sm max-[399px]:px-2.5 max-[399px]:text-[13px] [&>span:last-child]:whitespace-normal"
+								className="rounded-2xl px-3 py-1.5 text-sm max-[399px]:px-2.5 [&>span:last-child]:whitespace-normal"
 							/>
 							<IspuChip
 								station={station}
 								google={current.ispu}
 								timeZone={location.timeZone}
-								className="px-3 py-1.5 text-sm max-[399px]:px-2.5 max-[399px]:text-[13px] lg:hidden"
+								className="px-3 py-1.5 text-sm max-[399px]:px-2.5 lg:hidden"
 							/>
 							{current.index.dominantPollutant && (
 								<p className="text-sm text-muted-foreground lg:hidden">
@@ -204,71 +204,111 @@ function SummaryCard({
 						</>
 					)}
 				</div>
-				{/* UAQI runs the opposite way from ISPU, so the direction is stated next to the dial. */}
-				<p className="text-xs leading-relaxed text-muted-foreground [grid-area:note] sm:self-start">
-					{ispuShown ? (
-						<>
-							<span className="lg:hidden">{t.common.scaleIspu}</span>
-							<span className="hidden lg:inline">{t.common.scale}</span>
-						</>
-					) : (
-						t.common.scale
-					)}{' '}
-					<Link href="/about" className="font-medium whitespace-nowrap text-primary underline-offset-4 hover:underline">
-						{t.common.howToRead}
-					</Link>
-					{/* The chip's tooltip never reaches touch screens, so the source is also written out here. */}
-					<span className="lg:hidden">
-						{station ? (
-							<StationSource station={station} timeZone={location.timeZone} />
-						) : (
-							ispuShown && <span className="mt-1 block">{t.ispu.sourceModel}</span>
-						)}
-					</span>
-				</p>
+				<ScaleNote station={station} ispuShown={ispuShown} timeZone={location.timeZone} />
 			</header>
 			<div className="hidden content-start gap-4 border-l bg-muted/40 px-6 pt-6 lg:col-start-2 lg:row-start-1 lg:grid">
-				{current && (
-					<>
-						{/* ISPU runs the opposite way from the dial on the left, so its direction travels with it. */}
-						{station !== null || current.ispu ? (
-							<div className="grid justify-items-start gap-2">
-								<IspuChip station={station} google={current.ispu} timeZone={location.timeZone} className="px-3 py-1.5 text-sm" />
-								{ispuShown && (
-									<p className="text-xs leading-relaxed text-muted-foreground">
-										{t.ispu.direction}
-										{station ? <StationSource station={station} timeZone={location.timeZone} /> : <span className="mt-1 block">{t.ispu.sourceModel}</span>}
-									</p>
-								)}
-							</div>
-						) : null}
-						{current.index.dominantPollutant && (
-							<p className="flex items-baseline justify-between gap-3 border-t pt-4 text-sm text-muted-foreground first:border-t-0 first:pt-0">
-								{t.common.dominantPollutant}
-								<strong className="font-semibold text-foreground">{pollutantLabel(current.index.dominantPollutant)}</strong>
-							</p>
-						)}
-					</>
-				)}
+				{current && <ReadingDetails current={current} station={station} ispuShown={ispuShown} timeZone={location.timeZone} />}
 			</div>
-			{/* Freshness and the way to renew it share one row, so neither floats on its own. */}
-			<div className="flex items-center justify-between gap-3 border-t px-5 py-3 sm:px-6 lg:col-start-2 lg:row-start-2 lg:border-t-0 lg:border-l lg:bg-muted/40 lg:pt-4 lg:pb-6">
-				<div className="grid min-w-0 gap-0.5">
-					<span className="text-xs text-muted-foreground">{t.location.lastData}</span>
-					{current ? (
-						<time dateTime={current.dataTime} className="text-sm font-medium tabular-nums">
-							{formatDataTime(current.dataTime, location.timeZone, feed.language)}
-						</time>
-					) : (
-						<Skeleton className="h-5 w-32" />
+			<Freshness feed={feed} current={current} busy={busy} configured={configured} onRefresh={onRefresh} />
+		</Card>
+	);
+}
+
+type Station = ReturnType<typeof useKlhkStation>;
+
+/** UAQI runs the opposite way from ISPU, so the direction is stated next to the dial. */
+function ScaleNote({ station, ispuShown, timeZone }: { station: Station; ispuShown: boolean; timeZone: string }) {
+	const t = useDictionary();
+	return (
+		<p className="meta-copy text-muted-foreground [grid-area:note] sm:self-start">
+			{ispuShown ? (
+				<>
+					<span className="lg:hidden">{t.common.scaleIspu}</span>
+					<span className="hidden lg:inline">{t.common.scale}</span>
+				</>
+			) : (
+				t.common.scale
+			)}{' '}
+			<Link href="/about" className="font-medium whitespace-nowrap text-primary underline-offset-4 hover:underline">
+				{t.common.howToRead}
+			</Link>
+			{/* The chip's tooltip never reaches touch screens, so the source is also written out here. */}
+			<span className="lg:hidden">
+				{station ? <StationSource station={station} timeZone={timeZone} /> : ispuShown && <span className="mt-1 block">{t.ispu.sourceModel}</span>}
+			</span>
+		</p>
+	);
+}
+
+/** The side panel from lg: ISPU with its direction and source, then the dominant pollutant. */
+function ReadingDetails({
+	current,
+	station,
+	ispuShown,
+	timeZone
+}: {
+	current: AirQualityData;
+	station: Station;
+	ispuShown: boolean;
+	timeZone: string;
+}) {
+	const t = useDictionary();
+	return (
+		<>
+			{/* ISPU runs the opposite way from the dial on the left, so its direction travels with it. */}
+			{station !== null || current.ispu ? (
+				<div className="grid justify-items-start gap-2">
+					<IspuChip station={station} google={current.ispu} timeZone={timeZone} className="px-3 py-1.5 text-sm" />
+					{ispuShown && (
+						<p className="meta-copy text-muted-foreground">
+							{t.ispu.direction}
+							{station ? <StationSource station={station} timeZone={timeZone} /> : <span className="mt-1 block">{t.ispu.sourceModel}</span>}
+						</p>
 					)}
 				</div>
-				<Button variant="outline" size="lg" className="h-10 shrink-0 rounded-full bg-card px-4" onClick={onRefresh} disabled={busy || !configured}>
-					<RotateCw data-icon="inline-start" className={cn(busy && 'animate-spin')} />
-					{busy ? t.common.refreshing : t.common.refresh}
-				</Button>
+			) : null}
+			{current.index.dominantPollutant && (
+				<p className="flex items-baseline justify-between gap-3 border-t pt-4 text-sm text-muted-foreground first:border-t-0 first:pt-0">
+					{t.common.dominantPollutant}
+					<strong className="font-semibold text-foreground">{pollutantLabel(current.index.dominantPollutant)}</strong>
+				</p>
+			)}
+		</>
+	);
+}
+
+/** Freshness and the way to renew it share one row, so neither floats on its own. */
+function Freshness({
+	feed,
+	current,
+	busy,
+	configured,
+	onRefresh
+}: {
+	feed: LocationFeed;
+	current: AirQualityData | null;
+	busy: boolean;
+	configured: boolean;
+	onRefresh: () => void;
+}) {
+	const t = useDictionary();
+	return (
+		<div className="flex items-center justify-between gap-3 border-t px-5 py-3 sm:px-6 lg:col-start-2 lg:row-start-2 lg:border-t-0 lg:border-l lg:bg-muted/40 lg:pt-4 lg:pb-6">
+			<div className="grid min-w-0 gap-0.5">
+				<span className="meta-copy text-muted-foreground">{t.location.lastData}</span>
+				{current ? (
+					<time dateTime={current.dataTime} className="text-sm font-medium tabular-nums">
+						{formatDataTime(current.dataTime, feed.location.timeZone, feed.language)}
+					</time>
+				) : (
+					<Skeleton className="h-5 w-32" />
+				)}
 			</div>
-		</Card>
+			<Button variant="outline" size="lg" className="h-10 shrink-0 rounded-full bg-card px-4" onClick={onRefresh} disabled={busy || !configured}>
+				<RotateCw data-icon="inline-start" className={cn(busy && 'animate-spin')} />
+				{busy ? t.common.refreshing : t.common.refresh}
+			</Button>
+		</div>
 	);
 }
 
@@ -322,7 +362,7 @@ function DetailBody({ feed, configured, current, data }: { feed: LocationFeed; c
 
 			<Card className="@container rounded-[20px] lg:col-span-5">
 				<CardHeader>
-					<CardTitle className="text-lg font-semibold">{t.pollutants.levels}</CardTitle>
+					<CardTitle>{t.pollutants.levels}</CardTitle>
 					<CardDescription>{t.pollutants.levelsLatest}</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -344,10 +384,10 @@ function TrendCard({ location, data }: { location: LocationFeed['location']; dat
 		<Card className="rounded-[20px] lg:col-span-12">
 			<CardHeader className="flex flex-wrap items-baseline justify-between gap-2">
 				<div>
-					<CardTitle className="text-lg font-semibold">{t.location.trendTitle}</CardTitle>
+					<CardTitle>{t.location.trendTitle}</CardTitle>
 					<CardDescription>{fill(t.location.trendDescription, { zone: timeZoneLabel(location.timeZone) })}</CardDescription>
 				</div>
-				<p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+				<p className="meta-copy flex items-center gap-1.5 text-muted-foreground">
 					<span className="w-4 border-t-2 border-primary" aria-hidden="true" />
 					{t.location.recorded}
 					<span className="ml-2 w-4 border-t-2 border-dashed border-primary/70" aria-hidden="true" />
@@ -361,7 +401,7 @@ function TrendCard({ location, data }: { location: LocationFeed['location']; dat
 				) : loading ? (
 					<Skeleton className="h-72 rounded-xl sm:h-80" />
 				) : (
-					<p className="py-10 text-center text-sm text-muted-foreground">{t.location.trendMissing}</p>
+					<p className="body-copy py-10 text-center text-muted-foreground">{t.location.trendMissing}</p>
 				)}
 			</CardContent>
 		</Card>
@@ -415,11 +455,11 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 	return (
 		<Card className="rounded-[20px] lg:col-span-12">
 			<CardHeader className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-				<CardTitle id="planner-title" className="text-lg font-semibold">
+				<CardTitle id="planner-title">
 					{t.location.next24}
 				</CardTitle>
 				{count > 0 && (
-					<ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground" aria-label={t.aqi.categories}>
+					<ul className="meta-copy flex flex-wrap gap-x-3 gap-y-1 text-muted-foreground" aria-label={t.aqi.categories}>
 						{bands.map((band) => (
 							<li key={band.min} className="flex items-center gap-1.5">
 								<span className="size-2.5 rounded-[3px]" style={{ background: band.fill, boxShadow: bandEdge(band) }} aria-hidden="true" />
@@ -465,7 +505,7 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 							/>
 						</div>
 						{/* Ticks on clock hours divisible by 3 (6 on phones); midnight and the first tick also name the day. */}
-						<div className="relative mt-1.5 h-8 text-[11px] text-muted-foreground tabular-nums" aria-hidden="true">
+						<div className="relative mt-1.5 h-9 text-xs text-muted-foreground tabular-nums" aria-hidden="true">
 							{next.map((h, i) => {
 								const hour = Number.parseInt(hourOf(h), 10);
 								if (hour % 3 !== 0) return null;
@@ -482,12 +522,12 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 								);
 							})}
 						</div>
-						<p className="text-xs text-muted-foreground">{t.location.plannerHint}</p>
+						<p className="meta-copy text-muted-foreground">{t.location.plannerHint}</p>
 					</>
 				) : loading ? (
 					<Skeleton className="h-20 rounded-xl" />
 				) : (
-					<p className="text-sm text-muted-foreground">{t.location.plannerMissing}</p>
+					<p className="body-copy text-muted-foreground">{t.location.plannerMissing}</p>
 				)}
 			</CardContent>
 		</Card>
@@ -524,14 +564,14 @@ function TrendStats({ past, historyLoading, timeZone }: { past: AirQualityData[]
 		<dl className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border bg-border">
 			{stats.map(({ label, value, note }) => (
 				<div key={label} className="grid content-start gap-0.5 bg-card px-3 py-3 sm:px-4">
-					<dt className="text-xs font-semibold text-muted-foreground">{label}</dt>
+					<dt className="meta-copy font-semibold text-muted-foreground">{label}</dt>
 					<dd className="grid gap-0.5">
 						{value !== null ? (
 							<>
 								<span className="text-xl font-semibold tabular-nums" style={{ color: aqiBand(value).ink }}>
 									{value}
 								</span>
-								{note && <span className="text-xs text-muted-foreground">{note}</span>}
+								{note && <span className="meta-copy text-muted-foreground">{note}</span>}
 							</>
 						) : historyLoading ? (
 							<Skeleton className="h-10 rounded-md" />
@@ -564,7 +604,7 @@ function RelatedList({ places, region }: { places: RelatedPlace[]; region?: stri
 	return (
 		<nav aria-labelledby="related-title" className="mt-10">
 			<div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-				<h2 id="related-title" className="font-heading text-xl leading-snug font-semibold sm:text-2xl">
+				<h2 id="related-title" className="section-title">
 					{fill(t.location.relatedTitle, { region: region ?? t.location.thisArea })}
 				</h2>
 				<p className="text-sm text-muted-foreground">{t.location.relatedOrder}</p>
@@ -614,7 +654,7 @@ function RelatedList({ places, region }: { places: RelatedPlace[]; region?: stri
 					);
 				})}
 			</ol>
-			{missing && <p className="mt-2 text-xs text-muted-foreground">{t.location.relatedNote}</p>}
+			{missing && <p className="meta-copy mt-3 text-muted-foreground">{t.location.relatedNote}</p>}
 		</nav>
 	);
 }
