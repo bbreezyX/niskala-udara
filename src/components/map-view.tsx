@@ -113,11 +113,11 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 
 	return (
 		<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-			<Card className="overflow-hidden rounded-2xl p-0">
+			<Card className="overflow-hidden overscroll-contain rounded-2xl p-0">
 				<MapError status={mapState.status} />
 				<div className={failed ? 'hidden' : 'relative h-[min(70vh,680px)] min-h-90'}>
-					{/* Google Maps owns this element's children, so React renders nothing inside it. */}
-					<div ref={mapElement} role="region" aria-label={t.map.regionLabel} className="absolute inset-0" />
+					{/* Keep scroll inside the map even at its zoom limits; Google Maps owns this element's children. */}
+					<div ref={mapElement} role="region" aria-label={t.map.regionLabel} className="absolute inset-0 overflow-hidden overscroll-contain" />
 					{mapState.status === 'loading' && <Skeleton className="absolute inset-0 rounded-none" />}
 				</div>
 			</Card>

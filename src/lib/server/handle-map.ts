@@ -1,3 +1,5 @@
+import { setTimeout as delay } from 'node:timers/promises';
+import { HEATMAP_TILE_MAX_AGE_MS } from '@/lib/config/cache';
 import { MAP_ZOOM } from '@/lib/config/map';
 import { tileInBounds } from '@/lib/tile-bounds';
 import { getHotspots } from './firms';
@@ -6,7 +8,14 @@ import { AirQualityError } from './google-air-quality';
 import { fail, isCrossSite, log, respond } from './http';
 
 const TILE_URL = 'https://airquality.googleapis.com/v1/mapTypes/UAQI_RED_GREEN/heatmapTiles';
+/** The full tile request, including a retry and body transfer, shares this budget. */
 const TIMEOUT_MS = 10_000;
+const TILE_MAX_ATTEMPTS = 2;
+const TILE_RETRYABLE_STATUSES = new Set([408, 500, 502, 503, 504]);
+const TILE_RETRYABLE_NETWORK_CODES = new Set([
+	'EAI_AGAIN', 'ECONNREFUSED', 'ECONNRESET', 'EHOSTUNREACH', 'ENETUNREACH', 'EPIPE', 'ETIMEDOUT',
+	'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT', 'UND_ERR_SOCKET'
+]);
 
 /** GET /api/fires: hotspots across Indonesia over the last 24 hours. */
 export async function handleFiresRequest(
@@ -44,31 +53,66 @@ interface Tile {
 }
 
 /**
- * The Air Quality API terms allow caching current-conditions content for one hour. Tiles are
- * kept for half of that so the browser's own copy (max-age = time left here) also stays inside it.
+ * Server and browser HTTP copies share a 30-minute deadline. A decoded browser fallback can
+ * add at most five minutes; the combined 35-minute age stays below Google's one-hour limit.
  */
-export const TILE_TTL_MS = 30 * 60_000;
+export const TILE_TTL_MS = HEATMAP_TILE_MAX_AGE_MS;
 /** About 25 KB per tile, so the cap keeps the cache near 10 MB. */
 const TILE_CACHE_MAX = 400;
 const tileCache = new Map<string, { at: number; tile: Promise<Tile> }>();
 
+/** Preserve transport codes through cause/AggregateError without logging URLs, keys or coordinates. */
+function tileErrorCodes(error: unknown, depth = 0): string[] {
+	if (depth >= 4 || typeof error !== 'object' || error === null) return [];
+	const codes = 'code' in error && typeof error.code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(error.code)
+		? [error.code] : [];
+	const nested: unknown[] = 'errors' in error && Array.isArray(error.errors) ? error.errors.slice(0, 4) : [];
+	if ('cause' in error) nested.push(error.cause);
+	return [...new Set([...codes, ...nested.flatMap((cause) => tileErrorCodes(cause, depth + 1))])];
+}
+
 async function fetchTile(path: string, apiKey: string, fetchFn: typeof fetch): Promise<Tile> {
-	let response: Response;
-	try {
-		response = await fetchFn(`${TILE_URL}/${path}`, {
-			headers: { 'x-goog-api-key': apiKey },
-			signal: AbortSignal.timeout(TIMEOUT_MS)
-		});
-	} catch (error) {
-		const timedOut = error instanceof DOMException && error.name === 'TimeoutError';
-		throw new AirQualityError(timedOut ? 'timeout' : 'upstream_error', 'tile fetch failed');
+	const startedAt = performance.now();
+	const signal = AbortSignal.timeout(TIMEOUT_MS);
+	for (let attempt = 1; ; attempt++) {
+		let response: Response | undefined;
+		let phase = 'request';
+		let retryable = false;
+		try {
+			response = await fetchFn(`${TILE_URL}/${path}`, {
+				headers: { 'x-goog-api-key': apiKey },
+				signal
+			});
+			phase = 'response';
+			const contentType = response.headers.get('content-type') ?? '';
+			if (!response.ok || !contentType.startsWith('image/')) {
+				const code = response.status === 429 ? 'quota_exceeded'
+					: response.status === 400 || response.status === 401 || response.status === 403 ? 'not_authorized' : 'upstream_error';
+				retryable = TILE_RETRYABLE_STATUSES.has(response.status);
+				await response.body?.cancel().catch(() => {});
+				throw new AirQualityError(code, `upstream HTTP ${response.status}`);
+			}
+			phase = 'body';
+			return { body: await response.arrayBuffer(), contentType };
+		} catch (error) {
+			const causes = tileErrorCodes(error);
+			const timedOut = signal.aborted
+				|| (error instanceof DOMException && error.name === 'TimeoutError')
+				|| causes.some((code) => code === 'ETIMEDOUT' || code.endsWith('_TIMEOUT'));
+			const code = timedOut ? 'timeout' : error instanceof AirQualityError ? error.code : 'upstream_error';
+			retryable ||= causes.some((cause) => TILE_RETRYABLE_NETWORK_CODES.has(cause));
+			// Jitter prevents a viewport's failed tiles from retrying Google in lockstep.
+			const retryDelay = 200 + Math.floor(Math.random() * 150);
+			const retry = retryable && attempt < TILE_MAX_ATTEMPTS && !signal.aborted
+				&& performance.now() - startedAt + retryDelay < TIMEOUT_MS;
+			const detail = `host=airquality.googleapis.com attempt=${attempt}/${TILE_MAX_ATTEMPTS}`
+				+ ` phase=${phase} status=${response?.status ?? 'none'} causes=${causes.join(',') || 'none'}`
+				+ ` outcome=${retry ? 'retry' : 'failed'}`;
+			log('tiles', code, detail, startedAt);
+			if (!retry) throw new AirQualityError(code, detail);
+			await delay(retryDelay);
+		}
 	}
-	const contentType = response.headers.get('content-type') ?? '';
-	if (!response.ok || !contentType.startsWith('image/')) {
-		const code = response.status === 429 ? 'quota_exceeded' : response.status === 400 || response.status === 403 ? 'not_authorized' : 'upstream_error';
-		throw new AirQualityError(code, `upstream HTTP ${response.status}`);
-	}
-	return { body: await response.arrayBuffer(), contentType };
 }
 
 /** Shares one upstream fetch per tile across visitors, including concurrent ones; failures are not cached. */

@@ -120,7 +120,9 @@ Setiap request di bawah ditagih per SKU Air Quality API; cek harga dan kuota gra
 - Membuka halaman detail kota: +1 (history 24 jam), +2 jika data kota itu belum ada di memori. Lokasi perangkat dan titik peta: 3 per sel grid sekitar 550 m yang belum ada di cache.
 - Halaman Riwayat: 1 per pilihan kota/rentang.
 - "Perbarui": 2 per lokasi di wilayah aktif jika cache sudah kedaluwarsa. Selama cache berlaku, hasilnya sama dengan data yang tampil, karena Google memperbarui datanya per jam.
-- Halaman Peta: 1 pemuatan peta (SKU Dynamic Maps, Maps JavaScript API) + 1 request per tile heatmap yang belum ada di cache server (30 menit). Klik titik: membuka halaman detail (3 request).
+- Halaman Peta: 1 pemuatan peta (SKU Dynamic Maps, Maps JavaScript API) + 1 request per tile heatmap yang belum ada di cache server (30 menit), dengan paling banyak 1 retry server untuk kegagalan sementara. Percobaan dan pembacaan respons berbagi timeout total 10 detik; error key dan kuota tidak diulang. Klik titik: membuka halaman detail (3 request).
+
+Saat zoom berubah, heatmap memakai potongan tile dari zoom lebih rendah yang sudah berhasil dimuat untuk area yang sama, lalu menggantinya setelah tile detail siap. Cadangan ini tidak membuat request Google tambahan. Memori halaman menampung paling banyak 64 tile selama paling lama 5 menit sejak request masing-masing dimulai; cadangan dihapus ketika kedaluwarsa. Area tanpa tile induk yang tersedia tetap menunggu tile baru.
 - FIRMS: 3 transaksi per 10 menit paling banyak (dibagi ke semua pengunjung), jauh di bawah batas 5.000 per 10 menit.
 
 ## Deployment
@@ -153,5 +155,5 @@ Key Maps JavaScript (`PUBLIC_GOOGLE_MAPS_API_KEY`) memang terlihat di browser, j
 ## Kepatuhan Google
 
 - Atribusi "Google Maps" dan "Source: Includes air quality data from Google" tampil di dalam area data, tidak diterjemahkan (`translate="no"`).
-- Data ditampilkan apa adanya. Cache server mengikuti batas Service Specific Terms Air Quality API: kondisi terkini dan prakiraan paling lama 1 jam untuk semua lapisan (55 menit di server plus paling lama 60 detik di Cloudflare), tile heatmap 30 menit (browser hanya boleh menyimpan sisa waktunya). Jika batas di ketentuan Google berubah, sesuaikan `src/lib/config/cache.ts` dan `TILE_TTL_MS` di `src/lib/server/handle-map.ts`.
+- Data ditampilkan apa adanya. Cache server mengikuti batas Service Specific Terms Air Quality API: kondisi terkini dan prakiraan paling lama 1 jam untuk semua lapisan (55 menit di server plus paling lama 60 detik di Cloudflare). Server dan cache HTTP browser untuk tile heatmap berbagi batas 30 menit; cache cadangan di memori halaman menambah paling lama 5 menit sejak request dimulai, sehingga total semua lapisan heatmap paling lama 35 menit. Batas waktunya ada di `src/lib/config/cache.ts` dan dipakai oleh proksi serta renderer heatmap. Sesuaikan jika ketentuan Google berubah.
 - Halaman `/privacy` dan `/terms` merujuk ke Kebijakan Privasi Google dan Ketentuan Google Maps. Tinjau ulang isinya sebelum rilis publik, terutama jika alamat penagihan Google Cloud berada di EEA (tautan ketentuannya berbeda).
