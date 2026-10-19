@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
-import { Instrument_Serif, Plus_Jakarta_Sans } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import { AppHeader } from '@/components/app-header';
 import { Providers } from '@/components/providers';
 import { SiteFooter } from '@/components/site-footer';
@@ -9,14 +10,16 @@ import { getDictionary } from '@/lib/i18n/server';
 import { siteUrl } from '@/lib/server/env';
 import '../globals.css';
 
-// Type system modeled on america.gov: a high-contrast serif for display titles over a sans for UI
-// and body. Its faces (Rhymes, Helvetica Now) are commercial, so these are OFL stand-ins. Plus Jakarta
-// Sans (Tokotype, Bandung) was drawn for Jakarta's city identity and has tabular figures for AQI data.
+// Gambetta gives display titles their editorial character; Plus Jakarta Sans keeps UI and AQI data
+// readable, with tabular figures. Gambetta is self-hosted under the ITF Free Font License.
 const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta', display: 'swap' });
-const instrumentSerif = Instrument_Serif({
-	subsets: ['latin'],
-	weight: '400',
-	variable: '--font-instrument-serif',
+const gambetta = localFont({
+	src: [
+		{ path: '../fonts/gambetta/Gambetta-Regular.woff2', weight: '400', style: 'normal' },
+		{ path: '../fonts/gambetta/Gambetta-Italic.woff2', weight: '400', style: 'italic' }
+	],
+	variable: '--font-gambetta',
+	adjustFontFallback: 'Times New Roman',
 	display: 'swap'
 });
 
@@ -46,7 +49,7 @@ export default async function RootLayout({ children, params }: Props) {
 	const dictionary = getDictionary(lang);
 
 	return (
-		<html lang={lang} className={`${plusJakarta.variable} ${instrumentSerif.variable}`}>
+		<html lang={lang} className={`${plusJakarta.variable} ${gambetta.variable}`}>
 			<body className="flex min-h-dvh flex-col">
 				<a
 					href="#konten"
