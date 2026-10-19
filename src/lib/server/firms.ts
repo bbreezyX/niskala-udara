@@ -1,12 +1,34 @@
+import { setTimeout as delay } from 'node:timers/promises';
+import { Agent } from 'undici';
 import { FIRE_AREA, FIRE_WINDOW_HOURS } from '@/lib/config/map';
 import type { ApiErrorCode, FireData, Hotspot } from '@/lib/types';
 import { AirQualityError } from './google-air-quality';
+import { log } from './http';
 
-const BASE_URL = 'https://firms.modaps.eosdis.nasa.gov/api/area/csv';
+const FIRMS_HOST = 'firms.modaps.eosdis.nasa.gov';
+const BASE_URL = `https://${FIRMS_HOST}/api/area/csv`;
 /** VIIRS (375 m) from all three satellites; MODIS (1 km) adds little over these. */
 export const FIRMS_SOURCES = ['VIIRS_SNPP_NRT', 'VIIRS_NOAA20_NRT', 'VIIRS_NOAA21_NRT'] as const;
-/** Nationwide, one source can take 9–10 s in fire season; still under the browser's 15 s limit. */
+/** One budget per source, including retries and the body, below the browser's 15 s limit. */
 const TIMEOUT_MS = 13_000;
+const MAX_ATTEMPTS = 2;
+const RETRY_DELAY_MS = 250;
+const RETRYABLE_STATUSES = new Set([408, 500, 502, 503, 504]);
+const RETRYABLE_NETWORK_CODES = new Set([
+	'EAI_AGAIN',
+	'ECONNREFUSED',
+	'ECONNRESET',
+	'EHOSTUNREACH',
+	'ENETUNREACH',
+	'EPIPE',
+	'ETIMEDOUT',
+	'UND_ERR_CONNECT_TIMEOUT',
+	'UND_ERR_HEADERS_TIMEOUT',
+	'UND_ERR_BODY_TIMEOUT',
+	'UND_ERR_SOCKET'
+]);
+/** FIRMS alone uses IPv4: the VPS has no IPv6 route and Node's 250 ms fallback cuts IPv4 short. */
+const firmsDispatcher = new Agent({ connect: { family: 4 }, autoSelectFamily: false });
 /** NASA data may be cached; FIRMS updates every few hours, so 10 minutes costs nothing in freshness. */
 export const CACHE_TTL_MS = 10 * 60_000;
 
@@ -58,22 +80,70 @@ function errorCodeForText(text: string): ApiErrorCode {
 	return 'upstream_error';
 }
 
+class FirmsResponseError extends AirQualityError {
+	constructor(code: ApiErrorCode, readonly reason: string, readonly retryable: boolean) {
+		super(code, reason);
+	}
+}
+
+/** Only error codes leave this boundary; messages, URLs, stacks and response bodies may contain the key. */
+function networkErrorCodes(error: unknown, depth = 0): string[] {
+	if (depth >= 4 || typeof error !== 'object' || error === null) return [];
+	const codes = 'code' in error && typeof error.code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(error.code)
+		? [error.code]
+		: [];
+	const nested: unknown[] = 'errors' in error && Array.isArray(error.errors) ? error.errors.slice(0, 4) : [];
+	if ('cause' in error) nested.push(error.cause);
+	return [...new Set([...codes, ...nested.flatMap((cause) => networkErrorCodes(cause, depth + 1))])];
+}
+
 async function fetchSource(source: string, apiKey: string, fetchFn: typeof fetch): Promise<Hotspot[]> {
 	const { west, south, east, north } = FIRE_AREA;
 	// Two days back, then trimmed to the last 24 h, since FIRMS days are UTC calendar days.
 	const url = `${BASE_URL}/${encodeURIComponent(apiKey)}/${source}/${west},${south},${east},${north}/2`;
-	let response: Response;
-	try {
-		response = await fetchFn(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-	} catch (error) {
-		const timedOut = error instanceof DOMException && error.name === 'TimeoutError';
-		throw new AirQualityError(timedOut ? 'timeout' : 'upstream_error', `${source}: ${timedOut ? 'timeout' : 'network failure'}`);
+	const startedAt = performance.now();
+	const signal = AbortSignal.timeout(TIMEOUT_MS);
+	const init = { signal, dispatcher: firmsDispatcher };
+	for (let attempt = 1; ; attempt++) {
+		let phase = 'request';
+		let response: Response | undefined;
+		try {
+			response = await fetchFn(url, init);
+			phase = 'body';
+			const text = await response.text();
+			phase = 'response';
+			if (!response.ok || !text.startsWith('latitude')) {
+				const code = response.status === 401 || response.status === 403
+					? 'not_authorized'
+					: response.status === 429 ? 'quota_exceeded' : errorCodeForText(text);
+				throw new FirmsResponseError(
+					code,
+					response.ok ? 'non_csv_response' : 'http_error',
+					code === 'upstream_error' && RETRYABLE_STATUSES.has(response.status)
+				);
+			}
+			phase = 'csv';
+			return parseFirmsCsv(text);
+		} catch (error) {
+			const causes = networkErrorCodes(error);
+			const timedOut = signal.aborted
+				|| (error instanceof DOMException && error.name === 'TimeoutError')
+				|| causes.some((code) => code === 'ETIMEDOUT' || code.endsWith('_TIMEOUT'));
+			const code = timedOut ? 'timeout' : error instanceof AirQualityError ? error.code : 'upstream_error';
+			const reason = error instanceof FirmsResponseError ? error.reason
+				: timedOut ? 'timeout' : phase === 'csv' ? 'invalid_csv' : 'network_failure';
+			const retryable = error instanceof FirmsResponseError ? error.retryable
+				: causes.some((cause) => RETRYABLE_NETWORK_CODES.has(cause));
+			const retry = retryable && attempt < MAX_ATTEMPTS && !signal.aborted
+				&& performance.now() - startedAt + RETRY_DELAY_MS < TIMEOUT_MS;
+			const detail = `host=${FIRMS_HOST} source=${source} family=IPv4 attempt=${attempt}/${MAX_ATTEMPTS}`
+				+ ` phase=${phase} status=${response?.status ?? 'none'} reason=${reason}`
+				+ ` causes=${causes.join(',') || 'none'} outcome=${retry ? 'retry' : 'failed'}`;
+			log('firms', code, detail, startedAt);
+			if (!retry) throw new AirQualityError(code, detail);
+			await delay(RETRY_DELAY_MS);
+		}
 	}
-	const text = await response.text();
-	if (!response.ok || !text.startsWith('latitude')) {
-		throw new AirQualityError(errorCodeForText(text), `${source}: HTTP ${response.status}, not CSV`);
-	}
-	return parseFirmsCsv(text);
 }
 
 export async function fetchHotspots(apiKey: string, fetchFn: typeof fetch = fetch, now = new Date()): Promise<FireData> {
