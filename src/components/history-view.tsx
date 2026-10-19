@@ -10,6 +10,7 @@ import {
 	tableFeatures,
 	useTable
 } from '@tanstack/react-table';
+import { Tabs as TabsPrimitive } from 'radix-ui';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { aqiBand, bandEdge } from '@/lib/aqi';
 import { CITIES, DEFAULT_REGION, type City, type RegionId } from '@/lib/config/cities';
@@ -23,10 +24,9 @@ import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 import type { AirQualityData } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
 import { CityPicker, useNearby } from './city-picker';
@@ -211,161 +211,162 @@ export function HistoryView({ configured }: { configured: boolean }) {
 
 	return (
 		<div className="grid items-start gap-5 min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(320px,22rem)_minmax(260px,20rem)]">
-			<Card className="min-w-0 rounded-2xl">
-				<CardHeader className="flex flex-wrap items-start justify-between gap-3">
-					<div className="min-w-0">
-						<CardTitle className="text-lg font-semibold">{t.history.title}</CardTitle>
-						<CardDescription>{fill(t.history.description, { zone: timeZoneLabel(city.timeZone) })}</CardDescription>
-					</div>
-					{/* Phones: one row where the city picker takes the free space and truncates; the range keeps its size. */}
-					<div className="flex w-full items-center gap-2 sm:w-auto">
-						<CityPicker
-							value={city}
-							onChange={(next) => setPickedId(next.id)}
-							nearby={nearby}
-							onLocate={() => locate(false, (nearest) => setPickedId(nearest.id))}
-							className="min-w-0 flex-1 sm:w-48 sm:flex-none"
-						/>
-						<ToggleGroup
-							type="single"
-							value={String(range)}
-							// A single-select toggle can be cleared by clicking the active item; keep one selected.
-							onValueChange={(next) => next && setRange(Number(next) as HistoryRange)}
-							aria-label={t.history.rangeLabel}
-							spacing={0}
-							className="shrink-0 rounded-full bg-muted p-1"
-						>
-							{HISTORY_RANGES.map((hours) => (
-								<ToggleGroupItem
-									key={hours}
-									value={String(hours)}
-									className="h-8 rounded-full! px-3 text-muted-foreground sm:px-4 data-[state=on]:bg-card data-[state=on]:text-primary data-[state=on]:shadow-sm"
-								>
-									{fill(t.history.rangeOption, { n: String(hours) })}
-								</ToggleGroupItem>
-							))}
-						</ToggleGroup>
-					</div>
-				</CardHeader>
-
-				<CardContent className="grid gap-4">
-					{history.status === 'error' ? (
-						<div role="alert" className="grid justify-items-start gap-2 rounded-xl bg-destructive/5 p-6">
-							<p className="font-semibold text-destructive">{t.errors[history.code].title}</p>
-							<p className="text-sm text-muted-foreground">{t.errors[history.code].description}</p>
-							<Button size="lg" className="mt-2" onClick={() => setReloadVersion((v) => v + 1)}>
-								{t.common.retry}
-							</Button>
+			{/* The range tabs own the table below them: the card is the tab set, its content the one panel. */}
+			<TabsPrimitive.Root asChild value={String(range)} onValueChange={(next) => setRange(Number(next) as HistoryRange)}>
+				<Card className="min-w-0 rounded-2xl">
+					<CardHeader className="gap-0">
+						<p className="text-sm text-muted-foreground">{fill(t.history.kicker, { zone: timeZoneLabel(city.timeZone) })}</p>
+						{/* The city is what this card is about, so its name is the heading and the way to change it. */}
+						<h2 className="mt-0.5 min-w-0">
+							<CityPicker
+								variant="heading"
+								value={city}
+								onChange={(next) => setPickedId(next.id)}
+								nearby={nearby}
+								onLocate={() => locate(false, (nearest) => setPickedId(nearest.id))}
+							/>
+						</h2>
+						<div className="mt-3 flex items-center gap-4 border-b">
+							<TabsPrimitive.List aria-label={t.history.rangeLabel} className="flex gap-6">
+								{HISTORY_RANGES.map((hours) => (
+									<TabsPrimitive.Trigger
+										key={hours}
+										value={String(hours)}
+										className="relative -mb-px inline-flex min-h-11 items-center rounded-t-md text-sm font-medium whitespace-nowrap text-muted-foreground outline-none after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-primary after:opacity-0 after:transition-opacity hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=active]:text-foreground data-[state=active]:after:opacity-100 motion-reduce:after:transition-none"
+									>
+										{fill(t.history.rangeOption, { n: String(hours) })}
+									</TabsPrimitive.Trigger>
+								))}
+							</TabsPrimitive.List>
+							{history.status === 'success' && newest && (
+								<p className="ml-auto text-sm whitespace-nowrap text-muted-foreground tabular-nums max-sm:hidden">
+									{fill(t.history.latest, { time: formatHour(newest.hour.dataTime, city.timeZone, locale) })}
+								</p>
+							)}
 						</div>
-					) : (
-						<>
-							<Table aria-busy={history.status !== 'success'} data-grouped={groupedByDay} className="text-sm">
-								<TableCaption className="sr-only">{fill(t.history.caption, { name: city.name })}</TableCaption>
-								<TableHeader>
-									{table.getHeaderGroups().map((group) => (
-										<TableRow key={group.id} className="hover:bg-transparent">
-											{group.headers.map((header) => {
-												const sorted = header.column.getIsSorted();
-												const SortIcon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
-												return (
-													<TableHead
-														key={header.id}
-														aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-														className={cn('h-10 px-2 text-xs font-semibold text-muted-foreground', COLUMN_CLASS[header.column.id])}
-													>
-														{header.column.getCanSort() ? (
-															<button
-																type="button"
-																onClick={header.column.getToggleSortingHandler()}
-																className="inline-flex min-h-9 items-center gap-1 hover:text-foreground"
+					</CardHeader>
+
+					<TabsPrimitive.Content value={String(range)} asChild>
+						<CardContent className="grid gap-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+							{history.status === 'error' ? (
+								<div role="alert" className="grid justify-items-start gap-2 rounded-xl bg-destructive/5 p-6">
+									<p className="font-semibold text-destructive">{t.errors[history.code].title}</p>
+									<p className="text-sm text-muted-foreground">{t.errors[history.code].description}</p>
+									<Button size="lg" className="mt-2" onClick={() => setReloadVersion((v) => v + 1)}>
+										{t.common.retry}
+									</Button>
+								</div>
+							) : (
+								<>
+									<Table aria-busy={history.status !== 'success'} data-grouped={groupedByDay} className="text-sm">
+										<TableCaption className="sr-only">{fill(t.history.caption, { name: city.name })}</TableCaption>
+										<TableHeader>
+											{table.getHeaderGroups().map((group) => (
+												<TableRow key={group.id} className="hover:bg-transparent">
+													{group.headers.map((header) => {
+														const sorted = header.column.getIsSorted();
+														const SortIcon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
+														return (
+															<TableHead
+																key={header.id}
+																aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
+																className={cn('h-10 px-2 text-xs font-semibold text-muted-foreground', COLUMN_CLASS[header.column.id])}
 															>
-																{headerText(header.column)}
-																<SortIcon className={cn('size-3.5', !sorted && 'opacity-40')} aria-hidden="true" />
-															</button>
-														) : (
-															<table.FlexRender header={header} />
-														)}
-													</TableHead>
-												);
-											})}
-										</TableRow>
-									))}
-								</TableHeader>
-								<TableBody>
-									{history.status === 'success'
-										? table.getRowModel().rows.map((row, i, all) => {
-												const isSelected = row.original.t === selected?.t;
-												const day = dayLabel.format(row.original.t);
-												const newDay = groupedByDay && (i === 0 || dayLabel.format(all[i - 1].original.t) !== day);
-												return (
-													<Fragment key={row.id}>
-														{newDay && (
-															<TableRow className="border-0 hover:bg-transparent">
-																<TableCell colSpan={4} className="px-2 pt-4 pb-1 text-xs font-semibold text-muted-foreground">
-																	{day}
-																</TableCell>
-															</TableRow>
-														)}
-														<TableRow
-															data-state={isSelected ? 'selected' : undefined}
-															onClick={() => select(row.original.t)}
-															className="cursor-pointer border-0 hover:bg-muted/60 data-[state=selected]:bg-secondary [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl"
-														>
-															{row.getAllCells().map((cell) => (
-																<TableCell key={cell.id} className={cn('h-11 px-2 py-1', COLUMN_CLASS[cell.column.id])}>
-																	{cell.column.id === 't' ? (
-																		<button
-																			type="button"
-																			aria-pressed={isSelected}
-																			aria-label={fill(t.history.showHour, {
-																				time: `${formatHour(row.original.hour.dataTime, city.timeZone, locale)}, ${formatDay(row.original.hour.dataTime, city.timeZone, locale)}`
-																			})}
-																			onClick={(event) => {
-																				event.stopPropagation();
-																				select(row.original.t);
-																			}}
-																			className="min-h-10 rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-																		>
-																			<table.FlexRender cell={cell} />
-																		</button>
-																	) : (
-																		<table.FlexRender cell={cell} />
-																	)}
-																</TableCell>
-															))}
-														</TableRow>
-													</Fragment>
-												);
-											})
-										: Array.from({ length: 8 }, (_, i) => (
-												<TableRow key={i} aria-hidden="true">
-													<TableCell colSpan={4}>
-														<Skeleton className="h-8" />
-													</TableCell>
+																{header.column.getCanSort() ? (
+																	<button
+																		type="button"
+																		onClick={header.column.getToggleSortingHandler()}
+																		className="inline-flex min-h-9 items-center gap-1 hover:text-foreground"
+																	>
+																		{headerText(header.column)}
+																		<SortIcon className={cn('size-3.5', !sorted && 'opacity-40')} aria-hidden="true" />
+																	</button>
+																) : (
+																	<table.FlexRender header={header} />
+																)}
+															</TableHead>
+														);
+													})}
 												</TableRow>
 											))}
-								</TableBody>
-							</Table>
+										</TableHeader>
+										<TableBody>
+											{history.status === 'success'
+												? table.getRowModel().rows.map((row, i, all) => {
+														const isSelected = row.original.t === selected?.t;
+														const day = dayLabel.format(row.original.t);
+														const newDay = groupedByDay && (i === 0 || dayLabel.format(all[i - 1].original.t) !== day);
+														return (
+															<Fragment key={row.id}>
+																{newDay && (
+																	<TableRow className="border-0 hover:bg-transparent">
+																		<TableCell colSpan={4} className="px-2 pt-4 pb-1 text-xs font-semibold text-muted-foreground">
+																			{day}
+																		</TableCell>
+																	</TableRow>
+																)}
+																<TableRow
+																	data-state={isSelected ? 'selected' : undefined}
+																	onClick={() => select(row.original.t)}
+																	className="cursor-pointer border-0 hover:bg-muted/60 data-[state=selected]:bg-secondary [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl"
+																>
+																	{row.getAllCells().map((cell) => (
+																		<TableCell key={cell.id} className={cn('h-11 px-2 py-1', COLUMN_CLASS[cell.column.id])}>
+																			{cell.column.id === 't' ? (
+																				<button
+																					type="button"
+																					aria-pressed={isSelected}
+																					aria-label={fill(t.history.showHour, {
+																						time: `${formatHour(row.original.hour.dataTime, city.timeZone, locale)}, ${formatDay(row.original.hour.dataTime, city.timeZone, locale)}`
+																					})}
+																					onClick={(event) => {
+																						event.stopPropagation();
+																						select(row.original.t);
+																					}}
+																					className="min-h-10 rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+																				>
+																					<table.FlexRender cell={cell} />
+																				</button>
+																			) : (
+																				<table.FlexRender cell={cell} />
+																			)}
+																		</TableCell>
+																	))}
+																</TableRow>
+															</Fragment>
+														);
+													})
+												: Array.from({ length: 8 }, (_, i) => (
+														<TableRow key={i} aria-hidden="true">
+															<TableCell colSpan={4}>
+																<Skeleton className="h-8" />
+															</TableCell>
+														</TableRow>
+													))}
+										</TableBody>
+									</Table>
 
-							{pageCount > 1 && (
-								<nav aria-label={t.history.pagesLabel} className="flex items-center justify-between gap-2">
-									<Button variant="outline" size="lg" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>
-										<ChevronLeft data-icon="inline-start" />
-										{t.history.previous}
-									</Button>
-									<p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
-										{fill(t.history.page, { page: String(pageIndex + 1), count: String(pageCount) })}
-									</p>
-									<Button variant="outline" size="lg" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
-										{t.history.next}
-										<ChevronRight data-icon="inline-end" />
-									</Button>
-								</nav>
+									{pageCount > 1 && (
+										<nav aria-label={t.history.pagesLabel} className="flex items-center justify-between gap-2">
+											<Button variant="outline" size="lg" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>
+												<ChevronLeft data-icon="inline-start" />
+												{t.history.previous}
+											</Button>
+											<p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+												{fill(t.history.page, { page: String(pageIndex + 1), count: String(pageCount) })}
+											</p>
+											<Button variant="outline" size="lg" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
+												{t.history.next}
+												<ChevronRight data-icon="inline-end" />
+											</Button>
+										</nav>
+									)}
+								</>
 							)}
-						</>
-					)}
-				</CardContent>
-			</Card>
+						</CardContent>
+					</TabsPrimitive.Content>
+				</Card>
+			</TabsPrimitive.Root>
 
 			<aside
 				ref={panel}

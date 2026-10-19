@@ -105,8 +105,6 @@ export const id = {
 			'Aman untuk beraktivitas di luar ruangan',
 			'Udara bersih, nikmati aktivitas di luar'
 		],
-		more: 'Selengkapnya',
-		less: 'Ringkas',
 		missing: 'Saran lengkap belum tersedia untuk lokasi ini.'
 	},
 	pollutants: {
@@ -270,8 +268,8 @@ export const id = {
 		useMyLocation: 'Gunakan lokasi saya',
 		overviewPrefix: 'Pantauan, ',
 		dataAt: 'Data {time}',
-		refreshData: 'Perbarui data',
-		refreshingData: 'Memperbarui data',
+		refreshData: 'Perbarui',
+		refreshingData: 'Memperbarui…',
 		listLabel: 'Daftar lokasi pantauan',
 		emptyTitle: 'Tidak ada lokasi di kategori ini',
 		emptyDescription: 'Pilih kategori AQI lain atau atur ulang filter untuk melihat semua lokasi.',
@@ -289,7 +287,7 @@ export const id = {
 		worst: ' · {n} {band}'
 	},
 	filter: {
-		trigger: 'Urutkan dan saring',
+		trigger: 'Filter',
 		active: '(aktif)',
 		title: 'Tampilkan lokasi dengan udara…',
 		hint: 'Ketuk satu atau beberapa kategori.',
@@ -327,10 +325,10 @@ export const id = {
 		selected: ' (dipilih)'
 	},
 	history: {
-		title: 'Catatan per jam',
-		description: 'Waktu dalam {zone}. Pilih baris untuk melihat detailnya.',
+		kicker: 'Catatan per jam, waktu {zone}',
 		rangeLabel: 'Rentang waktu',
-		rangeOption: '{n} jam',
+		rangeOption: '{n} jam terakhir',
+		latest: 'Data terakhir {time}',
 		caption: 'Kualitas udara per jam di {name}. Pilih baris untuk melihat detail.',
 		columns: { hour: 'Jam', aqi: 'AQI', pollutant: 'Polutan', change: 'Perubahan' },
 		delta: {

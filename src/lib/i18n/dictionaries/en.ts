@@ -105,8 +105,6 @@ export const en: Dictionary = {
 			'Safe for outdoor activities',
 			'Clean air, enjoy being outside'
 		],
-		more: 'Show more',
-		less: 'Show less',
 		missing: 'Full advice is not available for this location yet.'
 	},
 	pollutants: {
@@ -269,8 +267,8 @@ export const en: Dictionary = {
 		useMyLocation: 'Use my location',
 		overviewPrefix: 'Overview, ',
 		dataAt: 'Data {time}',
-		refreshData: 'Refresh data',
-		refreshingData: 'Refreshing data',
+		refreshData: 'Refresh',
+		refreshingData: 'Refreshing…',
 		listLabel: 'Monitored locations',
 		emptyTitle: 'No locations in this category',
 		emptyDescription: 'Pick another AQI category or reset the filter to see every location.',
@@ -288,7 +286,7 @@ export const en: Dictionary = {
 		worst: ' · {n} {band}'
 	},
 	filter: {
-		trigger: 'Sort and filter',
+		trigger: 'Filter',
 		active: '(active)',
 		title: 'Show locations where the air is…',
 		hint: 'Tap one or more categories.',
@@ -326,10 +324,10 @@ export const en: Dictionary = {
 		selected: ' (selected)'
 	},
 	history: {
-		title: 'Hourly records',
-		description: 'Times in {zone}. Select a row to see its details.',
+		kicker: 'Hourly records, times in {zone}',
 		rangeLabel: 'Time range',
-		rangeOption: '{n} h',
+		rangeOption: 'Last {n} hours',
+		latest: 'Latest {time}',
 		caption: 'Hourly air quality in {name}. Select a row to see details.',
 		columns: { hour: 'Hour', aqi: 'AQI', pollutant: 'Pollutant', change: 'Change' },
 		delta: {

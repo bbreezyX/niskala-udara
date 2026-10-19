@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { useDictionary } from './locale-provider';
 
-/** Long enough that three lines usually cut it off, so the full text sits behind "show more". */
-const CLAMP_FROM = 180;
-
+/**
+ * The general advice is always shown in full. Advice for specific groups is opt-in below it, so the
+ * card reads as a recommendation first and nobody has to pick a group to get one.
+ */
 export function Recommendation({
 	aqi,
 	recommendations,
@@ -22,12 +23,10 @@ export function Recommendation({
 	className?: string;
 }) {
 	const { health } = useDictionary();
-	const groups = HEALTH_GROUPS.filter((group) => recommendations[group]);
-	const [picked, setPicked] = useState<HealthGroup>('generalPopulation');
-	const [expanded, setExpanded] = useState(false);
-	const group = groups.includes(picked) ? picked : groups[0];
-	const text = group ? recommendations[group] : undefined;
-	const long = (text?.length ?? 0) > CLAMP_FROM;
+	const general = recommendations.generalPopulation;
+	const groups = HEALTH_GROUPS.filter((group) => group !== 'generalPopulation' && recommendations[group]);
+	const [picked, setPicked] = useState<HealthGroup | ''>('');
+	const groupText = picked ? recommendations[picked] : undefined;
 
 	return (
 		<section aria-labelledby="health-advice" className={cn('grid gap-3 rounded-xl border p-4', className)}>
@@ -40,45 +39,33 @@ export function Recommendation({
 					{health.headlines[aqiBandIndex(aqi)]}
 				</h3>
 			</div>
-			{groups.length > 1 && (
-				<ToggleGroupPrimitive.Root
-					type="single"
-					value={group}
-					onValueChange={(next) => {
-						if (!next) return;
-						setPicked(next as HealthGroup);
-						setExpanded(false);
-					}}
-					aria-label={health.groupsLabel}
-					className="flex flex-wrap gap-1.5"
-				>
-					{groups.map((item) => (
-						<ToggleGroupPrimitive.Item
-							key={item}
-							value={item}
-							className="h-8 rounded-full border bg-card px-3 text-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=on]:border-foreground data-[state=on]:bg-foreground data-[state=on]:text-background"
-						>
-							{health.groups[item]}
-						</ToggleGroupPrimitive.Item>
-					))}
-				</ToggleGroupPrimitive.Root>
-			)}
-			{text ? (
-				<div>
-					<p className={cn('max-w-prose leading-relaxed', long && !expanded && 'line-clamp-3')}>{text}</p>
-					{long && (
-						<button
-							type="button"
-							onClick={() => setExpanded((value) => !value)}
-							aria-expanded={expanded}
-							className="mt-1 min-h-8 text-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
-						>
-							{expanded ? health.less : health.more}
-						</button>
-					)}
+			<p className={cn('max-w-prose leading-relaxed', !general && 'text-muted-foreground')}>{general ?? health.missing}</p>
+			{groups.length > 0 && (
+				<div className="grid gap-2 border-t pt-3">
+					<p id="health-groups" className="text-sm text-muted-foreground">
+						{health.groupsLabel}
+					</p>
+					<ToggleGroupPrimitive.Root
+						type="single"
+						value={picked}
+						onValueChange={(next) => setPicked(next as HealthGroup | '')}
+						aria-labelledby="health-groups"
+						className="flex flex-wrap gap-1.5"
+					>
+						{groups.map((item) => (
+							<ToggleGroupPrimitive.Item
+								key={item}
+								value={item}
+								className="h-8 rounded-full border bg-card px-3 text-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=on]:border-foreground data-[state=on]:bg-foreground data-[state=on]:text-background"
+							>
+								{health.groups[item]}
+							</ToggleGroupPrimitive.Item>
+						))}
+					</ToggleGroupPrimitive.Root>
+					<div aria-live="polite">
+						{groupText && <p className="max-w-prose rounded-lg bg-muted px-3 py-2.5 leading-relaxed">{groupText}</p>}
+					</div>
 				</div>
-			) : (
-				<p className="text-muted-foreground">{health.missing}</p>
 			)}
 		</section>
 	);

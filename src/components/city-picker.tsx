@@ -72,11 +72,13 @@ interface Props {
 	onChange: (city: City) => void;
 	nearby: Nearby;
 	onLocate: () => void;
+	/** `heading`: the city name itself is the trigger, set in the display face, for a card whose subject is the city. */
+	variant?: 'field' | 'heading';
 	className?: string;
 }
 
 /** Searchable city list: the closest cities first (once the device location is known), then every city by province. */
-export function CityPicker({ value, onChange, nearby, onLocate, className }: Props) {
+export function CityPicker({ value, onChange, nearby, onLocate, variant = 'field', className }: Props) {
 	const [open, setOpen] = useState(false);
 	const below = useDropdownBelow();
 	const locale = useLocale();
@@ -96,16 +98,34 @@ export function CityPicker({ value, onChange, nearby, onLocate, className }: Pro
 			}}
 		>
 			<PopoverTrigger asChild>
-				<Button
-					ref={below.triggerRef}
-					variant="outline"
-					size="lg"
-					aria-label={fill(cityPicker.trigger, { name: value.name })}
-					className={cn('h-10 justify-between rounded-full border-input bg-card px-4 font-semibold', className)}
-				>
-					<span className="truncate">{value.name}</span>
-					<ChevronDown data-icon="inline-end" className="text-muted-foreground" />
-				</Button>
+				{variant === 'heading' ? (
+					<button
+						ref={below.triggerRef}
+						type="button"
+						aria-label={fill(cityPicker.trigger, { name: value.name })}
+						className={cn(
+							'group inline-flex max-w-full items-center gap-1.5 rounded-lg text-left font-display text-3xl leading-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+							className
+						)}
+					>
+						<span className="truncate decoration-input decoration-1 underline-offset-[6px] group-hover:underline">{value.name}</span>
+						<ChevronDown
+							className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-y-0.5 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+							aria-hidden="true"
+						/>
+					</button>
+				) : (
+					<Button
+						ref={below.triggerRef}
+						variant="outline"
+						size="lg"
+						aria-label={fill(cityPicker.trigger, { name: value.name })}
+						className={cn('h-10 justify-between rounded-full border-input bg-card px-4 font-semibold', className)}
+					>
+						<span className="truncate">{value.name}</span>
+						<ChevronDown data-icon="inline-end" className="text-muted-foreground" />
+					</Button>
+				)}
 			</PopoverTrigger>
 			<PopoverContent align="start" sideOffset={6} {...below.contentProps} className="w-80 max-w-[calc(100vw-32px)] overflow-hidden rounded-2xl p-0">
 				<Command ref={below.commandRef} filter={filterCities} loop>
