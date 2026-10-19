@@ -22,7 +22,7 @@ export default async function HistoryPage({ params }: Props) {
 	const { pages } = getDictionary(toLocale((await params).lang));
 	await connection();
 	return (
-		<div className="mx-auto grid max-w-7xl gap-6 px-4 pt-8 sm:px-6 md:pt-10">
+		<div className="page-frame grid gap-6 pt-8 md:pt-10">
 			<PageIntro title={pages.history.heading} />
 			<HistoryView configured={Boolean(airQualityKey())} />
 		</div>

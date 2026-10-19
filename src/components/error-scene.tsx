@@ -19,7 +19,7 @@ export function ErrorScene({
 }) {
 	return (
 		// Fills the screen under the header (3.75rem); globals.css hides the footer and the header's sections.
-		<div className="mx-auto flex min-h-[calc(100dvh-3.75rem)] max-w-7xl flex-col px-4 pt-3 pb-4 sm:px-6 sm:pb-6">
+		<div className="page-frame flex min-h-[calc(100dvh-3.75rem)] flex-col pt-3 pb-4 sm:pb-6">
 			<section
 				aria-labelledby="error-title"
 				data-error-scene

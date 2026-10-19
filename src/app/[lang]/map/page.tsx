@@ -22,7 +22,7 @@ export default async function MapPage({ params }: Props) {
 	const { pages } = getDictionary(toLocale((await params).lang));
 	await connection();
 	return (
-		<div className="mx-auto grid max-w-7xl gap-6 px-4 pt-8 sm:px-6 md:pt-10">
+		<div className="page-frame grid gap-6 pt-8 md:pt-10">
 			<PageIntro title={pages.map.heading} />
 			{/* The browser key is public by design; the server-only keys stay as booleans. */}
 			<MapView mapsKey={mapsBrowserKey() ?? null} firesConfigured={Boolean(firmsKey())} />

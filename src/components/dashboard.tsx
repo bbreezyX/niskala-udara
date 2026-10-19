@@ -196,7 +196,7 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 
 	return (
 		<>
-			<div className="mx-auto max-w-7xl px-4 pt-3 sm:px-6">
+			<div className="page-frame pt-3">
 				{/*
 				  Sky panel. From lg up, its bottom-left corner is cut into a notch (page background, concave
 				  fillets) that holds the list title and region switch, so they read as the top of the card list.
@@ -290,7 +290,7 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 				</div>
 			</div>
 
-			<div className="mx-auto grid max-w-7xl gap-12 px-4 pt-6 sm:px-6 lg:pt-12">
+			<div className="page-frame grid gap-12 pt-6 lg:pt-12">
 				<section aria-label={t.dashboard.listLabel}>
 					<p className="sr-only" role="status">
 						{announcement}

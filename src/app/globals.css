@@ -4,6 +4,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* The one page width: header-aligned content, the footer and every data page share these edges.
+   Reading pages keep a narrower text column inside it. */
+@utility page-frame {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 90rem;
+    padding-inline: 1rem;
+    @variant sm {
+        padding-inline: 1.5rem;
+    }
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;

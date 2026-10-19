@@ -120,7 +120,7 @@ function columnsFor(timeZone: string, locale: Locale, t: Dictionary) {
 const COLUMN_CLASS: Record<string, string> = {
 	t: 'w-24',
 	aqi: 'w-full',
-	dominant: 'max-sm:hidden',
+	dominant: 'max-sm:hidden min-[1100px]:max-xl:hidden',
 	trend: 'text-right'
 };
 
@@ -210,7 +210,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 	const dayLabel = dateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'short', timeZone: city.timeZone });
 
 	return (
-		<div className="grid items-start gap-5 min-[1100px]:grid-cols-[minmax(0,1.45fr)_minmax(360px,1fr)]">
+		<div className="grid items-start gap-5 min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(320px,22rem)_minmax(260px,20rem)]">
 			<Card className="min-w-0 rounded-2xl">
 				<CardHeader className="flex flex-wrap items-start justify-between gap-3">
 					<div className="min-w-0">
@@ -377,47 +377,9 @@ export function HistoryView({ configured }: { configured: boolean }) {
 				  The card keeps its rounded shape; scrolling happens in this inset layer (16px from top and bottom,
 				  4px from the right) so the scrollbar never crosses the rounded corners. Padding adds up to the same 20px.
 				*/}
-				<div className="my-4 mr-1 grid min-h-0 content-start gap-5 py-1 pr-4 pl-5 min-[1100px]:overflow-y-auto">
+				<div className="@container my-4 mr-1 grid min-h-0 content-start gap-5 py-1 pr-4 pl-5 min-[1100px]:overflow-y-auto">
 					{selected ? (
-						<>
-							<header>
-								<h2 id="detail-title" className="text-lg font-semibold">
-									{city.name}
-								</h2>
-								<p className="text-sm text-muted-foreground">
-									<time dateTime={selected.hour.dataTime}>{formatDataTime(selected.hour.dataTime, city.timeZone, locale)}</time>
-								</p>
-							</header>
-							<div className="flex flex-wrap items-center gap-5">
-								<AqiGauge size="lg" aqi={selected.hour.index.aqi} display={selected.hour.index.aqiDisplay} />
-								<div className="grid min-w-48 flex-1 justify-items-start gap-2">
-									<AqiBadge aqi={selected.hour.index.aqi} category={selected.hour.index.category} color={selected.hour.index.color} />
-									<p className="text-sm font-semibold text-muted-foreground">{selected.hour.index.displayName}</p>
-									{selected.hour.index.dominantPollutant && (
-										<p className="text-muted-foreground">
-											{t.common.dominantPollutant}:{' '}
-											<strong className="font-semibold text-foreground">{pollutantLabel(selected.hour.index.dominantPollutant)}</strong>
-										</p>
-									)}
-									<p className="text-xs text-muted-foreground">{t.common.scale}</p>
-								</div>
-							</div>
-							<section className="grid gap-3 rounded-xl border p-4">
-								<h3 className="font-semibold">{fill(t.history.trendTitle, { n: String(range) })}</h3>
-								<TrendChart
-									points={hours.map((h) => ({ dateTime: h.dataTime, aqi: h.index.aqi }))}
-									timeZone={city.timeZone}
-									selected={selected.hour.dataTime}
-									label={fill(t.history.trendLabel, { name: city.name, n: String(range) })}
-								/>
-							</section>
-							<section className="@container grid gap-3">
-								<h3 className="font-semibold">{t.pollutants.levelsThisHour}</h3>
-								<PollutantBreakdown pollutants={selected.hour.pollutants} dominant={selected.hour.index.dominantPollutant} />
-							</section>
-							<Recommendation aqi={selected.hour.index.aqi} recommendations={selected.hour.recommendations ?? {}} />
-							<Attribution />
-						</>
+						<HourDetail city={city} hour={selected.hour} hours={hours} range={range} />
 					) : (
 						<>
 							<h2 id="detail-title" className="sr-only">
@@ -429,6 +391,63 @@ export function HistoryView({ configured }: { configured: boolean }) {
 					)}
 				</div>
 			</aside>
+
+			{/* Health advice for the selected hour gets its own column, so it is in view without scrolling the detail panel. */}
+			{selected ? (
+				<Recommendation
+					aqi={selected.hour.index.aqi}
+					recommendations={selected.hour.recommendations ?? {}}
+					className="rounded-2xl border-0 bg-card p-5 ring-1 ring-foreground/10 min-[1100px]:sticky min-[1100px]:top-20"
+				/>
+			) : (
+				<Skeleton className="h-48 rounded-2xl" />
+			)}
 		</div>
+	);
+}
+
+/** The selected hour in full: its AQI, the trend around it and its pollutant levels. */
+function HourDetail({ city, hour, hours, range }: { city: City; hour: AirQualityData; hours: AirQualityData[]; range: HistoryRange }) {
+	const locale = useLocale();
+	const t = useDictionary();
+	return (
+		<>
+			<header>
+				<h2 id="detail-title" className="text-lg font-semibold">
+					{city.name}
+				</h2>
+				<p className="text-sm text-muted-foreground">
+					<time dateTime={hour.dataTime}>{formatDataTime(hour.dataTime, city.timeZone, locale)}</time>
+				</p>
+			</header>
+			<div className="flex flex-wrap items-center gap-5 @max-[28rem]:flex-col @max-[28rem]:text-center">
+				<AqiGauge size="lg" aqi={hour.index.aqi} display={hour.index.aqiDisplay} />
+				<div className="grid min-w-48 flex-1 justify-items-start gap-2 @max-[28rem]:justify-items-center">
+					<AqiBadge aqi={hour.index.aqi} category={hour.index.category} color={hour.index.color} />
+					<p className="text-sm font-semibold text-muted-foreground">{hour.index.displayName}</p>
+					{hour.index.dominantPollutant && (
+						<p className="text-muted-foreground">
+							{t.common.dominantPollutant}:{' '}
+							<strong className="font-semibold text-foreground">{pollutantLabel(hour.index.dominantPollutant)}</strong>
+						</p>
+					)}
+					<p className="text-xs text-muted-foreground">{t.common.scale}</p>
+				</div>
+			</div>
+			<section className="grid gap-3 rounded-xl border p-4">
+				<h3 className="font-semibold">{fill(t.history.trendTitle, { n: String(range) })}</h3>
+				<TrendChart
+					points={hours.map((h) => ({ dateTime: h.dataTime, aqi: h.index.aqi }))}
+					timeZone={city.timeZone}
+					selected={hour.dataTime}
+					label={fill(t.history.trendLabel, { name: city.name, n: String(range) })}
+				/>
+			</section>
+			<section className="@container grid gap-3">
+				<h3 className="font-semibold">{t.pollutants.levelsThisHour}</h3>
+				<PollutantBreakdown pollutants={hour.pollutants} dominant={hour.index.dominantPollutant} />
+			</section>
+			<Attribution />
+		</>
 	);
 }

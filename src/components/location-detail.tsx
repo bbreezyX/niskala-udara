@@ -105,7 +105,7 @@ export function LocationDetail({ feed, configured, back, region, related }: Prop
 	const current = state.current.status === 'success' ? state.current.data : null;
 
 	return (
-		<div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 md:pt-8">
+		<div className="page-frame pt-6 md:pt-8">
 			<Button asChild variant="ghost" size="lg" className="-ml-2.5 h-10 text-muted-foreground">
 				<Link href={back.href}>
 					<ArrowLeft data-icon="inline-start" />
