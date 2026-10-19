@@ -30,7 +30,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
 import { CityPicker, useNearby } from './city-picker';
-import { Attribution, Recommendation, StateMessage } from './info-blocks';
+import { Attribution, DataUnavailable, Recommendation, StateMessage } from './info-blocks';
 import { useDictionary, useLocale } from './locale-provider';
 import { PollutantBreakdown } from './pollutant-breakdown';
 import { TrendChart } from './trend-chart';
@@ -201,7 +201,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 	}
 
 	if (!configured) {
-		return <StateMessage tone="error" title={t.errors.not_configured.title} description={t.errors.not_configured.description} />;
+		return <DataUnavailable title={t.errors.not_configured.title} description={t.errors.not_configured.description} />;
 	}
 
 	const pageCount = table.getPageCount();

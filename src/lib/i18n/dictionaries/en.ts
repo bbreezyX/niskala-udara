@@ -28,7 +28,8 @@ export const en: Dictionary = {
 	languageSwitch: { switchTo: 'Switch to {name}' },
 	footer: {
 		taglineLead: 'Air is',
-		taglineRest: ', unseen. We make it readable.',
+		taglineAfterName: ', unseen.',
+		taglineClosing: 'We make it readable.',
 		pages: 'Pages',
 		information: 'Information',
 		about: 'About',
@@ -262,7 +263,8 @@ export const en: Dictionary = {
 			evening: 'Good evening',
 			neutral: 'Hello'
 		},
-		lead: 'Here is the air quality in your monitored cities right now.',
+		heading: 'Air quality around you',
+		lead: 'Choose a region or use your location to see the conditions.',
 		useMyLocation: 'Use my location',
 		overviewPrefix: 'Overview, ',
 		dataAt: 'Data {time}',
@@ -285,7 +287,7 @@ export const en: Dictionary = {
 		worst: ' · {n} {band}'
 	},
 	filter: {
-		trigger: 'Sort & filter',
+		trigger: 'Sort and filter',
 		active: '(active)',
 		title: 'Show locations where the air is…',
 		hint: 'Tap one or more categories.',

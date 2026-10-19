@@ -1,14 +1,13 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Link } from './link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { AnimatePresence, m } from 'motion/react';
-import { Clock, LocateFixed, RotateCw } from 'lucide-react';
+import { Clock, LocateFixed, RotateCw, SlidersHorizontal } from 'lucide-react';
 import { CITIES, DEFAULT_REGION, regionFromParam, type RegionId } from '@/lib/config/cities';
 import { fill, plural, type Locale } from '@/lib/i18n/config';
-import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 import { cityFeed, isBusy, loadRegion, needsLoad, useFeeds, type FeedState, type LocationFeed } from '@/lib/client/location-feed';
 import { rememberedRegion, rememberRegion } from '@/lib/client/region-memory';
 import type { RegionStream } from '@/lib/types';
@@ -18,28 +17,11 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AqiSpread } from './aqi-spread';
 import { CityCard, CityCardSkeleton } from './city-card';
-import { StateMessage } from './info-blocks';
+import { DataUnavailable, StateMessage } from './info-blocks';
 import { useDictionary, useLocale } from './locale-provider';
 import { RegionPicker } from './region-picker';
 import { DEFAULT_FILTER, type ListFilter } from './list-filter';
 import { SortFilter } from './sort-filter';
-
-const noopSubscribe = () => () => {};
-
-/** Greeting from the device's clock. The server renders a neutral one, so hydration never mismatches. */
-function useGreeting(greetings: Dictionary['dashboard']['greetings']) {
-	return useSyncExternalStore(
-		noopSubscribe,
-		() => {
-			const hour = new Date().getHours();
-			if (hour < 4 || hour >= 18) return greetings.evening;
-			if (hour < 11) return greetings.morning;
-			if (hour < 15) return greetings.midday;
-			return greetings.afternoon;
-		},
-		() => greetings.neutral
-	);
-}
 
 const aqiOf = (state: FeedState) => (state.current.status === 'success' ? state.current.data.index.aqi : null);
 
@@ -85,10 +67,10 @@ function CityList({
 	const locale = useLocale();
 	return (
 		<>
-			{!configured && <StateMessage tone="error" title={t.errors.not_configured.title} description={t.errors.not_configured.description} />}
+			{!configured && <DataUnavailable title={t.errors.not_configured.title} description={t.errors.not_configured.description} />}
 			{configured && visible.length === 0 && (
-				<StateMessage title={t.dashboard.emptyTitle} description={t.dashboard.emptyDescription}>
-					<Button size="lg" onClick={onReset}>
+				<StateMessage variant="compact" icon={SlidersHorizontal} title={t.dashboard.emptyTitle} description={t.dashboard.emptyDescription}>
+					<Button variant="link" className="h-10 px-0 text-primary" onClick={onReset}>
 						{t.dashboard.resetFilter}
 					</Button>
 				</StateMessage>
@@ -128,7 +110,6 @@ function CityList({
 /** `initial` is what the server streams for the region in the URL it rendered; null without a key. */
 export function Dashboard({ configured, initial }: { configured: boolean; initial: RegionStream | null }) {
 	const t = useDictionary();
-	const greeting = useGreeting(t.dashboard.greetings);
 	const locale = useLocale();
 	const pathname = usePathname();
 	// The region lives in the URL, so "back" from a city page returns to the same region.
@@ -195,11 +176,20 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 	}
 
 	const listActions = (
-		<div className="flex flex-wrap gap-2">
+		<div className="flex items-center gap-2">
 			<SortFilter value={filter} onApply={setFilter} bandCounts={bandCounts} pendingCount={pendingCount} />
-			<Button variant="outline" size="lg" className="h-10 rounded-full bg-card px-4" disabled={anyBusy || !configured} onClick={refreshAll}>
-				<RotateCw data-icon="inline-start" className={cn(anyBusy && 'animate-spin')} />
-				{anyBusy ? t.common.refreshing : t.common.refresh}
+			<Button
+				variant="outline"
+				size="lg"
+				className="h-11 w-11 gap-2 rounded-full bg-card px-0 text-muted-foreground hover:text-foreground lg:w-auto lg:px-4"
+				disabled={anyBusy || !configured}
+				onClick={refreshAll}
+				aria-label={anyBusy ? t.dashboard.refreshingData : t.dashboard.refreshData}
+				aria-busy={anyBusy}
+				title={anyBusy ? t.dashboard.refreshingData : t.dashboard.refreshData}
+			>
+				<RotateCw className={cn('size-4', anyBusy && 'motion-safe:animate-spin')} aria-hidden="true" />
+				<span className="hidden lg:inline">{anyBusy ? t.dashboard.refreshingData : t.dashboard.refreshData}</span>
 			</Button>
 		</div>
 	);
@@ -231,11 +221,11 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 						<div className="absolute inset-0 bg-linear-to-br from-sky/95 via-sky/75 to-sky/5 sm:bg-linear-to-r sm:from-sky/95 sm:via-sky/60 sm:to-sky/10" />
 					</div>
 					<div className="relative flex flex-wrap items-end justify-between gap-6 px-5 pt-10 pb-10 sm:px-10 md:pt-14 lg:pb-28">
-						<div>
-							<h1 id="page-title" className="font-display text-5xl leading-none tracking-[-0.02em] sm:text-6xl lg:text-7xl">
-								{greeting}
+						<div className="min-w-0 flex-1 basis-[28rem]">
+							<h1 id="page-title" className="max-w-[18ch] font-display text-4xl leading-[1.08] tracking-[-0.02em] text-balance sm:text-5xl lg:text-6xl">
+								{t.dashboard.heading}
 							</h1>
-							<p className="mt-3 text-base text-muted-foreground sm:text-lg">{t.dashboard.lead}</p>
+							<p className="mt-3 max-w-[52ch] text-base text-pretty text-muted-foreground sm:text-lg">{t.dashboard.lead}</p>
 							{/* UAQI runs the opposite way to ISPU, so the explanation stays one tap away. From lg up it sits under the hero, beside the cards it explains. */}
 							<Link href="/about" className="mt-2 inline-flex min-h-8 items-center text-sm font-medium text-primary underline-offset-4 hover:underline lg:hidden">
 								{t.common.scale} {t.common.howToRead}
@@ -271,28 +261,16 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 				</section>
 
 				{/*
-				  Phones: the region and its actions on one row, then the band bar across the full width with the
-				  summary under it. The data time sits at the row's end as a neutral chip, its own fact.
+				  Phones: keep the filter label visible and let the actions wrap when the region needs more room.
+				  The band bar spans the full width, with its summary and the data time below it.
 				*/}
 				<div className="grid gap-3 pt-5 lg:hidden">
-					<div className="flex items-center justify-between gap-3">
-						<h2 className="flex min-w-0">
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<h2 className="flex max-w-full min-w-0">
 							<span className="sr-only">{t.dashboard.overviewPrefix}</span>
 							<RegionPicker value={region} onChange={setRegion} variant="title" />
 						</h2>
-						<div className="flex shrink-0 gap-2">
-							<SortFilter value={filter} onApply={setFilter} bandCounts={bandCounts} pendingCount={pendingCount} compact />
-							<Button
-								variant="outline"
-								size="icon"
-								className="size-11 rounded-full bg-card"
-								disabled={anyBusy || !configured}
-								onClick={refreshAll}
-								aria-label={anyBusy ? t.dashboard.refreshingData : t.dashboard.refreshData}
-							>
-								<RotateCw className={cn(anyBusy && 'animate-spin')} aria-hidden="true" />
-							</Button>
-						</div>
+						<div className="ml-auto shrink-0">{listActions}</div>
 					</div>
 					<AqiSpread
 						layout="stacked"

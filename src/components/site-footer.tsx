@@ -24,23 +24,18 @@ function columns(t: Dictionary) {
 }
 
 /**
- * Mirrors the dashboard hero: a sky panel with the brand in a bottom-left notch, so the page opens
+ * Mirrors the dashboard hero: a sky panel with the brand in a bottom-right notch, so the page opens
  * and closes with the same shape. The line explains the name: "niskala" means intangible, unseen.
  */
 export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 	return (
 		<footer className="mx-auto mt-16 w-full max-w-7xl px-4 pb-6 sm:px-6">
 			<div className="relative rounded-[20px] bg-sky sm:rounded-[28px]">
-				<div className="grid gap-10 px-6 pt-10 pb-20 sm:px-10 md:grid-cols-[minmax(0,1fr)_auto] md:gap-16 md:pt-14 md:pb-20">
-					<p className="max-w-[16ch] font-display text-4xl leading-[1.02] tracking-[-0.01em] text-secondary-foreground sm:text-5xl lg:text-6xl">
-						{t.footer.taglineLead} <em lang="id">niskala</em>
-						{t.footer.taglineRest}
-					</p>
-
+				<div className="grid gap-10 px-6 pt-10 pb-20 sm:px-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-16 md:pt-14 md:pb-20">
 					<div className="grid grid-cols-2 content-start gap-x-10 gap-y-8 text-sm">
 						{columns(t).map((column) => (
 							<nav key={column.title} aria-label={column.title}>
-								<h2 className="mb-3 text-xs font-semibold text-secondary-foreground/70">{column.title}</h2>
+								<h2 className="mb-3 text-sm font-semibold text-secondary-foreground/70">{column.title}</h2>
 								<ul className="grid gap-1">
 									{column.links.map((link) => (
 										<li key={link.href}>
@@ -56,7 +51,7 @@ export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 							</nav>
 						))}
 						<div className="col-span-2">
-							<h2 className="mb-3 text-xs font-semibold text-secondary-foreground/70">{t.footer.dataSources}</h2>
+							<h2 className="mb-3 text-sm font-semibold text-secondary-foreground/70">{t.footer.dataSources}</h2>
 							<p className="leading-relaxed text-secondary-foreground">
 								{t.footer.airQualitySource}
 								<br />
@@ -72,6 +67,11 @@ export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 							</p>
 						</div>
 					</div>
+
+					<p className="max-w-[21ch] font-display text-[1.75rem] leading-[1.1] tracking-[-0.01em] text-secondary-foreground sm:text-4xl md:justify-self-end lg:text-[clamp(2.5rem,3.9vw,3rem)]">
+						<span className="block">{t.footer.taglineLead} <em lang="id">niskala</em>{t.footer.taglineAfterName}</span>{' '}
+						<span className="block text-balance">{t.footer.taglineClosing}</span>
+					</p>
 				</div>
 
 				{/* Notch: page background with concave fillets, holding the brand. */}

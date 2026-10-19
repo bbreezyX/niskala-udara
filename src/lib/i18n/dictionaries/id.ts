@@ -28,9 +28,10 @@ export const id = {
 	},
 	languageSwitch: { switchTo: 'Ganti ke {name}' },
 	footer: {
-		// The tagline wraps the name in <em>, so it is stored in three parts around it.
+		// Keep the two sentences separate while allowing the name to use italic type.
 		taglineLead: 'Udara itu',
-		taglineRest: '. Kami membuatnya terbaca.',
+		taglineAfterName: '.',
+		taglineClosing: 'Kami membuatnya terbaca.',
 		pages: 'Halaman',
 		information: 'Informasi',
 		about: 'Tentang',
@@ -263,7 +264,8 @@ export const id = {
 			evening: 'Selamat malam',
 			neutral: 'Halo'
 		},
-		lead: 'Begini kualitas udara di kota pantauanmu sekarang.',
+		heading: 'Kualitas udara di sekitarmu',
+		lead: 'Pilih wilayah atau gunakan lokasimu untuk melihat kondisinya.',
 		useMyLocation: 'Gunakan lokasi saya',
 		overviewPrefix: 'Pantauan, ',
 		dataAt: 'Data {time}',
@@ -286,7 +288,7 @@ export const id = {
 		worst: ' · {n} {band}'
 	},
 	filter: {
-		trigger: 'Urutkan & filter',
+		trigger: 'Urutkan dan saring',
 		active: '(aktif)',
 		title: 'Tampilkan lokasi dengan udara…',
 		hint: 'Ketuk satu atau beberapa kategori.',

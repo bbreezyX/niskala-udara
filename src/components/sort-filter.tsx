@@ -40,7 +40,7 @@ interface Props {
  * The AQI scale is the control: each band is a toggle that shows how many locations sit in it now.
  * Edits are a draft until the apply button, which states the result ("Show N locations") before it is applied.
  */
-export function SortFilter({ value, onApply, bandCounts, pendingCount, compact = false }: Props & { compact?: boolean }) {
+export function SortFilter({ value, onApply, bandCounts, pendingCount }: Props) {
 	const t = useDictionary();
 	const locale = useLocale();
 	const [open, setOpen] = useState(false);
@@ -62,32 +62,24 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 	const active = SORT_OPTIONS.find((option) => option.value === sort) ?? SORT_OPTIONS[0];
 	const matching = pendingCount + bands.reduce((sum, i) => sum + (bandCounts[i] ?? 0), 0);
 	const nothingPicked = bands.length === 0;
+	const filtered = isFiltered(value);
 
 	return (
 		<Popover open={open} onOpenChange={handleOpenChange}>
 			<PopoverTrigger asChild>
-				{compact ? (
-					// Icon only on phones; the dot keeps an active sort or filter visible without the label.
-					<Button variant="outline" size="icon" className="relative size-11 rounded-full bg-card" aria-label={t.filter.trigger}>
-						<SlidersHorizontal aria-hidden="true" />
-						{isFiltered(value) && (
-							<span className="absolute top-2 right-2 size-2 rounded-full bg-primary ring-2 ring-card">
-								<span className="sr-only">{t.filter.active}</span>
-							</span>
-						)}
-					</Button>
-				) : (
-					<Button variant="outline" size="lg" className="h-10 rounded-full bg-card px-4">
-						<SlidersHorizontal data-icon="inline-start" />
-						{t.filter.trigger}
-						{isFiltered(value) && (
-							<span className="size-2 rounded-full bg-primary">
-								<span className="sr-only">{t.filter.active}</span>
-							</span>
-						)}
-						<ChevronDown data-icon="inline-end" className="text-muted-foreground" />
-					</Button>
-				)}
+				<Button
+					variant="outline"
+					size="lg"
+					className={cn('h-11 gap-2 rounded-full border-input bg-card px-4', filtered && 'border-primary/50 text-primary hover:text-primary aria-expanded:text-primary')}
+				>
+					<span className="relative">
+						<SlidersHorizontal className="size-4" aria-hidden="true" />
+						{filtered && <span aria-hidden="true" className="absolute -top-1 -right-1 size-2 rounded-full bg-primary ring-2 ring-card" />}
+					</span>
+					{t.filter.trigger}
+					{filtered && <span className="sr-only">{t.filter.active}</span>}
+					<ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+				</Button>
 			</PopoverTrigger>
 			<PopoverContent
 				align="end"

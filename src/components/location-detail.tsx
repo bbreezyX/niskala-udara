@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ChevronRight, MapPin, RotateCw } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, CloudOff, Hourglass, Lock, MapPin, MapPinOff, RotateCw, type LucideIcon } from 'lucide-react';
 import { postJson, toRemote, withLanguage, type Remote } from '@/lib/client/api';
 import { isBusy, needsLoad, useFeed, useFeeds, type LocationFeed } from '@/lib/client/location-feed';
 import { aqiBand, bandEdge } from '@/lib/aqi';
 import { dateTimeFormat } from '@/lib/date-format';
 import { fill, plural } from '@/lib/i18n/config';
-import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
+import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel, type ClientErrorCode } from '@/lib/format';
 import type { AirQualityData } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -15,11 +15,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
-import { Attribution, Recommendation, StateMessage } from './info-blocks';
+import { Attribution, DataUnavailable, Recommendation, StateMessage } from './info-blocks';
 import { PollutantBreakdown } from './pollutant-breakdown';
 import { TrendChart, type TrendPoint } from './trend-chart';
 import { Link } from './link';
 import { useDictionary, useLocale } from './locale-provider';
+
+/** The glyph drawn in the empty AQI ring for each failure; no_data keeps the ring's "–", since nothing came back. */
+const ERROR_ICONS: Partial<Record<ClientErrorCode, LucideIcon>> = {
+	network: CloudOff,
+	timeout: Clock,
+	quota_exceeded: Hourglass,
+	upstream_error: CloudOff,
+	not_authorized: Lock,
+	location_unsupported: MapPinOff,
+	invalid_request: MapPinOff
+};
 
 export interface RelatedPlace {
 	href: string;
@@ -215,11 +226,16 @@ function DetailBody({ feed, configured, current, data }: { feed: LocationFeed; c
 	const { location } = feed;
 
 	if (!configured) {
-		return <StateMessage tone="error" title={t.errors.not_configured.title} description={t.errors.not_configured.description} />;
+		return <DataUnavailable title={t.errors.not_configured.title} description={t.errors.not_configured.description} />;
 	}
 	if (state.current.status === 'error') {
 		return (
-			<StateMessage tone="error" title={t.errors[state.current.code].title} description={t.errors[state.current.code].description}>
+			<StateMessage
+				tone="error"
+				icon={ERROR_ICONS[state.current.code] ?? null}
+				title={t.errors[state.current.code].title}
+				description={t.errors[state.current.code].description}
+			>
 				<Button size="lg" onClick={data.refresh}>
 					<RotateCw data-icon="inline-start" />
 					{t.common.retry}

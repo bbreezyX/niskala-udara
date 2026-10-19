@@ -45,7 +45,7 @@ function MapError({ status }: { status: MapState['status'] }) {
 	const t = useDictionary();
 	if (status !== 'unconfigured' && status !== 'auth' && status !== 'network') return null;
 	const { title, description } = t.map[status];
-	return <StateMessage tone="error" className="border-0" title={title} description={description} />;
+	return <StateMessage variant="plain" tone="error" className="border-0" title={title} description={description} />;
 }
 
 interface Props {
