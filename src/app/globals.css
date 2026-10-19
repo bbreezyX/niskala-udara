@@ -137,6 +137,15 @@
   }
 }
 
+/*
+ * Error pages (404, 500) are one focused screen: the header keeps only the logo and search, and the footer
+ * goes. Its links are not ways out of an error, and a second sky panel would compete with the scene's actions.
+ * The language switch goes too: the other language has no page here either.
+ */
+body:has([data-error-scene]) :is([data-section-nav], [data-language-switch], #konten ~ footer) {
+    display: none;
+}
+
 /* Route change: the new page settles in instead of swapping in place. `backwards` fill leaves no
    transform behind once it ends, so fixed and sticky descendants keep the viewport as their box. */
 @keyframes page-enter {

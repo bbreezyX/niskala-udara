@@ -154,6 +154,17 @@ export const en: Dictionary = {
 		whoSuffix: ' the WHO guideline',
 		whoNote: 'Vertical line = WHO 2021 guideline (24-hour mean; O₃ 8-hour). These readings are hourly, so the comparison is indicative.'
 	},
+	// Full-page states: a URL with no page behind it, and a page that failed to render.
+	errorPage: {
+		notFound: {
+			title: 'Page not found',
+			description: 'This address is not part of Niskala. Check the link, or start from the Overview to see the air quality in your city.'
+		},
+		failed: {
+			title: 'This page failed to load',
+			description: 'Niskala’s server ran into a problem while preparing this page. Try again; if it still fails, wait a few minutes.'
+		}
+	},
 	errors: {
 		not_configured: {
 			title: 'Data source not set up',

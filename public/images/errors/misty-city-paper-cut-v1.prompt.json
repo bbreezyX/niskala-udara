@@ -1,0 +1,25 @@
+{
+  "generated_with": "built-in image_gen",
+  "date": "2026-10-19",
+  "use_case": "stylized-concept",
+  "purpose": "Decorative background for error-mockups option A, Cakrawala",
+  "prompt": "Use case: stylized-concept\nAsset type: one finished edge-to-edge 16:10 background illustration, approximately 2400 by 1500 pixels, for a centered 404 and error page of a light-theme air quality website.\nPrimary request: a serene layered landscape of city and hills receding into morning mist, built like stacked sheets of cut paper — the feeling of a place gently fading into the air.\nScene/backdrop: five to six horizontal layers along the bottom of the frame. The nearest layer is a crisp silhouette of an imagined city skyline with a few slender towers, rooftops and rounded tree crowns; behind it, progressively paler layers of lower buildings, then soft rolling hills, then the faintest mountain ridge. Thin bands of white mist lie between the layers so each one dissolves into the next.\nStyle/medium: refined contemporary editorial illustration, paper-cut depth with very subtle soft drop shadows between layers, fine matte paper texture, smooth vector-like edges, restrained detail. Elegant and calm, not childish clip art, not a flat icon set.\nComposition/framing: symmetrical and centered. All landscape forms must stay in the bottom 35 percent of the frame. The tallest forms cluster near the horizontal center so a narrow mobile crop still reads as a city. The top 60 percent is an almost flat pale-blue sky with a very soft vertical gradient and absolutely nothing in it, reserved as empty negative space for large dark serif HTML error-code text and centered HTML copy that will be added separately. Do not render that text in this artwork.\nLighting/mood: soft diffused morning light, quiet, airy, a little dreamlike, reassuring.\nColor palette: strictly cool and limited — sky #d3e3fd at the top grading very softly to #f8fafd near the horizon; layers stepping from #a8c7fa in front to near-white at the back; only a hint of muted sage on the tree crowns. No warm colors.\nConstraints: image only, no text, no lettering, no numbers, no signs, no logos, no flags, no watermark, no UI, no frame, no sun disk, no birds, no people. No smog, smoke, or pollution cues. Conceptual artwork, must not imply any air-quality reading. Preserve the large uninterrupted empty upper sky.",
+  "original": {
+    "file": "misty-city-paper-cut-v1-original.png",
+    "width": 1586,
+    "height": 992
+  },
+  "export": {
+    "file": "misty-city-paper-cut-v1.png",
+    "width": 2400,
+    "height": 1500,
+    "processing": "Resampled from the original with Lanczos3; not native generated resolution."
+  },
+  "page_asset": {
+    "file": "misty-city-paper-cut-v1.webp",
+    "width": 2400,
+    "height": 1500,
+    "quality": 90
+  },
+  "constraints": "Conceptual artwork only; no text, UI, readings, or pollution cues."
+}

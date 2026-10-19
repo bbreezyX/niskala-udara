@@ -155,6 +155,17 @@ export const id = {
 		whoSuffix: ' pedoman WHO',
 		whoNote: 'Garis tegak = pedoman WHO 2021 (rata-rata 24 jam; O₃ 8 jam). Angka di sini per jam, jadi perbandingannya indikatif.'
 	},
+	// Full-page states: a URL with no page behind it, and a page that failed to render.
+	errorPage: {
+		notFound: {
+			title: 'Halaman tidak ditemukan',
+			description: 'Alamat ini tidak ada di Niskala. Periksa tautannya, atau lanjutkan dari Pantauan untuk melihat kualitas udara di kotamu.'
+		},
+		failed: {
+			title: 'Halaman gagal dimuat',
+			description: 'Server Niskala mengalami gangguan saat menyiapkan halaman ini. Coba lagi; kalau masih gagal, tunggu beberapa menit.'
+		}
+	},
 	errors: {
 		not_configured: {
 			title: 'Sumber data belum dikonfigurasi',

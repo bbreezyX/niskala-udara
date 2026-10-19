@@ -13,13 +13,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 	const { lang, id } = await params;
 	const locale = toLocale(lang);
 	const city = CITIES.find((c) => c.id === id);
+	const dictionary = getDictionary(locale);
 	return city
 		? {
 				title: city.name,
-				description: fill(getDictionary(locale).pages.city.description, { name: city.name }),
+				description: fill(dictionary.pages.city.description, { name: city.name }),
 				alternates: localeAlternates(`/location/${city.id}`, locale)
 			}
-		: {};
+		: { title: dictionary.errorPage.notFound.title };
 }
 
 export default async function CityPage({ params }: Params) {

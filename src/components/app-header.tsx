@@ -162,6 +162,7 @@ function SectionNav({
 		<m.nav
 			ref={ref}
 			aria-label={t.nav.label}
+			data-section-nav
 			inert={hidden}
 			initial={false}
 			animate={{ opacity: hidden ? 0 : 1 }}
@@ -344,7 +345,7 @@ export function AppHeader() {
 							<SearchToggle open={searching} onToggle={() => openSearch(!searching)} />
 							{/* Below 360px the capsule has no room left; small screens need the footer for this once it ships. */}
 							{SHOW_LANGUAGE_SWITCH && (
-								<div className="ml-1.5 shrink-0 max-[379px]:ml-1 max-[359px]:hidden">
+								<div data-language-switch className="ml-1.5 shrink-0 max-[379px]:ml-1 max-[359px]:hidden">
 									<LanguageSwitch value={locale} path={pathname} />
 								</div>
 							)}
