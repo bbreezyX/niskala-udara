@@ -39,6 +39,7 @@ export const id = {
 		terms: 'Ketentuan Penggunaan',
 		dataSources: 'Sumber data',
 		airQualitySource: 'Kualitas udara: Google Air Quality API',
+		ispuSource: 'ISPU stasiun:',
 		hotspotSource: 'Hotspot:',
 		windSource: 'Angin:'
 	},

@@ -55,6 +55,11 @@ export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 							<p className="leading-relaxed text-secondary-foreground">
 								{t.footer.airQualitySource}
 								<br />
+								{t.footer.ispuSource}{' '}
+								<a href="https://ispu.kemenlh.go.id/" rel="noopener noreferrer" className="underline underline-offset-4">
+									KLH/BPLH
+								</a>
+								<br />
 								{t.footer.hotspotSource}{' '}
 								<a
 									href="https://firms.modaps.eosdis.nasa.gov/"

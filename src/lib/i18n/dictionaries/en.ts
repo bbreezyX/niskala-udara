@@ -37,6 +37,7 @@ export const en: Dictionary = {
 		terms: 'Terms of Use',
 		dataSources: 'Data sources',
 		airQualitySource: 'Air quality: Google Air Quality API',
+		ispuSource: 'Station ISPU:',
 		hotspotSource: 'Fire hotspots:',
 		windSource: 'Wind:'
 	},
