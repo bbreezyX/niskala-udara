@@ -26,7 +26,7 @@ function filterRegions(_: string, query: string, keywords: string[] = []) {
 
 /**
  * One button for the active region; its list is grouped by island, searchable, and scales to any number of regions.
- * `title` renders it as the list heading itself (mobile), `display` as the serif heading in the hero notch
+ * `title` renders it as the list heading itself (mobile), `display` as the larger heading in the hero notch
  * (desktop), `pill` as a control beside a heading.
  */
 export function RegionPicker({
@@ -62,10 +62,9 @@ export function RegionPicker({
 					size="lg"
 					aria-label={fill(t.regionPicker.trigger, { name: placeName(current, locale) })}
 					className={cn(
-						variant === 'title' && '-ml-2 h-11 min-w-0 rounded-full px-2 text-lg font-semibold text-foreground [&_svg:not([class*=size-])]:size-5',
+						variant === 'title' && '-ml-2 h-11 min-w-0 rounded-full px-2 font-heading text-xl font-semibold text-foreground [&_svg:not([class*=size-])]:size-5',
 						variant === 'display' &&
-							// Serif glyphs need line height for their descenders, so this variant never clips its text.
-							'-ml-3 h-auto gap-2.5 rounded-2xl px-3 py-1.5 font-display text-3xl leading-[1.15] font-normal tracking-[-0.01em] text-foreground [&_svg:not([class*=size-])]:size-5',
+							'-ml-3 h-auto gap-2.5 rounded-2xl px-3 py-1.5 font-heading text-2xl leading-tight font-semibold text-foreground [&_svg:not([class*=size-])]:size-5',
 						variant === 'pill' && 'h-10 rounded-full border-input bg-card px-4 font-semibold text-primary hover:text-primary'
 					)}
 				>

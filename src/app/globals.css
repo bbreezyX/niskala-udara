@@ -261,9 +261,11 @@ body:has([data-error-scene]) :is([data-section-nav], [data-language-switch], #ko
     gap: 2px;
 }
 .hotspot-card__ago {
-    font-family: var(--font-display);
-    font-size: 30px;
-    line-height: 1;
+    font-family: var(--font-sans);
+    font-size: 1.5rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
 }
 .hotspot-card__date {
     font-size: 12px;

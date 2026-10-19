@@ -170,7 +170,7 @@ function SummaryCard({
 					)}
 				</div>
 				<div className="min-w-0 [grid-area:title] min-[360px]:self-end">
-					<h1 className="font-display text-[1.75rem] leading-[1.05] tracking-[-0.02em] text-balance [overflow-wrap:anywhere] min-[400px]:text-[2rem] sm:text-5xl">
+					<h1 className="font-display text-[1.75rem] leading-[1.1] tracking-[-0.02em] text-balance [overflow-wrap:anywhere] min-[400px]:text-[2rem] sm:text-5xl">
 						{location.name}
 					</h1>
 					<p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
@@ -530,7 +530,7 @@ function RelatedList({ places, region }: { places: RelatedPlace[]; region?: stri
 	return (
 		<nav aria-labelledby="related-title" className="mt-10">
 			<div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-				<h2 id="related-title" className="font-display text-3xl leading-tight tracking-[-0.01em]">
+				<h2 id="related-title" className="font-heading text-xl leading-snug font-semibold sm:text-2xl">
 					{fill(t.location.relatedTitle, { region: region ?? t.location.thisArea })}
 				</h2>
 				<p className="text-sm text-muted-foreground">{t.location.relatedOrder}</p>

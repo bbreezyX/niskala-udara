@@ -80,7 +80,7 @@ function FireCounts({ data }: { data: FireData }) {
 	return (
 		<>
 			<p className="-mt-1 flex items-baseline gap-2">
-				<span className="font-display text-5xl leading-none tabular-nums">{hotspots.length}</span>
+				<span className="font-sans text-5xl leading-none font-semibold tabular-nums">{hotspots.length}</span>
 				<span className="text-muted-foreground">{plural(t.map.detections, hotspots.length, locale)}</span>
 			</p>
 			{hotspots.length > 0 && (

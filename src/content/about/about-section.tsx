@@ -2,7 +2,7 @@
 export function AboutHeader({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
 		<header>
-			<h1 className="font-display text-5xl leading-none tracking-[-0.02em] sm:text-6xl">{title}</h1>
+			<h1 className="font-display text-5xl leading-[1.1] tracking-[-0.02em] text-balance sm:text-6xl">{title}</h1>
 			<p className="mt-4 max-w-prose text-lg">{children}</p>
 		</header>
 	);

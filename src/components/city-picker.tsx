@@ -72,7 +72,7 @@ interface Props {
 	onChange: (city: City) => void;
 	nearby: Nearby;
 	onLocate: () => void;
-	/** `heading`: the city name itself is the trigger, set in the display face, for a card whose subject is the city. */
+	/** `heading`: the city name itself is the trigger, styled as an operational heading for the data card. */
 	variant?: 'field' | 'heading';
 	className?: string;
 }
@@ -104,7 +104,7 @@ export function CityPicker({ value, onChange, nearby, onLocate, variant = 'field
 						type="button"
 						aria-label={fill(cityPicker.trigger, { name: value.name })}
 						className={cn(
-							'group inline-flex max-w-full items-center gap-1.5 rounded-lg text-left font-display text-3xl leading-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+							'group inline-flex max-w-full items-center gap-1.5 rounded-lg text-left font-heading text-2xl leading-tight font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
 							className
 						)}
 					>

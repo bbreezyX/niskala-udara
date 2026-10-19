@@ -94,7 +94,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount }: Props) 
 			>
 				<div className="grid gap-5 p-5">
 					<div>
-						<p className="font-display text-2xl leading-tight">{t.filter.title}</p>
+						<p className="font-heading text-lg leading-snug font-semibold">{t.filter.title}</p>
 						<p className="mt-1 text-sm text-muted-foreground">{t.filter.hint}</p>
 					</div>
 

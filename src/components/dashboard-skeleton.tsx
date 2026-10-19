@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function DashboardSkeleton() {
 	return (
 		<div aria-busy="true">
-			<div className="page-frame pt-3">
+			<div className="page-frame pt-5">
 				<div className="rounded-[20px] bg-linear-to-b from-sky to-sky/60 px-5 pt-10 pb-10 sm:rounded-[28px] sm:px-10 md:pt-14 lg:pb-28">
 					<Skeleton className="h-12 w-64 max-w-full rounded-xl bg-card/60 sm:h-15 lg:h-18" />
 					<Skeleton className="mt-3 h-6 w-80 max-w-full rounded-full bg-card/60 sm:h-7" />
