@@ -81,10 +81,10 @@ export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 				</div>
 
 				{/* Notch: page background with concave fillets, holding the brand. */}
-				<div className="absolute right-0 bottom-0 flex items-center gap-2 rounded-tl-[20px] bg-background pt-2 pl-4">
+				<div className="absolute right-0 bottom-0 flex items-center gap-2 rounded-tl-[20px] bg-background pt-4 pl-5">
 					<span aria-hidden="true" className="absolute right-0 bottom-full size-5 bg-[radial-gradient(circle_at_0_0,transparent_19.5px,var(--background)_20px)]" />
 					<span aria-hidden="true" className="absolute right-full bottom-0 size-5 bg-[radial-gradient(circle_at_0_0,transparent_19.5px,var(--background)_20px)]" />
-					<BrandMark className="size-8 shrink-0 object-contain" />
+					<BrandMark className="size-10 shrink-0 object-contain" />
 					<span className="flex items-baseline gap-3">
 						<span className="font-display text-2xl leading-none">Niskala</span>
 						<span className="text-sm text-muted-foreground">© {new Date().getFullYear()}</span>

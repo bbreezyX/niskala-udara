@@ -72,7 +72,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount }: Props) 
 					size="lg"
 					// Icon-only below lg, like the refresh button beside it, so the region and both actions share one row on phones.
 					className={cn(
-						'h-11 w-11 gap-2 rounded-full border-input bg-card px-0 lg:w-auto lg:px-4',
+						'h-11 w-11 gap-2 rounded-full border-input bg-card px-0 text-muted-foreground lg:w-auto lg:px-4',
 						filtered && 'border-primary/50 text-primary hover:text-primary aria-expanded:text-primary'
 					)}
 					title={t.filter.trigger}
