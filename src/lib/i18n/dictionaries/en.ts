@@ -75,6 +75,7 @@ export const en: Dictionary = {
 		loadingPlace: 'Loading data for {name}',
 		locations: { one: '{n} location', other: '{n} locations' },
 		scale: 'Scale 0–100, higher is better.',
+		scaleIspu: 'AQI 0–100, higher is better. ISPU runs the other way: higher is worse.',
 		howToRead: 'How to read the AQI',
 		dominantPollutant: 'Dominant pollutant',
 		backToOverview: 'Back to Overview',
@@ -85,6 +86,20 @@ export const en: Dictionary = {
 		bands: { poor: 'Poor', low: 'Low', moderate: 'Moderate', good: 'Good', excellent: 'Excellent' },
 		gauge: 'AQI {value} out of 100',
 		categories: 'Categories'
+	},
+	ispu: {
+		label: 'ISPU',
+		spoken: 'ISPU {value}, {category}',
+		atLeast: '≥ {value}',
+		bands: {
+			good: 'Good',
+			moderate: 'Moderate',
+			unhealthy: 'Unhealthy',
+			veryUnhealthy: 'Very unhealthy',
+			hazardous: 'Hazardous'
+		},
+		sourceStation: 'ISPU from KLH/BPLH station {name}, {time}.',
+		sourceModel: 'ISPU computed by Google from model data; no active KLH/BPLH station for this location.'
 	},
 	health: {
 		title: 'Health advice',

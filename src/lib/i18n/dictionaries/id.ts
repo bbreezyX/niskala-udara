@@ -74,6 +74,7 @@ export const id = {
 		loadingPlace: 'Memuat data {name}',
 		locations: { one: '{n} lokasi', other: '{n} lokasi' },
 		scale: 'Skala 0–100, makin tinggi makin baik.',
+		scaleIspu: 'AQI 0–100, makin tinggi makin baik. ISPU sebaliknya, makin tinggi makin buruk.',
 		howToRead: 'Cara membaca AQI',
 		dominantPollutant: 'Polutan dominan',
 		backToOverview: 'Kembali ke Pantauan',
@@ -84,6 +85,20 @@ export const id = {
 		bands: { poor: 'Buruk', low: 'Rendah', moderate: 'Sedang', good: 'Baik', excellent: 'Sangat baik' },
 		gauge: 'AQI {value} dari 100',
 		categories: 'Kategori'
+	},
+	ispu: {
+		label: 'ISPU',
+		spoken: 'ISPU {value}, {category}',
+		atLeast: '≥ {value}',
+		bands: {
+			good: 'Baik',
+			moderate: 'Sedang',
+			unhealthy: 'Tidak sehat',
+			veryUnhealthy: 'Sangat tidak sehat',
+			hazardous: 'Berbahaya'
+		},
+		sourceStation: 'ISPU dari stasiun KLH/BPLH {name}, {time}.',
+		sourceModel: 'ISPU dihitung Google dari data model; belum ada stasiun KLH/BPLH aktif untuk lokasi ini.'
 	},
 	health: {
 		title: 'Rekomendasi kesehatan',
