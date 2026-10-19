@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { citiesInRegion } from '@/lib/config/cities';
 import type { RegionLine } from '@/lib/types';
-import { clearAirQualityCache, expiresAt, getCurrentConditions, MAX_AGE_MS } from './air-quality-cache';
+import {
+	clearAirQualityCache,
+	expiresAt,
+	FORECAST_CONCURRENCY,
+	getCurrentConditions,
+	getForecast,
+	MAX_AGE_MS
+} from './air-quality-cache';
 import { handleAirQualityRequest } from './handle-air-quality';
 import { handleRegionRequest } from './region-air-quality';
 
@@ -101,6 +108,70 @@ describe('server cache', () => {
 		vi.setSystemTime(new Date('2026-10-19T11:10:00Z'));
 		await getCurrentConditions(jambi, API_KEY, fetchFn);
 		expect(fetchFn).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe('forecast concurrency', () => {
+	/** Holds every forecast call open until released, and tracks how many are in flight. */
+	function heldGoogle(fail = false) {
+		let inFlight = 0;
+		let peak = 0;
+		const held: (() => void)[] = [];
+		const fetchFn = vi.fn<typeof fetch>(async () => {
+			peak = Math.max(peak, ++inFlight);
+			await new Promise<void>((resolve) => held.push(resolve));
+			inFlight--;
+			return fail ? jsonResponse({ error: { status: 'INTERNAL' } }, 500) : jsonResponse(forecast);
+		});
+		const releaseAll = async () => {
+			while (held.length > 0) {
+				held.splice(0).forEach((release) => release());
+				await new Promise((resolve) => setTimeout(resolve, 0));
+			}
+		};
+		return { fetchFn, releaseAll, peak: () => peak, started: () => fetchFn.mock.calls.length };
+	}
+
+	const places = Array.from({ length: 11 }, (_, i) => ({ latitude: -1.6 - i / 100, longitude: 103.6 }));
+
+	it(`runs at most ${FORECAST_CONCURRENCY} forecasts at once and still finishes the rest`, async () => {
+		const google = heldGoogle();
+		const all = Promise.all(places.map((place) => getForecast(place, API_KEY, google.fetchFn)));
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(google.started()).toBe(FORECAST_CONCURRENCY);
+
+		await google.releaseAll();
+		const results = await all;
+		expect(results).toHaveLength(places.length);
+		expect(google.started()).toBe(places.length);
+		expect(google.peak()).toBe(FORECAST_CONCURRENCY);
+	});
+
+	it('frees the slot when a forecast fails', async () => {
+		const google = heldGoogle(true);
+		const all = Promise.allSettled(places.map((place) => getForecast(place, API_KEY, google.fetchFn)));
+		await google.releaseAll();
+		const results = await all;
+		expect(results.every((result) => result.status === 'rejected')).toBe(true);
+		expect(google.started()).toBe(places.length);
+
+		// All slots are free again: a new batch starts FORECAST_CONCURRENCY calls at once.
+		const next = heldGoogle();
+		const again = Promise.all(places.map((place) => getForecast(place, API_KEY, next.fetchFn)));
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(next.started()).toBe(FORECAST_CONCURRENCY);
+		await next.releaseAll();
+		await again;
+	});
+
+	it('does not hold back current conditions', async () => {
+		const google = heldGoogle();
+		const forecasts = Promise.all(places.map((place) => getForecast(place, API_KEY, google.fetchFn)));
+		const fetchCurrent = vi.fn<typeof fetch>().mockImplementation(async () => jsonResponse(current));
+		const currents = await Promise.all(places.map((place) => getCurrentConditions(place, API_KEY, fetchCurrent)));
+		expect(currents).toHaveLength(places.length);
+		await google.releaseAll();
+		await forecasts;
 	});
 });
 

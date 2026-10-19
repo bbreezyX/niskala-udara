@@ -12,6 +12,12 @@ const HOUR_MS = 60 * 60_000;
 /** About 9 KB per forecast entry, so the cap keeps the cache under 10 MB even with many map points. */
 const CACHE_MAX = 1000;
 const SWEEP_EVERY_MS = 5 * 60_000;
+/**
+ * forecast:lookup slows down sharply when many run at once. Measured on the VPS with a region's
+ * current conditions alongside: 11 forecasts in parallel took up to 9.3 s (the timeout is 10 s),
+ * 6 at a time stayed under 4 s with the same total time. Current conditions do not slow down.
+ */
+export const FORECAST_CONCURRENCY = 6;
 
 /** Whichever comes first: one hour after the fetch, or ten minutes into the next hour. */
 export function expiresAt(fetchedAt: number): number {
@@ -27,6 +33,8 @@ interface Entry {
 interface CacheState {
 	entries: Map<string, Entry>;
 	sweeper: ReturnType<typeof setInterval> | null;
+	/** Forecast calls in flight, and the ones waiting for a free slot (oldest first). */
+	forecastSlots?: { active: number; waiting: (() => void)[] };
 }
 
 // On globalThis: the page and the route handlers can be bundled separately, and must share one cache.
@@ -35,6 +43,21 @@ const state: CacheState = ((globalThis as Record<symbol, CacheState | undefined>
 	entries: new Map(),
 	sweeper: null
 });
+const forecastSlots = (state.forecastSlots ??= { active: 0, waiting: [] });
+
+/** Runs a forecast call once fewer than FORECAST_CONCURRENCY are in flight, across all visitors. */
+async function withForecastSlot<T>(task: () => Promise<T>): Promise<T> {
+	if (forecastSlots.active < FORECAST_CONCURRENCY) forecastSlots.active++;
+	else await new Promise<void>((resolve) => forecastSlots.waiting.push(resolve));
+	try {
+		return await task();
+	} finally {
+		// Hand the slot straight to the next caller, so a new one cannot slip in between.
+		const next = forecastSlots.waiting.shift();
+		if (next) next();
+		else forecastSlots.active--;
+	}
+}
 
 /** Deletes expired entries even when nobody asks for them again, as the terms require. */
 function sweep(now = Date.now()) {
@@ -83,9 +106,12 @@ export function getCurrentConditions(coordinates: Coordinates, apiKey: string, f
 	return cached(`current:${place(coordinates)}`, () => fetchCurrentConditions(coordinates, apiKey, fetchFn));
 }
 
-/** The forecast starts at the next full hour; entries expire by ten past it, so its first hour is never stale for long. */
+/**
+ * The forecast starts at the next full hour; entries expire by ten past it, so its first hour is never stale for long.
+ * The 10 s timeout starts when the call leaves the queue, so waiting for a slot never counts against it.
+ */
 export function getForecast(coordinates: Coordinates, apiKey: string, fetchFn: typeof fetch = fetch): Promise<AirQualityData[]> {
-	return cached(`forecast:${place(coordinates)}`, () => fetchForecast(coordinates, apiKey, fetchFn));
+	return cached(`forecast:${place(coordinates)}`, () => withForecastSlot(() => fetchForecast(coordinates, apiKey, fetchFn)));
 }
 
 /** History may be cached indefinitely, but it gains a new hour every hour, so it follows the same expiry. */
