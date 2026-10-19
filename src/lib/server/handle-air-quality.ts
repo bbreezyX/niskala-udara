@@ -1,11 +1,7 @@
 import { parseCoordinates, parseHistoryRequest } from '@/lib/coordinates';
 import type { ApiErrorCode } from '@/lib/types';
-import {
-	AirQualityError,
-	fetchCurrentConditions,
-	fetchForecast,
-	fetchHistory
-} from './google-air-quality';
+import { getCurrentConditions, getForecast, getHistory } from './air-quality-cache';
+import { AirQualityError } from './google-air-quality';
 import { fail, isCrossSite, log as logScoped, respond } from './http';
 
 const MAX_BODY_BYTES = 1024;
@@ -66,14 +62,12 @@ function createHandler<Input>(
 }
 
 /** POST /api/air-quality: current conditions. */
-export const handleAirQualityRequest = createHandler(parseCoordinates, fetchCurrentConditions);
+export const handleAirQualityRequest = createHandler(parseCoordinates, getCurrentConditions);
 
 /** POST /api/air-quality/history: the last 24 or 72 hours. */
 export const handleHistoryRequest = createHandler(parseHistoryRequest, ({ coordinates, hours }, apiKey, fetchFn) =>
-	fetchHistory(coordinates, hours, apiKey, fetchFn)
+	getHistory(coordinates, hours, apiKey, fetchFn)
 );
 
 /** POST /api/air-quality/forecast: the next 24 hours. */
-export const handleForecastRequest = createHandler(parseCoordinates, (coordinates, apiKey, fetchFn) =>
-	fetchForecast(coordinates, apiKey, fetchFn)
-);
+export const handleForecastRequest = createHandler(parseCoordinates, getForecast);

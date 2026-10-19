@@ -1,19 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { LocateFixed, RotateCw } from 'lucide-react';
-import { CITIES, DEFAULT_REGION, REGIONS, type RegionId } from '@/lib/config/cities';
-import { cityFeed, isBusy, needsLoad, useFeeds, type FeedState } from '@/lib/client/location-feed';
+import { CITIES, DEFAULT_REGION, regionFromParam, type RegionId } from '@/lib/config/cities';
+import { cityFeed, isBusy, loadRegion, needsLoad, useFeeds, type FeedState, type LocationFeed } from '@/lib/client/location-feed';
+import type { RegionStream } from '@/lib/types';
 import { ERROR_MESSAGES, formatHour, timeZoneLabel } from '@/lib/format';
 import { aqiBandIndex, AQI_BANDS } from '@/lib/aqi';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AqiSpread } from './aqi-spread';
-import { CityCard } from './city-card';
+import { CityCard, CityCardSkeleton } from './city-card';
 import { StateMessage } from './info-blocks';
 import { RegionPicker } from './region-picker';
 import { DEFAULT_FILTER, SortFilter, type ListFilter } from './sort-filter';
@@ -37,21 +38,25 @@ function useGreeting() {
 
 const aqiOf = (state: FeedState) => (state.current.status === 'success' ? state.current.data.index.aqi : null);
 
-export function Dashboard({ configured }: { configured: boolean }) {
+const cityId = (feed: LocationFeed) => feed.location.key.replace('city:', '');
+
+/** `initial` is what the server streams for the region in the URL it rendered; null without a key. */
+export function Dashboard({ configured, initial }: { configured: boolean; initial: RegionStream | null }) {
 	const greeting = useGreeting();
-	const router = useRouter();
 	const pathname = usePathname();
 	// The region lives in the URL, so "back" from a city page returns to the same region.
-	const requested = useSearchParams().get('region');
-	const region: RegionId = REGIONS.find((r) => r.id === requested)?.id ?? DEFAULT_REGION;
+	const region = regionFromParam(useSearchParams().get('region'));
 	// Only the active region is shown and loaded, so a page view costs one region's requests.
 	const feeds = useMemo(() => CITIES.filter((city) => city.region === region).map(cityFeed), [region]);
 	const states = useFeeds(feeds);
 	const [filter, setFilter] = useState<ListFilter>(DEFAULT_FILTER);
+	const streamed = initial?.region === region ? initial.cities : null;
 
+	// The native history API keeps useSearchParams in sync without a server round trip, so switching
+	// region is instant; the new region then loads with one streamed request.
 	function setRegion(next: RegionId) {
 		const query = next === DEFAULT_REGION ? '' : `?region=${next}`;
-		router.replace(`${pathname}${query}`, { scroll: false });
+		window.history.replaceState(null, '', `${pathname}${query}`);
 	}
 
 	const visible = useMemo(() => {
@@ -86,14 +91,16 @@ export function Dashboard({ configured }: { configured: boolean }) {
 	const loadedCount = states.filter((state) => state.current.status === 'success').length;
 	const announcement = loadingCount > 0 ? `Memuat data ${loadingCount} lokasi.` : loadedCount > 0 ? `Data ${loadedCount} lokasi dimuat.` : '';
 
-	// Load cities that have no data yet (or only stale data). Feeds are shared with the detail pages,
-	// so returning from one does not ask Google again. Without a key, the not-configured notice is shown.
+	// Load cities that have no data yet (or only stale data): one streamed request for the region, or a
+	// single lookup when only one city needs it. Cities the page is streaming arrive on their own, and feeds
+	// are shared with the detail pages, so returning from one does not ask again. Without a key, the
+	// not-configured notice is shown.
 	useEffect(() => {
 		if (!configured) return;
-		for (const feed of feeds) {
-			if (needsLoad(feed)) feed.load();
-		}
-	}, [configured, feeds]);
+		const stale = feeds.filter((feed) => needsLoad(feed) && !(streamed?.[cityId(feed)] && feed.state.current.status === 'idle'));
+		if (stale.length === 1) stale[0].load();
+		else if (stale.length > 1) loadRegion(region, stale);
+	}, [configured, feeds, region, streamed]);
 
 	// Newest reading across the region, shown once in the phone toolbar instead of only per card.
 	const latest = feeds.reduce<{ time: string; timeZone: string } | null>((best, feed, i) => {
@@ -105,7 +112,7 @@ export function Dashboard({ configured }: { configured: boolean }) {
 
 	function refreshAll() {
 		if (anyBusy) return;
-		feeds.forEach((feed) => feed.load());
+		loadRegion(region, feeds);
 	}
 
 	const listActions = (
@@ -234,7 +241,9 @@ export function Dashboard({ configured }: { configured: boolean }) {
 											exit={{ opacity: 0, scale: 0.97 }}
 											transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
 										>
-											<CityCard feed={feed} href={`/location/${feed.location.key.replace('city:', '')}`} />
+											<Suspense fallback={<CityCardSkeleton feed={feed} />}>
+											<CityCard feed={feed} href={`/location/${cityId(feed)}`} streamed={streamed?.[cityId(feed)]} />
+										</Suspense>
 										</motion.li>
 									))}
 								</AnimatePresence>

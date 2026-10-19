@@ -1,11 +1,13 @@
 'use client';
 
+import { Suspense, use, useEffect } from 'react';
 import Link from 'next/link';
 import { Clock, MapPin, RotateCw } from 'lucide-react';
+import { fromApi, toRemote, type Remote } from '@/lib/client/api';
 import { isBusy, useFeed, type LocationFeed } from '@/lib/client/location-feed';
 import { aqiBand } from '@/lib/aqi';
 import { ERROR_MESSAGES, formatHour, timeZoneLabel } from '@/lib/format';
-import type { PollutantCode } from '@/lib/types';
+import type { AirQualityData, ApiResponse, PollutantCode, StreamedCity } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,27 +21,75 @@ const SUMMARY_POLLUTANTS: PollutantCode[] = ['pm25', 'pm10', 'no2', 'o3'];
 /** Small section labels share one style, so the pollutant names and "Prakiraan" read as one set. */
 const LABEL = 'text-xs font-semibold text-muted-foreground';
 
-export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
+function Place({ note }: { note: string }) {
+	return (
+		<CardDescription className="flex items-center gap-1">
+			<MapPin className="size-3.5 shrink-0" aria-hidden="true" />
+			<span className="truncate">{note}</span>
+		</CardDescription>
+	);
+}
+
+/** Shown while a card's current conditions load, and as the fallback while the page streams them. */
+export function CityCardSkeleton({ feed }: { feed: LocationFeed }) {
+	const { location } = feed;
+	const titleId = `city-${location.key}`;
+	return (
+		<Card className="h-full rounded-2xl" aria-labelledby={titleId} aria-busy="true">
+			<CardHeader className="gap-1.5">
+				<Skeleton className="h-6 w-36 rounded-full" />
+				<CardTitle id={titleId} className="text-lg font-semibold">
+					{location.name}
+				</CardTitle>
+				<Place note={location.note} />
+				<CardAction>
+					<Skeleton className="size-[72px] rounded-full" />
+				</CardAction>
+			</CardHeader>
+			<CardContent className="grid gap-4">
+				<Skeleton className="h-[74px] rounded-xl" />
+				<Skeleton className="h-28 rounded-xl" />
+			</CardContent>
+			<p className="sr-only">Memuat data {location.name}</p>
+		</Card>
+	);
+}
+
+/**
+ * Until this device has its own data, a card shows what the server streamed with the page: `use()`
+ * suspends until that part arrives (already resolved when the server cache was warm), and the feed
+ * takes it over so detail pages and refreshes start from it.
+ */
+function useStreamed<T>(
+	feed: LocationFeed,
+	part: 'current' | 'forecast',
+	live: Remote<T>,
+	streamed: Promise<ApiResponse<T>> | undefined
+): Remote<T> {
+	const response = streamed && live.status === 'idle' ? use(streamed) : null;
+	useEffect(() => {
+		if (!response) return;
+		if (part === 'current') feed.seed({ part, result: fromApi(response as ApiResponse<AirQualityData>) });
+		else feed.seed({ part, result: fromApi(response as ApiResponse<AirQualityData[]>) });
+	}, [feed, part, response]);
+	return response ? toRemote(fromApi(response)) : live;
+}
+
+export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: string; streamed?: StreamedCity }) {
 	const state = useFeed(feed);
+	const current = useStreamed(feed, 'current', state.current, streamed?.current);
 	const { location } = feed;
 	const titleId = `city-${location.key}`;
 
-	const place = (
-		<CardDescription className="flex items-center gap-1">
-			<MapPin className="size-3.5 shrink-0" aria-hidden="true" />
-			<span className="truncate">{location.note}</span>
-		</CardDescription>
-	);
-
-	if (state.current.status === 'error') {
-		const message = ERROR_MESSAGES[state.current.code];
+	if (current.status === 'error') {
+		const message = ERROR_MESSAGES[current.code];
 		return (
 			<Card className="h-full rounded-2xl" aria-labelledby={titleId}>
 				<CardHeader>
 					<CardTitle id={titleId} className="text-lg font-semibold">
 						{location.name}
 					</CardTitle>
-					{place}
+					<Place note={location.note} />
 				</CardHeader>
 				<CardContent>
 					<div role="alert" className="grid justify-items-start gap-1 rounded-xl bg-destructive/5 p-4">
@@ -55,30 +105,10 @@ export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
 		);
 	}
 
-	if (state.current.status !== 'success') {
-		return (
-			<Card className="h-full rounded-2xl" aria-labelledby={titleId} aria-busy="true">
-				<CardHeader className="gap-1.5">
-					<Skeleton className="h-6 w-36 rounded-full" />
-					<CardTitle id={titleId} className="text-lg font-semibold">
-						{location.name}
-					</CardTitle>
-					{place}
-					<CardAction>
-						<Skeleton className="size-[72px] rounded-full" />
-					</CardAction>
-				</CardHeader>
-				<CardContent className="grid gap-4">
-					<Skeleton className="h-[74px] rounded-xl" />
-					<Skeleton className="h-28 rounded-xl" />
-				</CardContent>
-				<p className="sr-only">Memuat data {location.name}</p>
-			</Card>
-		);
-	}
+	if (current.status !== 'success') return <CityCardSkeleton feed={feed} />;
 
-	const { index, pollutants, dataTime } = state.current.data;
-	const band = aqiBand(index.aqi);
+	const data = current.data;
+	const { index, pollutants, dataTime } = data;
 	const busy = isBusy(state);
 
 	return (
@@ -99,7 +129,7 @@ export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
 						{location.name}
 					</Link>
 				</CardTitle>
-				{place}
+				<Place note={location.note} />
 				<CardAction className="row-span-3">
 					<AqiGauge aqi={index.aqi} display={index.aqiDisplay} />
 				</CardAction>
@@ -109,22 +139,10 @@ export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
 				<PollutantTiles pollutants={pollutants} codes={SUMMARY_POLLUTANTS} />
 				<div className="grid gap-1">
 					<p className={LABEL}>Prakiraan 24 jam</p>
-					{state.forecast.status === 'success' ? (
-						<TrendChart
-							variant="compact"
-							color={band.ink}
-							timeZone={location.timeZone}
-							label={`Prakiraan AQI 24 jam untuk ${location.name}`}
-							points={[
-								{ dateTime: dataTime, aqi: index.aqi },
-								...state.forecast.data.map((h) => ({ dateTime: h.dataTime, aqi: h.index.aqi, forecast: true }))
-							]}
-						/>
-					) : state.forecast.status === 'error' ? (
-						<p className="flex h-24 items-center text-sm text-muted-foreground">Prakiraan belum tersedia</p>
-					) : (
-						<Skeleton className="h-24 rounded-xl" />
-					)}
+					{/* The forecast is slower than current conditions, so it fills in on its own. */}
+					<Suspense fallback={<Skeleton className="h-24 rounded-xl" />}>
+						<CardForecast feed={feed} live={state.forecast} streamed={streamed?.forecast} current={data} />
+					</Suspense>
 				</div>
 			</CardContent>
 
@@ -134,5 +152,41 @@ export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
 				{busy && <span className="ml-auto">Memperbarui…</span>}
 			</CardFooter>
 		</Card>
+	);
+}
+
+function CardForecast({
+	feed,
+	live,
+	streamed,
+	current
+}: {
+	feed: LocationFeed;
+	live: Remote<AirQualityData[]>;
+	streamed: Promise<ApiResponse<AirQualityData[]>> | undefined;
+	current: AirQualityData;
+}) {
+	const forecast = useStreamed(feed, 'forecast', live, streamed);
+	const { location } = feed;
+
+	if (forecast.status === 'error') {
+		return <p className="flex h-24 items-center text-sm text-muted-foreground">Prakiraan belum tersedia</p>;
+	}
+	if (forecast.status !== 'success') return <Skeleton className="h-24 rounded-xl" />;
+
+	return (
+		<TrendChart
+			variant="compact"
+			color={aqiBand(current.index.aqi).ink}
+			timeZone={location.timeZone}
+			label={`Prakiraan AQI 24 jam untuk ${location.name}`}
+			points={[
+				{ dateTime: current.dataTime, aqi: current.index.aqi },
+				// A cached forecast can start at the hour current conditions already cover.
+				...forecast.data
+					.filter((h) => h.dataTime > current.dataTime)
+					.map((h) => ({ dateTime: h.dataTime, aqi: h.index.aqi, forecast: true }))
+			]}
+		/>
 	);
 }
