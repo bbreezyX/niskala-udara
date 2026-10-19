@@ -254,7 +254,7 @@ export const en: Dictionary = {
 		lead: 'Here is the air quality in your monitored cities right now.',
 		useMyLocation: 'Use my location',
 		overviewPrefix: 'Overview, ',
-		dataAt: ' · data {time}',
+		dataAt: 'Data {time}',
 		refreshData: 'Refresh data',
 		refreshingData: 'Refreshing data',
 		listLabel: 'Monitored locations',

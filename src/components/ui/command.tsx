@@ -75,7 +75,8 @@ function CommandInput({
         <CommandPrimitive.Input
           data-slot="command-input"
           className={cn(
-            "w-full text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+            // 16px on touch screens: iOS zooms the page into any focused input smaller than that.
+            "w-full text-base outline-hidden disabled:cursor-not-allowed disabled:opacity-50 pointer-fine:text-sm",
             className
           )}
           {...props}

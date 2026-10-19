@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronDown, MapPin } from 'lucide-react';
 import { CITIES, DEFAULT_REGION, ISLANDS, placeName, REGIONS, type RegionId } from '@/lib/config/cities';
 import { fill, plural } from '@/lib/i18n/config';
+import { useDropdownBelow } from '@/lib/client/dropdown-below';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -38,6 +39,7 @@ export function RegionPicker({
 	variant?: 'pill' | 'title' | 'display';
 }) {
 	const [open, setOpen] = useState(false);
+	const below = useDropdownBelow();
 	const t = useDictionary();
 	const locale = useLocale();
 	const current = REGIONS.find((region) => region.id === value) ?? REGIONS.find((region) => region.id === DEFAULT_REGION)!;
@@ -46,9 +48,16 @@ export function RegionPicker({
 	);
 
 	return (
-		<Popover open={open} onOpenChange={setOpen}>
+		<Popover
+			open={open}
+			onOpenChange={(next) => {
+				if (next) below.makeRoom();
+				setOpen(next);
+			}}
+		>
 			<PopoverTrigger asChild>
 				<Button
+					ref={below.triggerRef}
 					variant={variant === 'pill' ? 'outline' : 'ghost'}
 					size="lg"
 					aria-label={fill(t.regionPicker.trigger, { name: placeName(current, locale) })}
@@ -65,10 +74,10 @@ export function RegionPicker({
 					<ChevronDown data-icon="inline-end" className="text-muted-foreground" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent align="start" sideOffset={8} className="w-76 overflow-hidden rounded-2xl p-0">
-				<Command filter={filterRegions} loop>
+			<PopoverContent align="start" sideOffset={8} {...below.contentProps} className="w-76 overflow-hidden rounded-2xl p-0">
+				<Command ref={below.commandRef} filter={filterRegions} loop>
 					<CommandInput placeholder={t.regionPicker.placeholder} className="h-10" />
-					<CommandList className="max-h-80">
+					<CommandList className="max-h-[min(20rem,calc(var(--radix-popover-content-available-height)-3.5rem))]">
 						<CommandEmpty>{t.regionPicker.empty}</CommandEmpty>
 						{islands.map((island) => (
 							<CommandGroup

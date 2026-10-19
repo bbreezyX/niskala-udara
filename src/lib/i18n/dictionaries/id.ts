@@ -255,7 +255,7 @@ export const id = {
 		lead: 'Begini kualitas udara di kota pantauanmu sekarang.',
 		useMyLocation: 'Gunakan lokasi saya',
 		overviewPrefix: 'Pantauan, ',
-		dataAt: ' · data {time}',
+		dataAt: 'Data {time}',
 		refreshData: 'Perbarui data',
 		refreshingData: 'Memperbarui data',
 		listLabel: 'Daftar lokasi pantauan',

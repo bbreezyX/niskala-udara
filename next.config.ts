@@ -16,6 +16,8 @@ const LEGACY_PATHS: [string, string][] = [
 
 const nextConfig: NextConfig = {
 	poweredByHeader: false,
+	// 90 is for the dashboard hero only: on phones it is cropped and shown near its full resolution.
+	images: { qualities: [75, 90] },
 	async headers() {
 		return [
 			{

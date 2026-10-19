@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Link } from './link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { AnimatePresence, m } from 'motion/react';
-import { LocateFixed, RotateCw } from 'lucide-react';
+import { Clock, LocateFixed, RotateCw } from 'lucide-react';
 import { CITIES, DEFAULT_REGION, regionFromParam, type RegionId } from '@/lib/config/cities';
 import { fill, plural, type Locale } from '@/lib/i18n/config';
 import type { Dictionary } from '@/lib/i18n/dictionaries/id';
@@ -221,10 +221,14 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 							fill
 							loading="eager"
 							fetchPriority="high"
-							sizes="(max-width: 1280px) 100vw, 1280px"
-							className="object-cover object-[65%_center] sm:object-center"
+							quality={90}
+							// Phones crop the 3:1 image to a tall box, so it renders about three times the box height
+							// wide (~1400px): asking for that loads the full-resolution file instead of a blurry 828px one.
+							sizes="(max-width: 639px) 1400px, (max-width: 1280px) 100vw, 1280px"
+							className="object-cover object-right sm:object-center"
 						/>
-						<div className="absolute inset-0 bg-linear-to-b from-sky/95 via-sky/80 to-sky/35 sm:bg-linear-to-r sm:from-sky/95 sm:via-sky/60 sm:to-sky/10" />
+						{/* Phones: strong behind the text (top left), clear toward the island (right). */}
+						<div className="absolute inset-0 bg-linear-to-br from-sky/95 via-sky/75 to-sky/5 sm:bg-linear-to-r sm:from-sky/95 sm:via-sky/60 sm:to-sky/10" />
 					</div>
 					<div className="relative flex flex-wrap items-end justify-between gap-6 px-5 pt-10 pb-10 sm:px-10 md:pt-14 lg:pb-28">
 						<div>
@@ -266,32 +270,45 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 					</Link>
 				</section>
 
-				{/* Phones: one row. The region is the heading; sort/filter and refresh shrink to icons. */}
-				<div className="flex items-center justify-between gap-3 pt-5 lg:hidden">
-					<div className="min-w-0">
+				{/*
+				  Phones: the region and its actions on one row, then the band bar across the full width with the
+				  summary under it. The data time sits at the row's end as a neutral chip, its own fact.
+				*/}
+				<div className="grid gap-3 pt-5 lg:hidden">
+					<div className="flex items-center justify-between gap-3">
 						<h2 className="flex min-w-0">
 							<span className="sr-only">{t.dashboard.overviewPrefix}</span>
 							<RegionPicker value={region} onChange={setRegion} variant="title" />
 						</h2>
-						<p className="text-sm text-muted-foreground tabular-nums">
-							{plural(t.common.locations, visible.length, locale)}
-							{latest &&
-								fill(t.dashboard.dataAt, { time: `${formatHour(latest.time, latest.timeZone, locale)} ${timeZoneLabel(latest.timeZone, new Date(latest.time))}` })}
-						</p>
+						<div className="flex shrink-0 gap-2">
+							<SortFilter value={filter} onApply={setFilter} bandCounts={bandCounts} pendingCount={pendingCount} compact />
+							<Button
+								variant="outline"
+								size="icon"
+								className="size-11 rounded-full bg-card"
+								disabled={anyBusy || !configured}
+								onClick={refreshAll}
+								aria-label={anyBusy ? t.dashboard.refreshingData : t.dashboard.refreshData}
+							>
+								<RotateCw className={cn(anyBusy && 'animate-spin')} aria-hidden="true" />
+							</Button>
+						</div>
 					</div>
-					<div className="flex shrink-0 gap-2">
-						<SortFilter value={filter} onApply={setFilter} bandCounts={bandCounts} pendingCount={pendingCount} compact />
-						<Button
-							variant="outline"
-							size="icon"
-							className="size-11 rounded-full bg-card"
-							disabled={anyBusy || !configured}
-							onClick={refreshAll}
-							aria-label={anyBusy ? t.dashboard.refreshingData : t.dashboard.refreshData}
-						>
-							<RotateCw className={cn(anyBusy && 'animate-spin')} aria-hidden="true" />
-						</Button>
-					</div>
+					<AqiSpread
+						layout="stacked"
+						bandCounts={bandCounts}
+						pendingCount={pendingCount}
+						filter={filter}
+						onFilter={setFilter}
+						aside={
+							latest && (
+								<span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-xs font-medium text-foreground tabular-nums ring-1 ring-border">
+									<Clock className="size-3.5 text-muted-foreground" aria-hidden="true" />
+									{fill(t.dashboard.dataAt, { time: `${formatHour(latest.time, latest.timeZone, locale)} ${timeZoneLabel(latest.timeZone, new Date(latest.time))}` })}
+								</span>
+							)
+						}
+					/>
 				</div>
 			</div>
 

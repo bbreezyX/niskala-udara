@@ -217,7 +217,8 @@ function SearchField({ open, query, onQueryChange }: { open: boolean; query: str
 					onValueChange={onQueryChange}
 					placeholder={t.search.placeholder}
 					aria-label={t.search.inputLabel}
-					className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+					// 16px on touch screens: iOS zooms the page into any focused input smaller than that.
+					className="h-full min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground pointer-fine:text-sm"
 				/>
 			</div>
 		</m.div>
