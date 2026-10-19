@@ -46,7 +46,7 @@ src/
     page.tsx                     dashboard (Pantauan)
     riwayat/                     halaman Riwayat
     peta/                        halaman Peta (Google Maps + FIRMS)
-    api/air-quality/             POST /api/air-quality, /history, /forecast; GET /tiles/[z]/[x]/[y]
+    api/air-quality/             POST /api/air-quality, /history, /forecast; GET /region/[region], /tiles/[z]/[x]/[y]
     api/fires/                   GET hotspot FIRMS (cache 10 menit)
     privasi/, ketentuan/         halaman kebijakan (statis)
     globals.css                  token tema Tailwind/shadcn
@@ -61,6 +61,8 @@ src/
     format.ts                    format angka, satuan, waktu, pesan error
     server/env.ts                akses env var (server-only)
     server/google-air-quality.ts panggilan ke Google + validasi respons
+    server/air-quality-cache.ts  cache server ≤ 1 jam, satu request Google per lokasi bersamaan
+    server/region-air-quality.ts lookup per wilayah untuk halaman dan endpoint NDJSON
     server/handle-air-quality.ts validasi request, pemetaan error, log
 ```
 
@@ -75,24 +77,31 @@ Titik kabupaten di Jambi adalah ibu kota kabupaten (mis. Batanghari → Muara Bu
 | `POST /api/air-quality`           | `{ latitude, longitude }`         | `currentConditions:lookup` |
 | `POST /api/air-quality/forecast`  | `{ latitude, longitude }`         | `forecast:lookup` (24 jam) |
 | `POST /api/air-quality/history`   | `{ latitude, longitude, hours }`  | `history:lookup` (24/72)   |
+| `GET /api/air-quality/region/[id]`| —                                 | `currentConditions` + `forecast` untuk semua kota di wilayah, NDJSON |
 | `GET /api/air-quality/tiles/z/x/y`| —                                 | `heatmapTiles` UAQI_RED_GREEN |
 | `GET /api/fires`                  | —                                 | NASA FIRMS area API (3 satelit VIIRS) |
 
+### Cache server dan streaming Pantauan
+
+Kondisi terkini, prakiraan, dan riwayat disimpan di memori server (`src/lib/server/air-quality-cache.ts`) dan dipakai bersama semua pengunjung. Ketentuan Google Maps Platform (Service Specific Terms, Air Quality API 2.2) mengizinkan cache kondisi terkini dan prakiraan per jam paling lama **1 jam**, lalu wajib dihapus. Entri kedaluwarsa pada yang lebih dulu: 1 jam setelah diambil, atau menit ke-10 jam berikutnya (saat Google sudah menerbitkan nilai jam baru). Entri kedaluwarsa dihapus berkala walau tidak diminta lagi. Request yang sama dan bersamaan dibagi menjadi satu panggilan ke Google, kegagalan tidak di-cache, dan jumlah entri dibatasi 1.000 (sekitar 9 MB). Cache ada di satu proses Node; restart server mengosongkannya.
+
+Pantauan tidak lagi menunggu JavaScript untuk mulai memuat data. Server memulai semua lookup wilayah di URL saat merender halaman dan mengirim hasil per kota begitu selesai (React Suspense streaming). Jika cache hangat, data sudah ada di HTML pertama. Kondisi terkini tampil tanpa menunggu prakiraan yang lebih lambat (prakiraan Google butuh 1–6 detik, kondisi terkini sekitar 1,4 detik dari VPS). Ganti wilayah dan "Perbarui" memakai satu request streaming per wilayah (`/api/air-quality/region/[id]`), satu baris JSON per kota dan bagian, sesuai urutan selesai. Endpoint itu hanya menerima wilayah yang terdaftar, jadi tidak bisa diarahkan ke koordinat sembarang.
+
 Tile heatmap diproksikan lewat server agar key Air Quality tidak pernah sampai ke browser. Proksi hanya melayani tile yang bersinggungan dengan Sumatra dan zoom ≤ 14, sehingga tidak bisa dipakai untuk menguras kuota di wilayah lain. Hotspot diambil untuk area Provinsi Jambi plus margin (`FIRE_AREA` di `src/lib/config/map.ts`), 2 hari terakhir dari FIRMS lalu dipangkas ke 24 jam, dan di-cache 10 menit di memori server. Data NASA boleh di-cache, berbeda dengan konten Google.
 
-Server menolak input lain (field tambahan, `hours` selain 24/72, body > 1 KB, content-type selain JSON, request lintas situs), lalu memanggil Google dengan key di header `X-Goog-Api-Key`, timeout 10 detik. Respons divalidasi saat runtime; indeks dipilih berdasarkan `code: "uaqi"`. Semua respons memakai `Cache-Control: no-store`.
+Server menolak input lain (field tambahan, `hours` selain 24/72, body > 1 KB, content-type selain JSON, request lintas situs), lalu memanggil Google dengan key di header `X-Goog-Api-Key`, timeout 10 detik. Respons divalidasi saat runtime; indeks dipilih berdasarkan `code: "uaqi"`. Respons JSON ke browser memakai `Cache-Control: no-store`; cache hanya ada di server (lihat di atas).
 
 Key dibaca dari `process.env` saat request lewat `src/lib/server/env.ts` (ditandai `server-only`, jadi build gagal jika modul itu diimpor dari kode browser). Halaman yang membutuhkan key memanggil `connection()` agar dirender per request, bukan saat build. Ini sudah dicek dengan mencari key di `.next/static` setelah build. Log server hanya mencatat kode error, status/reason Google, dan durasi; tanpa key dan tanpa koordinat.
 
 ## Jumlah request ke Google
 
-Setiap request di bawah ditagih per SKU Air Quality API; cek harga dan kuota gratis terbaru di halaman pricing Google Maps Platform.
+Setiap request di bawah ditagih per SKU Air Quality API; cek harga dan kuota gratis terbaru di halaman pricing Google Maps Platform. Angka di bawah adalah batas atas saat cache server kosong. Selama entri masih berlaku, pengunjung berikutnya tidak menambah request, jadi satu lokasi paling banyak menghabiskan sekitar 1 request per jenis data per jam, berapa pun jumlah pengunjungnya.
 
-- Membuka Pantauan: 2 request per lokasi di wilayah aktif (kondisi terkini + prakiraan). Jambi = 22; provinsi lain 2 sampai 18 (Jawa Barat dan Jawa Timur, 9 lokasi). Data kota disimpan di memori browser selama sesi dan dipakai bersama halaman detail, jadi berpindah wilayah atau kembali dari detail tidak memuat ulang; data yang lebih tua dari 30 menit dimuat ulang.
+- Membuka Pantauan: 2 request per lokasi di wilayah aktif (kondisi terkini + prakiraan). Jambi = 22; provinsi lain 2 sampai 18 (Jawa Barat dan Jawa Timur, 9 lokasi). Data kota disimpan di memori browser selama sesi dan dipakai bersama halaman detail, jadi kembali dari detail tidak memuat ulang; data yang lebih tua dari 30 menit dimuat ulang (dari cache server bila masih berlaku).
 - Membuka halaman detail kota: +1 (history 24 jam), +2 jika data kota itu belum ada di memori. Lokasi perangkat dan titik peta: 3.
 - Halaman Riwayat: 1 per pilihan kota/rentang.
-- "Perbarui semua": 2 per lokasi di wilayah aktif.
-- Halaman Peta: 1 pemuatan peta (SKU Dynamic Maps, Maps JavaScript API) + 1 request per tile heatmap yang terlihat. Menggeser atau zoom memuat tile baru, karena tile tidak di-cache. Klik titik: membuka halaman detail (3 request).
+- "Perbarui": 2 per lokasi di wilayah aktif jika cache sudah kedaluwarsa. Selama cache berlaku, hasilnya sama dengan data yang tampil, karena Google memperbarui datanya per jam.
+- Halaman Peta: 1 pemuatan peta (SKU Dynamic Maps, Maps JavaScript API) + 1 request per tile heatmap yang belum ada di cache server (30 menit). Klik titik: membuka halaman detail (3 request).
 - FIRMS: 3 transaksi per 10 menit paling banyak (dibagi ke semua pengunjung), jauh di bawah batas 5.000 per 10 menit.
 
 ## Deployment
@@ -125,5 +134,5 @@ Key Maps JavaScript (`PUBLIC_GOOGLE_MAPS_API_KEY`) memang terlihat di browser, j
 ## Kepatuhan Google
 
 - Atribusi "Google Maps" dan "Source: Includes air quality data from Google" tampil di dalam area data, tidak diterjemahkan (`translate="no"`).
-- Data ditampilkan apa adanya; tidak ada cache. Jika nanti menambah cache, ikuti batasan caching di perjanjian Google Maps Platform.
+- Data ditampilkan apa adanya. Cache server mengikuti batas Service Specific Terms Air Quality API: kondisi terkini dan prakiraan paling lama 1 jam, tile heatmap 30 menit (browser hanya boleh menyimpan sisa waktunya). Jika batas di ketentuan Google berubah, sesuaikan `MAX_AGE_MS` di `src/lib/server/air-quality-cache.ts` dan `TILE_TTL_MS` di `src/lib/server/handle-map.ts`.
 - Halaman `/privacy` dan `/terms` merujuk ke Kebijakan Privasi Google dan Ketentuan Google Maps. Tinjau ulang isinya sebelum rilis publik, terutama jika alamat penagihan Google Cloud berada di EEA (tautan ketentuannya berbeda).

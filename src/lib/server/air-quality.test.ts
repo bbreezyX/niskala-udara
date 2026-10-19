@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearAirQualityCache } from './air-quality-cache';
 import { fetchForecast, normalizeResponse } from './google-air-quality';
 import {
 	handleAirQualityRequest,
@@ -48,6 +49,9 @@ function apiRequest(body: unknown, headers: Record<string, string> = {}) {
 }
 
 const jakarta = { latitude: -6.1754, longitude: 106.8272 };
+
+// Handlers share the server cache; every test starts from an empty one.
+beforeEach(() => clearAirQualityCache());
 
 describe('normalizeResponse', () => {
 	it('picks the uaqi index by code, not by position', () => {

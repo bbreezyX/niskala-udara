@@ -57,6 +57,23 @@ export type ApiErrorCode =
 
 export type ApiResponse<T> = { data: T } | { error: { code: ApiErrorCode } };
 
+/** One location's results as the server streams them; each promise settles to data or an error, never rejects. */
+export interface StreamedCity {
+	current: Promise<ApiResponse<AirQualityData>>;
+	forecast: Promise<ApiResponse<AirQualityData[]>>;
+}
+
+/** What the dashboard page streams for the region in its URL, keyed by city id. */
+export interface RegionStream {
+	region: string;
+	cities: Record<string, StreamedCity>;
+}
+
+/** One line of GET /api/air-quality/region/[region] (NDJSON), sent as soon as that part is ready. */
+export type RegionLine =
+	| { id: string; part: 'current'; result: ApiResponse<AirQualityData> }
+	| { id: string; part: 'forecast'; result: ApiResponse<AirQualityData[]> };
+
 /** A NASA FIRMS VIIRS thermal anomaly: a likely fire, not a confirmed one. */
 export interface Hotspot {
 	latitude: number;

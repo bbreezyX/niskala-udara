@@ -2,8 +2,9 @@
 
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { cityNote, type City, type RegionId } from '@/lib/config/cities';
-import type { AirQualityData, Coordinates } from '@/lib/types';
-import { pending, postJson, toRemote, type Remote } from './api';
+import type { ClientErrorCode } from '@/lib/format';
+import type { AirQualityData, Coordinates, RegionLine } from '@/lib/types';
+import { fromApi, pending, postJson, toRemote, type Remote, type Result } from './api';
 
 export interface WatchLocation {
 	key: string;
@@ -37,6 +38,11 @@ export function isBusy(state: FeedState): boolean {
 	return state.current.status === 'loading' || (state.current.status === 'success' && state.current.refreshing);
 }
 
+/** A result for one half of a feed; the two halves arrive independently. */
+export type PartResult =
+	| { part: 'current'; result: Result<AirQualityData> }
+	| { part: 'forecast'; result: Result<AirQualityData[]> };
+
 /**
  * Current conditions plus the 24-hour forecast for one location, as an external store:
  * components read it with `useFeed`/`useFeeds`, and every update replaces the snapshot.
@@ -67,25 +73,49 @@ export class LocationFeed {
 		this.#listeners.forEach((listener) => listener());
 	}
 
-	async load() {
-		// A newer load always wins; the aborted one resolves to null and is ignored.
+	/** Starts a load: a newer one always wins, and results of the superseded one are ignored. */
+	#begin(): AbortController {
 		this.#controller?.abort();
 		const controller = new AbortController();
 		this.#controller = controller;
 		this.#set({ current: pending(this.#state.current), forecast: pending(this.#state.forecast) });
+		return controller;
+	}
 
+	#receive(controller: AbortController, { part, result }: PartResult) {
+		if (this.#controller !== controller || controller.signal.aborted) return;
+		if (part === 'current') {
+			this.#set({ current: toRemote(result), fetchedAt: result.ok ? new Date() : this.#state.fetchedAt });
+		} else {
+			this.#set({ forecast: toRemote(result) });
+		}
+	}
+
+	/** Current conditions show as soon as they arrive; the slower forecast fills in after. */
+	async load() {
+		const controller = this.#begin();
 		const body = this.location.coordinates;
-		const [current, forecast] = await Promise.all([
-			postJson<AirQualityData>('/api/air-quality', body, controller.signal),
-			postJson<AirQualityData[]>('/api/air-quality/forecast', body, controller.signal)
+		await Promise.all([
+			postJson<AirQualityData>('/api/air-quality', body, controller.signal).then(
+				(result) => result && this.#receive(controller, { part: 'current', result })
+			),
+			postJson<AirQualityData[]>('/api/air-quality/forecast', body, controller.signal).then(
+				(result) => result && this.#receive(controller, { part: 'forecast', result })
+			)
 		]);
-		if (!current || !forecast) return;
+	}
 
-		this.#set({
-			current: toRemote(current),
-			forecast: toRemote(forecast),
-			fetchedAt: current.ok ? new Date() : this.#state.fetchedAt
-		});
+	/** Starts a load whose results come from elsewhere (the region stream); the receiver ignores them once superseded. */
+	beginExternal(): (result: PartResult) => void {
+		const controller = this.#begin();
+		return (result) => this.#receive(controller, result);
+	}
+
+	/** Takes a result the server streamed with the page, unless this half already has data or is loading. */
+	seed({ part, result }: PartResult) {
+		if (this.#state[part].status !== 'idle') return;
+		if (part === 'current') this.#set({ current: toRemote(result), fetchedAt: result.ok ? new Date() : null });
+		else this.#set({ forecast: toRemote(result) });
 	}
 
 	/**
@@ -127,7 +157,69 @@ export function cityFeed(city: City): LocationFeed {
 	return feed;
 }
 
-const IDLE: FeedState = { current: { status: 'idle' }, forecast: { status: 'idle' }, fetchedAt: null };
+/** Longer than the server needs at worst (10 s per Google call, all in parallel). */
+const REGION_TIMEOUT_MS = 20_000;
+const regionControllers = new Map<RegionId, AbortController>();
+
+/**
+ * Loads a whole region with one streamed request (GET /api/air-quality/region/[region]) and hands each
+ * line to its feed as it arrives, so cards fill in one by one. A newer load of the same region aborts this one.
+ */
+export async function loadRegion(region: RegionId, feeds: readonly LocationFeed[]) {
+	regionControllers.get(region)?.abort();
+	const controller = new AbortController();
+	regionControllers.set(region, controller);
+	let timedOut = false;
+	const timer = setTimeout(() => {
+		timedOut = true;
+		controller.abort();
+	}, REGION_TIMEOUT_MS);
+
+	const waiting = new Map(feeds.map((feed) => [feed.location.key, { receive: feed.beginExternal(), parts: new Set(['current', 'forecast'] as const) }]));
+	const deliver = (line: RegionLine) => {
+		const target = waiting.get(`city:${line.id}`);
+		if (!target?.parts.delete(line.part)) return;
+		target.receive(line.part === 'current' ? { part: 'current', result: fromApi(line.result) } : { part: 'forecast', result: fromApi(line.result) });
+	};
+	/** Anything the stream did not deliver gets this error, so no card is left loading. */
+	const failRest = (code: ClientErrorCode) => {
+		for (const { receive, parts } of waiting.values()) {
+			for (const part of parts) receive({ part, result: { ok: false, code } });
+		}
+	};
+
+	try {
+		const response = await fetch(`/api/air-quality/region/${region}`, { signal: controller.signal });
+		if (!response.ok || !response.body) {
+			const json = (await response.json().catch(() => null)) as { error?: { code?: ClientErrorCode } } | null;
+			failRest(json?.error?.code ?? 'upstream_error');
+			return;
+		}
+		const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+		let buffer = '';
+		for (;;) {
+			const { value, done } = await reader.read();
+			if (done) break;
+			buffer += value;
+			let newline: number;
+			while ((newline = buffer.indexOf('\n')) >= 0) {
+				const line = buffer.slice(0, newline);
+				buffer = buffer.slice(newline + 1);
+				if (line) deliver(JSON.parse(line) as RegionLine);
+			}
+		}
+		failRest('upstream_error');
+	} catch {
+		// A newer load of this region aborted us; its own receivers take over.
+		if (controller.signal.aborted && !timedOut) return;
+		failRest(timedOut ? 'timeout' : 'network');
+	} finally {
+		clearTimeout(timer);
+		if (regionControllers.get(region) === controller) regionControllers.delete(region);
+	}
+}
+
+const IDLE: FeedState ={ current: { status: 'idle' }, forecast: { status: 'idle' }, fetchedAt: null };
 const noop = () => () => {};
 
 export function useFeed(feed: LocationFeed | null): FeedState {

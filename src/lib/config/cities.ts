@@ -233,6 +233,11 @@ export function cityNote(city: City): string {
 	return `${city.kind === 'kota' ? 'Kota' : 'Kabupaten'} · titik di ${city.point}`;
 }
 
+/** The region a `?region=` value names, or the default for anything else. */
+export function regionFromParam(value: string | null | undefined): RegionId {
+	return REGIONS.find((r) => r.id === value)?.id ?? DEFAULT_REGION;
+}
+
 export function citiesInRegion(region: RegionId): City[] {
 	return CITIES.filter((city) => city.region === region);
 }

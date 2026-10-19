@@ -59,6 +59,11 @@ export function pending<T>(remote: Remote<T>): Remote<T> {
 	return remote.status === 'success' ? { ...remote, refreshing: true } : { status: 'loading' };
 }
 
+/** A response body (from a stream or the page) as a result. */
+export function fromApi<T>(response: ApiResponse<T>): Result<T> {
+	return 'data' in response ? { ok: true, data: response.data } : { ok: false, code: response.error.code };
+}
+
 export function toRemote<T>(result: Result<T>): Remote<T> {
 	return result.ok
 		? { status: 'success', data: result.data, refreshing: false }
