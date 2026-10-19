@@ -1,6 +1,6 @@
 import { EDGE_CACHE_CONTROL } from '@/lib/config/cache';
 import { citiesInRegion, REGIONS, type RegionId } from '@/lib/config/cities';
-import { STATION_CITY } from '@/lib/config/klhk-stations';
+import { STATION_CITY, STATION_POSITIONS } from '@/lib/config/klhk-stations';
 import type { ApiErrorCode } from '@/lib/types';
 import { fail, isCrossSite, log, respond } from './http';
 
@@ -18,6 +18,8 @@ export interface KlhkStation {
 	id: string;
 	/** The city in `cities.ts` this station measures, or null when it sits elsewhere (see STATION_CITY). */
 	cityId: string | null;
+	/** Null for a station not yet in STATION_POSITIONS; it then stays off the map. */
+	position: { latitude: number; longitude: number } | null;
 	name: string;
 	ispu: number;
 	category: string | null;
@@ -127,10 +129,12 @@ function parseStations(html: string, timeZone: string): KlhkStation[] {
 		const ispu = parseVal(html, `${id}-sum-value`);
 		const observedAt = parseObservedAt(parseText(html, `${id}-sum-waktu`), timeZone);
 		if (MOBILE_STATION.test(id) || ispu === null || observedAt === null) return [];
+		const at = STATION_POSITIONS[id];
 		return [
 			{
 				id,
 				cityId: STATION_CITY[id] ?? null,
+				position: at ? { latitude: at[0], longitude: at[1] } : null,
 				name: parseStationName(html, id),
 				ispu,
 				category: parseText(html, `${id}-category`),
@@ -198,6 +202,59 @@ export async function fetchKlhkProvince(region: RegionId, fetchFn: typeof fetch 
 	const data: KlhkProvinceData = { province, stations: parseStations(html, timeZone), fetchedAt: new Date(now).toISOString() };
 	cache.set(province, { data, expires: now + CACHE_TTL_MS });
 	return recent(data, now);
+}
+
+export interface KlhkNationalData {
+	/** Every fixed station with a position and a reading from the last three hours, once each. */
+	stations: KlhkStation[];
+	/** Provinces whose page could not be read and had no earlier copy; their stations are missing. */
+	missingProvinces: string[];
+}
+
+/** Province pages are read a few at a time, so a cold map never sends KLH 38 requests at once. */
+const PROVINCE_CONCURRENCY = 6;
+
+/**
+ * Recent readings from every province page, for the map. Each page goes through the province cache, so the
+ * dashboard and the map share reads. Pages repeat neighbours' stations, so each station is kept once. Throws
+ * only when no province could be read at all.
+ */
+export async function fetchKlhkNational(fetchFn: typeof fetch = fetch, now = Date.now()): Promise<KlhkNationalData> {
+	const regions = REGIONS.map((r) => r.id);
+	const results: PromiseSettledResult<KlhkProvinceData>[] = new Array(regions.length);
+	let next = 0;
+	const worker = async () => {
+		while (next < regions.length) {
+			const i = next++;
+			results[i] = await fetchKlhkProvince(regions[i], fetchFn, now).then(
+				(value) => ({ status: 'fulfilled', value }) as const,
+				(reason: unknown) => ({ status: 'rejected', reason }) as const
+			);
+		}
+	};
+	await Promise.all(Array.from({ length: PROVINCE_CONCURRENCY }, worker));
+
+	const byId = new Map<string, KlhkStation>();
+	const missingProvinces: string[] = [];
+	results.forEach((result, i) => {
+		if (result.status === 'rejected') {
+			missingProvinces.push(regionToProvince(regions[i]));
+			return;
+		}
+		for (const station of result.value.stations) if (station.position) byId.set(station.id, station);
+	});
+	if (missingProvinces.length === regions.length) throw new KlhkError('upstream_error', 'no province page could be read');
+	return { stations: [...byId.values()], missingProvinces };
+}
+
+/** GET /api/klhk-ispu/stations: every recent fixed station with a position, for the map layer. */
+export async function handleKlhkNationalRequest(request: Request, fetchFn: typeof fetch = fetch): Promise<Response> {
+	if (isCrossSite(request)) return fail('invalid_request', 403);
+	try {
+		return respond({ data: await fetchKlhkNational(fetchFn) }, 200, EDGE_CACHE_CONTROL);
+	} catch (error) {
+		return fail(error instanceof KlhkError ? error.code : 'upstream_error');
+	}
 }
 
 /** GET /api/klhk-ispu/region/[region]: recent KLH station readings for one province. */

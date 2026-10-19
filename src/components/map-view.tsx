@@ -8,6 +8,7 @@ import { getJson, toRemote, type Remote } from '@/lib/client/api';
 import { HotspotLayer } from '@/lib/client/hotspot-layer';
 import { describeWind, WindField } from '@/lib/client/wind-layer';
 import { useGoogleMap, useMapOverlays, useWindOverlay, type MapState } from '@/lib/client/use-google-map';
+import type { KlhkNationalData } from '@/lib/server/klhk-ispu';
 import type { FireData, WindData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import { StateMessage } from './info-blocks';
 import { useDictionary, useLocale, useLocalePath } from './locale-provider';
 import { hotspotStyle, useHotspotClicks } from './map-hotspots';
 import { FiresSummary, LayerControls, MapAbout, type CentreWind } from './map-panel';
+import { useStationLayer } from './map-stations';
 
 /** One map data source. A newer request aborts the one before it; nothing loads while `enabled` is off. */
 function useRemoteJson<T>(path: string, enabled: boolean) {
@@ -76,8 +78,10 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	const [showHeatmap, setShowHeatmap] = useState(true);
 	const [showFires, setShowFires] = useState(true);
 	const [showWind, setShowWind] = useState(true);
+	const [showStations, setShowStations] = useState(true);
 	const [fires, loadFires] = useRemoteJson<FireData>('/api/fires', firesConfigured);
 	const [wind, loadWind] = useRemoteJson<WindData>('/api/wind', true);
+	const [stations, loadStations] = useRemoteJson<KlhkNationalData>('/api/klhk-ispu/stations', true);
 	const router = useRouter();
 	const localize = useLocalePath();
 	const locale = useLocale();
@@ -103,6 +107,7 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	const windField = useMemo(() => (windData ? new WindField(windData) : null), [windData]);
 	useWindOverlay(mapState, windField, showWind);
 	const centreWind = useCentreWind(map, windField);
+	useStationLayer(map, stations.status === 'success' ? stations.data.stations : null, showStations, selectPoint);
 
 	const failed = mapState.status === 'unconfigured' || mapState.status === 'auth' || mapState.status === 'network';
 
@@ -133,6 +138,10 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 					onRetryWind={loadWind}
 					mapReady={map !== null}
 					firesConfigured={firesConfigured}
+					showStations={showStations}
+					onShowStations={setShowStations}
+					stations={stations}
+					onRetryStations={loadStations}
 				/>
 
 				<Separator />

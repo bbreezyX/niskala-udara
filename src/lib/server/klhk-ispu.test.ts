@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EDGE_CACHE_CONTROL } from '@/lib/config/cache';
-import { CITIES } from '@/lib/config/cities';
-import { STATION_CITY } from '@/lib/config/klhk-stations';
-import { clearKlhkCache, fetchKlhkProvince, handleKlhkRequest, parseObservedAt, regionToProvince } from './klhk-ispu';
+import { CITIES, REGIONS } from '@/lib/config/cities';
+import { STATION_CITY, STATION_POSITIONS } from '@/lib/config/klhk-stations';
+import { clearKlhkCache, fetchKlhkNational, fetchKlhkProvince, handleKlhkRequest, parseObservedAt, regionToProvince } from './klhk-ispu';
 
 /** 18:30 WIB on the day the fixture was captured. */
 const NOW = Date.UTC(2026, 9, 19, 11, 30);
@@ -77,6 +77,10 @@ describe('STATION_CITY', () => {
 		const ids = new Set(CITIES.map((c) => c.id));
 		expect(Object.values(STATION_CITY).filter((id) => !ids.has(id))).toEqual([]);
 	});
+
+	it('has a position for every station mapped to a city', () => {
+		expect(Object.keys(STATION_CITY).filter((id) => !STATION_POSITIONS[id])).toEqual([]);
+	});
 });
 
 describe('parseObservedAt', () => {
@@ -105,6 +109,7 @@ describe('fetchKlhkProvince', () => {
 		expect(result.stations[0]).toEqual({
 			id: 'DKI1',
 			cityId: 'jakarta',
+			position: { latitude: -6.19479, longitude: 106.823 },
 			name: 'DKI 1 Bundaran HI',
 			ispu: 96,
 			category: 'SEDANG',
@@ -138,6 +143,31 @@ describe('fetchKlhkProvince', () => {
 		await expect(fetchKlhkProvince('banten', failFetch, NOW)).rejects.toMatchObject({ code: 'upstream_error' });
 		const down = vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status: 503 }));
 		await expect(fetchKlhkProvince('banten', down, NOW)).rejects.toMatchObject({ code: 'upstream_error' });
+	});
+});
+
+describe('fetchKlhkNational', () => {
+	/** DKI1 has a position; NOWHERE is a fresh station missing from STATION_POSITIONS. */
+	const page = HTML + station('NOWHERE', 'Nowhere', '50', '19 Oktober 2026<br/>18:00');
+
+	it('lists each positioned station once, though many province pages repeat it', async () => {
+		const fetchFn = fakeFetch(page);
+		const result = await fetchKlhkNational(fetchFn, NOW);
+		expect(fetchFn).toHaveBeenCalledTimes(REGIONS.length);
+		expect(result.stations.map((s) => s.id)).toEqual(['DKI1']);
+		expect(result.missingProvinces).toEqual([]);
+	});
+
+	it('names provinces that could not be read and keeps the rest', async () => {
+		const fetchFn: typeof fetch = async (url) =>
+			String(url).endsWith('/banten') ? Promise.reject(new TypeError('network')) : new Response(page, { status: 200 });
+		const result = await fetchKlhkNational(fetchFn, NOW);
+		expect(result.missingProvinces).toEqual(['banten']);
+		expect(result.stations).toHaveLength(1);
+	});
+
+	it('fails only when no province could be read', async () => {
+		await expect(fetchKlhkNational(failFetch, NOW)).rejects.toMatchObject({ code: 'upstream_error' });
 	});
 });
 

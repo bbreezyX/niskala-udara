@@ -393,6 +393,16 @@ export const id = {
 		windLegend: 'Garis bergerak searah angin 10 m di atas tanah. Makin pekat, makin kencang.',
 		windValid: 'Prakiraan model untuk pukul {time}.',
 		windFailed: 'Data angin gagal dimuat.',
+		stations: {
+			title: 'ISPU stasiun KLH/BPLH',
+			scaleLow: '0, baik',
+			scaleHigh: '≥ 300, berbahaya',
+			count: { one: '{n} stasiun melapor dalam 3 jam terakhir.', other: '{n} stasiun melapor dalam 3 jam terakhir.' },
+			missing: 'Sebagian provinsi gagal dimuat, jumlah bisa lebih rendah.',
+			failed: 'ISPU stasiun gagal dimuat.',
+			critical: 'Parameter kritis',
+			marker: 'Stasiun {name}: ISPU {value}, {category}'
+		},
 		compass: ['utara', 'timur laut', 'timur', 'tenggara', 'selatan', 'barat daya', 'barat', 'barat laut'],
 		checkCenter: 'Cek AQI di tengah peta',
 		clickHint: 'Atau klik titik mana pun di peta.',

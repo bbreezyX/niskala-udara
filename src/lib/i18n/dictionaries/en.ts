@@ -392,6 +392,16 @@ export const en: Dictionary = {
 		windLegend: 'Lines move with the wind 10 m above ground. Darker means stronger.',
 		windValid: 'Model forecast for {time}.',
 		windFailed: 'Wind data failed to load.',
+		stations: {
+			title: 'KLH/BPLH station ISPU',
+			scaleLow: '0, good',
+			scaleHigh: '≥ 300, hazardous',
+			count: { one: '{n} station reported in the last 3 hours.', other: '{n} stations reported in the last 3 hours.' },
+			missing: 'Some provinces failed to load, so the count may be lower.',
+			failed: 'Station ISPU failed to load.',
+			critical: 'Critical parameter',
+			marker: 'Station {name}: ISPU {value}, {category}'
+		},
 		compass: ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'],
 		checkCenter: 'Check AQI at the map centre',
 		clickHint: 'Or click any point on the map.',
