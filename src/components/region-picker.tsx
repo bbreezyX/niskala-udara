@@ -62,10 +62,10 @@ export function RegionPicker({
 					size="lg"
 					aria-label={fill(t.regionPicker.trigger, { name: placeName(current, locale) })}
 					className={cn(
-						variant === 'title' && '-ml-2 h-11 min-w-0 rounded-full px-2 text-lg font-semibold [&_svg:not([class*=size-])]:size-5',
+						variant === 'title' && '-ml-2 h-11 min-w-0 rounded-full px-2 text-lg font-semibold text-foreground [&_svg:not([class*=size-])]:size-5',
 						variant === 'display' &&
 							// Serif glyphs need line height for their descenders, so this variant never clips its text.
-							'-ml-3 h-auto gap-2.5 rounded-2xl px-3 py-1.5 font-display text-3xl leading-[1.15] font-normal tracking-[-0.01em] [&_svg:not([class*=size-])]:size-5',
+							'-ml-3 h-auto gap-2.5 rounded-2xl px-3 py-1.5 font-display text-3xl leading-[1.15] font-normal tracking-[-0.01em] text-foreground [&_svg:not([class*=size-])]:size-5',
 						variant === 'pill' && 'h-10 rounded-full border-input bg-card px-4 font-semibold text-primary hover:text-primary'
 					)}
 				>

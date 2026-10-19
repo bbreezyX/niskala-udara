@@ -181,7 +181,7 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 			<Button
 				variant="outline"
 				size="lg"
-				className="h-11 w-11 gap-2 rounded-full bg-card px-0 text-muted-foreground hover:text-foreground lg:w-auto lg:px-4"
+				className="h-11 w-11 gap-2 rounded-full border-input bg-card px-0 text-muted-foreground lg:w-auto lg:px-4"
 				disabled={anyBusy || !configured}
 				onClick={refreshAll}
 				aria-label={anyBusy ? t.dashboard.refreshingData : t.dashboard.refreshData}

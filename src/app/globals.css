@@ -37,6 +37,9 @@
     --color-secondary-foreground: var(--secondary-foreground);
     --color-secondary: var(--secondary);
     --color-primary-foreground: var(--primary-foreground);
+    --color-primary-hover: var(--primary-hover);
+    --color-surface-hover: var(--surface-hover);
+    --color-surface-pressed: var(--surface-pressed);
     --color-primary: var(--primary);
     --color-popover-foreground: var(--popover-foreground);
     --color-popover: var(--popover);
@@ -57,38 +60,45 @@
 
 /*
  * Light only: the app has no dark theme yet.
- * Palette: Google Material 3 baseline. Blue marks what you can click; surfaces, borders, and text
- * stay neutral; the UAQI scale (red to green, no blue) is the only color that describes air.
+ * Palette: Niskala's own. "Langit malam" (night sky) navy marks what you can click; every gray comes from one
+ * neutral ramp derived from that navy's OKLCH hue (257°), and sky and status colors from the same hue.
+ * Surfaces, borders, and text stay neutral; the UAQI scale (red to green, no blue) is the only color that
+ * describes air. Ramp steps are noted beside each value.
  */
 :root {
-    --background: #f8fafd;
-    --foreground: #1f1f1f;
+    --background: #f8fafd; /* 25 */
+    --foreground: #141920; /* 950 */
     --card: #ffffff;
-    --card-foreground: #1f1f1f;
+    --card-foreground: #141920;
     --popover: #ffffff;
-    --popover-foreground: #1f1f1f;
-    --primary: #0b57d0;
+    --popover-foreground: #141920;
+    --primary: #13386b;
+    --primary-hover: #1d4a85;
     --primary-foreground: #ffffff;
-    --secondary: #d3e3fd;
-    --secondary-foreground: #041e49;
-    --muted: #f0f4f9;
-    --muted-foreground: #444746;
-    --accent: #e9f1fd;
-    --accent-foreground: #041e49;
-    --destructive: #b3261e;
-    --success: #146c2e;
-    --border: #e1e3e1;
-    --input: #c4c7c5;
-    --ring: #0b57d0;
+    --secondary: #d8e8fe;
+    --secondary-foreground: #0b264a;
+    --muted: #ecf0f6; /* 100 */
+    --muted-foreground: #4a5360; /* 700 */
+    --accent: #edf4ff;
+    --accent-foreground: #0b264a;
+    --destructive: #ae2e2a;
+    --success: #1e7546;
+    --border: #dbe0e8; /* 200 */
+    /* Control borders: 3.9:1 on card, 3.45:1 on surface-hover. */
+    --input: #78818e; /* 500 */
+    --ring: #1d4a85;
+    /* Hover and pressed fills for neutral controls (outline, ghost): one and two ramp steps below muted. */
+    --surface-hover: #e3e8ef; /* 150 */
+    --surface-pressed: #dbe0e8; /* 200 */
     --chart-1: #0b57d0;
     --chart-2: #00639b;
     --chart-3: #b3261e;
     --chart-4: #7c5800;
     --chart-5: #146c2e;
-    --sky: #d3e3fd;
-    --sky-deep: #a8c7fa;
-    --scrollbar-thumb: #c4c7c5;
-    --scrollbar-thumb-hover: #747775;
+    --sky: #d8e8fe;
+    --sky-deep: #b0cdf5;
+    --scrollbar-thumb: #c1c8d2; /* 300 */
+    --scrollbar-thumb-hover: #78818e; /* 500 */
     --radius: 0.75rem;
     color-scheme: light;
 }
@@ -194,7 +204,7 @@ body:has([data-error-scene]) :is([data-section-nav], [data-language-switch], #ko
 .gm-style .gm-style-iw-c:has(.hotspot-card) {
     padding-left: 16px;
     border-radius: 18px;
-    box-shadow: 0 1px 2px rgb(31 31 31 / 0.08), 0 12px 32px -8px rgb(31 31 31 / 0.28);
+    box-shadow: 0 1px 2px rgb(20 25 32 / 0.08), 0 12px 32px -8px rgb(20 25 32 / 0.28);
 }
 /* Google sets overflow: scroll inline; the card fits, so no scrollbar unless the map is tiny. */
 .gm-style .gm-style-iw-d:has(.hotspot-card) {
