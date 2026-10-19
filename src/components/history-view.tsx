@@ -12,10 +12,12 @@ import {
 } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { aqiBand } from '@/lib/aqi';
-import { CITIES, cityNote, DEFAULT_REGION } from '@/lib/config/cities';
+import { CITIES, DEFAULT_REGION } from '@/lib/config/cities';
 import { HISTORY_RANGES, type HistoryRange } from '@/lib/coordinates';
-import { postJson, toRemote, type Remote } from '@/lib/client/api';
-import { ERROR_MESSAGES, formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
+import { postJson, toRemote, withLanguage, type Remote } from '@/lib/client/api';
+import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
+import { fill, INTL_LOCALES, type Locale } from '@/lib/i18n/config';
+import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 import type { AirQualityData } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -27,6 +29,7 @@ import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
 import { CityPicker, useNearby } from './city-picker';
 import { Attribution, Recommendation, StateMessage } from './info-blocks';
+import { useDictionary, useLocale } from './locale-provider';
 import { PollutantBreakdown } from './pollutant-breakdown';
 import { TrendChart } from './trend-chart';
 
@@ -49,28 +52,28 @@ const features = tableFeatures({
 const helper = createColumnHelper<typeof features, HourRow>();
 
 /** Change against the hour before. Higher UAQI is better, so a drop is shown as worse. */
-function deltaOf(change: number | null) {
-	if (change === null) return { short: '–', spoken: 'Awal data', className: 'text-muted-foreground', icon: null };
-	if (change > 0) return { short: String(change), spoken: `Membaik ${change} dari jam sebelumnya`, className: 'text-success', icon: ArrowUp };
-	if (change < 0) return { short: String(-change), spoken: `Memburuk ${-change} dari jam sebelumnya`, className: 'text-destructive', icon: ArrowDown };
-	return { short: 'tetap', spoken: 'Tetap dari jam sebelumnya', className: 'text-muted-foreground', icon: null };
+function deltaOf(change: number | null, text: Dictionary['history']['delta']) {
+	if (change === null) return { short: '–', spoken: text.start, className: 'text-muted-foreground', icon: null };
+	if (change > 0) return { short: String(change), spoken: fill(text.better, { n: String(change) }), className: 'text-success', icon: ArrowUp };
+	if (change < 0) return { short: String(-change), spoken: fill(text.worse, { n: String(-change) }), className: 'text-destructive', icon: ArrowDown };
+	return { short: text.sameShort, spoken: text.same, className: 'text-muted-foreground', icon: null };
 }
 
-function columnsFor(timeZone: string) {
+function columnsFor(timeZone: string, locale: Locale, t: Dictionary) {
 	return helper.columns([
 		helper.accessor('t', {
-			header: 'Jam',
+			header: t.history.columns.hour,
 			cell: ({ row }) => (
 				<span className="grid leading-tight">
-					<span className="font-semibold tabular-nums">{formatHour(row.original.hour.dataTime, timeZone)}</span>
+					<span className="font-semibold tabular-nums">{formatHour(row.original.hour.dataTime, timeZone, locale)}</span>
 					{/* Sorted by time, day separators carry the date; otherwise each row shows it. */}
-					<span className="text-xs text-muted-foreground in-data-[grouped=true]:sr-only">{formatDay(row.original.hour.dataTime, timeZone)}</span>
+					<span className="text-xs text-muted-foreground in-data-[grouped=true]:sr-only">{formatDay(row.original.hour.dataTime, timeZone, locale)}</span>
 				</span>
 			)
 		}),
 		helper.accessor((row) => row.hour.index.aqi, {
 			id: 'aqi',
-			header: 'AQI',
+			header: t.history.columns.aqi,
 			cell: ({ row }) => {
 				const { index } = row.original.hour;
 				const band = aqiBand(index.aqi);
@@ -81,14 +84,14 @@ function columnsFor(timeZone: string) {
 							<span className="block h-full rounded-full" style={{ width: `${Math.max(3, Math.min(100, index.aqi))}%`, background: band.fill }} />
 						</span>
 						<span className="w-7 text-right font-semibold tabular-nums">{index.aqiDisplay}</span>
-						<span className="sr-only">{index.category ?? band.label}</span>
+						<span className="sr-only">{index.category ?? t.aqi.bands[band.key]}</span>
 					</span>
 				);
 			}
 		}),
 		helper.display({
 			id: 'dominant',
-			header: 'Polutan',
+			header: t.history.columns.pollutant,
 			cell: ({ row }) => {
 				const dominant = row.original.hour.index.dominantPollutant;
 				return dominant ? <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">{pollutantLabel(dominant)}</span> : '–';
@@ -96,9 +99,9 @@ function columnsFor(timeZone: string) {
 		}),
 		helper.display({
 			id: 'trend',
-			header: 'Perubahan',
+			header: t.history.columns.change,
 			cell: ({ row }) => {
-				const delta = deltaOf(row.original.change);
+				const delta = deltaOf(row.original.change, t.history.delta);
 				const Icon = delta.icon;
 				return (
 					<span className={cn('inline-flex items-center gap-0.5 text-sm font-semibold tabular-nums', delta.className)}>
@@ -122,6 +125,8 @@ const COLUMN_CLASS: Record<string, string> = {
 const EMPTY: HourRow[] = [];
 
 export function HistoryView({ configured }: { configured: boolean }) {
+	const locale = useLocale();
+	const t = useDictionary();
 	// The city the user picked; until then, the nearest one (when location access was already granted)
 	// or the default region's first city.
 	const [pickedId, setPickedId] = useState<string | null>(null);
@@ -146,14 +151,14 @@ export function HistoryView({ configured }: { configured: boolean }) {
 		const controller = new AbortController();
 		setSelectedTime(null);
 		postJson<AirQualityData[]>(
-			'/api/air-quality/history',
+			withLanguage('/api/air-quality/history', locale),
 			{ latitude: city.latitude, longitude: city.longitude, hours: range },
 			controller.signal
 		).then((result) => {
 			if (result) setHistory(toRemote(result));
 		});
 		return () => controller.abort();
-	}, [configured, settling, city.latitude, city.longitude, range, reloadVersion]);
+	}, [configured, settling, city.latitude, city.longitude, range, reloadVersion, locale]);
 
 	const hours = useMemo(() => (history.status === 'success' ? history.data : []), [history]);
 	const rows = useMemo(
@@ -163,7 +168,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 				: hours.map((hour, i) => ({ t: Date.parse(hour.dataTime), hour, change: i > 0 ? hour.index.aqi - hours[i - 1].index.aqi : null })),
 		[hours]
 	);
-	const columns = useMemo(() => columnsFor(city.timeZone), [city.timeZone]);
+	const columns = useMemo(() => columnsFor(city.timeZone, locale, t), [city.timeZone, locale, t]);
 
 	const table = useTable({
 		features,
@@ -183,23 +188,21 @@ export function HistoryView({ configured }: { configured: boolean }) {
 	}
 
 	if (!configured) {
-		return <StateMessage tone="error" title={ERROR_MESSAGES.not_configured.title} description={ERROR_MESSAGES.not_configured.description} />;
+		return <StateMessage tone="error" title={t.errors.not_configured.title} description={t.errors.not_configured.description} />;
 	}
 
 	const pageCount = table.getPageCount();
 	const { pageIndex } = table.state.pagination;
 	const groupedByDay = table.state.sorting[0]?.id === 't';
-	const dayLabel = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'short', timeZone: city.timeZone });
+	const dayLabel = new Intl.DateTimeFormat(INTL_LOCALES[locale], { weekday: 'long', day: 'numeric', month: 'short', timeZone: city.timeZone });
 
 	return (
 		<div className="grid items-start gap-5 min-[1100px]:grid-cols-[minmax(0,1.45fr)_minmax(360px,1fr)]">
 			<Card className="min-w-0 rounded-2xl">
 				<CardHeader className="flex flex-wrap items-start justify-between gap-3">
 					<div className="min-w-0">
-						<CardTitle className="text-lg font-semibold">Catatan per jam</CardTitle>
-						<CardDescription>
-							{cityNote(city)} · waktu dalam {timeZoneLabel(city.timeZone)}
-						</CardDescription>
+						<CardTitle className="text-lg font-semibold">{t.history.title}</CardTitle>
+						<CardDescription>{fill(t.history.description, { zone: timeZoneLabel(city.timeZone) })}</CardDescription>
 					</div>
 					{/* Phones: one row where the city picker takes the free space and truncates; the range keeps its size. */}
 					<div className="flex w-full items-center gap-2 sm:w-auto">
@@ -215,7 +218,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 							value={String(range)}
 							// A single-select toggle can be cleared by clicking the active item; keep one selected.
 							onValueChange={(next) => next && setRange(Number(next) as HistoryRange)}
-							aria-label="Rentang waktu"
+							aria-label={t.history.rangeLabel}
 							spacing={0}
 							className="shrink-0 rounded-full bg-muted p-1"
 						>
@@ -225,7 +228,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 									value={String(hours)}
 									className="h-8 rounded-full! px-3 text-muted-foreground sm:px-4 data-[state=on]:bg-card data-[state=on]:text-primary data-[state=on]:shadow-sm"
 								>
-									{hours} jam
+									{fill(t.history.rangeOption, { n: String(hours) })}
 								</ToggleGroupItem>
 							))}
 						</ToggleGroup>
@@ -235,16 +238,16 @@ export function HistoryView({ configured }: { configured: boolean }) {
 				<CardContent className="grid gap-4">
 					{history.status === 'error' ? (
 						<div role="alert" className="grid justify-items-start gap-2 rounded-xl bg-destructive/5 p-6">
-							<p className="font-semibold text-destructive">{ERROR_MESSAGES[history.code].title}</p>
-							<p className="text-sm text-muted-foreground">{ERROR_MESSAGES[history.code].description}</p>
+							<p className="font-semibold text-destructive">{t.errors[history.code].title}</p>
+							<p className="text-sm text-muted-foreground">{t.errors[history.code].description}</p>
 							<Button size="lg" className="mt-2" onClick={() => setReloadVersion((v) => v + 1)}>
-								Coba lagi
+								{t.common.retry}
 							</Button>
 						</div>
 					) : (
 						<>
 							<Table aria-busy={history.status !== 'success'} data-grouped={groupedByDay} className="text-sm">
-								<TableCaption className="sr-only">Kualitas udara per jam di {city.name}. Pilih baris untuk melihat detail.</TableCaption>
+								<TableCaption className="sr-only">{fill(t.history.caption, { name: city.name })}</TableCaption>
 								<TableHeader>
 									{table.getHeaderGroups().map((group) => (
 										<TableRow key={group.id} className="hover:bg-transparent">
@@ -329,16 +332,16 @@ export function HistoryView({ configured }: { configured: boolean }) {
 							</Table>
 
 							{pageCount > 1 && (
-								<nav aria-label="Halaman catatan" className="flex items-center justify-between gap-2">
+								<nav aria-label={t.history.pagesLabel} className="flex items-center justify-between gap-2">
 									<Button variant="outline" size="lg" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>
 										<ChevronLeft data-icon="inline-start" />
-										Sebelumnya
+										{t.history.previous}
 									</Button>
 									<p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
-										Halaman {pageIndex + 1} dari {pageCount}
+										{fill(t.history.page, { page: String(pageIndex + 1), count: String(pageCount) })}
 									</p>
 									<Button variant="outline" size="lg" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
-										Berikutnya
+										{t.history.next}
 										<ChevronRight data-icon="inline-end" />
 									</Button>
 								</nav>
@@ -366,7 +369,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 									{city.name}
 								</h2>
 								<p className="text-sm text-muted-foreground">
-									<time dateTime={selected.hour.dataTime}>{formatDataTime(selected.hour.dataTime, city.timeZone)}</time>
+									<time dateTime={selected.hour.dataTime}>{formatDataTime(selected.hour.dataTime, city.timeZone, locale)}</time>
 								</p>
 							</header>
 							<div className="flex flex-wrap items-center gap-5">
@@ -376,24 +379,24 @@ export function HistoryView({ configured }: { configured: boolean }) {
 									<p className="text-sm font-semibold text-muted-foreground">{selected.hour.index.displayName}</p>
 									{selected.hour.index.dominantPollutant && (
 										<p className="text-muted-foreground">
-											Polutan dominan:{' '}
+											{t.common.dominantPollutant}:{' '}
 											<strong className="font-semibold text-foreground">{pollutantLabel(selected.hour.index.dominantPollutant)}</strong>
 										</p>
 									)}
-									<p className="text-xs text-muted-foreground">Skala 0–100. Semakin tinggi, semakin baik.</p>
+									<p className="text-xs text-muted-foreground">{t.common.scale}</p>
 								</div>
 							</div>
 							<section className="grid gap-3 rounded-xl border p-4">
-								<h3 className="font-semibold">Tren AQI {range} jam</h3>
+								<h3 className="font-semibold">{fill(t.history.trendTitle, { n: String(range) })}</h3>
 								<TrendChart
 									points={hours.map((h) => ({ dateTime: h.dataTime, aqi: h.index.aqi }))}
 									timeZone={city.timeZone}
 									selected={selected.hour.dataTime}
-									label={`Tren AQI ${city.name}, ${range} jam terakhir`}
+									label={fill(t.history.trendLabel, { name: city.name, n: String(range) })}
 								/>
 							</section>
 							<section className="@container grid gap-3">
-								<h3 className="font-semibold">Kadar polutan pada jam ini</h3>
+								<h3 className="font-semibold">{t.pollutants.levelsThisHour}</h3>
 								<PollutantBreakdown pollutants={selected.hour.pollutants} dominant={selected.hour.index.dominantPollutant} />
 							</section>
 							<Recommendation aqi={selected.hour.index.aqi} recommendations={selected.hour.recommendations ?? {}} />
@@ -402,7 +405,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 					) : (
 						<>
 							<h2 id="detail-title" className="sr-only">
-								Detail
+								{t.history.detail}
 							</h2>
 							<Skeleton className="h-40 rounded-xl" />
 							<Skeleton className="h-64 rounded-xl" />

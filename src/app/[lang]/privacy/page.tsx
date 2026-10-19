@@ -1,7 +1,18 @@
 import type { Metadata } from 'next';
 import { LegalArticle } from '@/components/legal-article';
+import { toLocale } from '@/lib/i18n/config';
+import { getDictionary, localeAlternates } from '@/lib/i18n/server';
 
-export const metadata: Metadata = { title: 'Privasi', alternates: { canonical: '/privacy' } };
+type Props = { params: Promise<{ lang: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+	const locale = toLocale((await params).lang);
+	const page = getDictionary(locale).pages.privacy;
+	return {
+		title: page.title,
+		alternates: localeAlternates('/privacy', locale)
+	};
+}
 
 export default function PrivacyPage() {
 	return (

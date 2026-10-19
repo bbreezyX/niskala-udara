@@ -2,17 +2,19 @@
 
 import { useState } from 'react';
 import { ChevronDown, MapPin } from 'lucide-react';
-import { CITIES, DEFAULT_REGION, ISLANDS, REGIONS, type RegionId } from '@/lib/config/cities';
+import { CITIES, DEFAULT_REGION, ISLANDS, placeName, REGIONS, type RegionId } from '@/lib/config/cities';
+import { fill, plural } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useDictionary, useLocale } from './locale-provider';
 
 const COUNTS = new Map(REGIONS.map((region) => [region.id, CITIES.filter((city) => city.region === region.id).length]));
 
-/** Region names plus every city in them, so searching "Kerinci" finds Provinsi Jambi. */
+/** Region names in both languages plus every city in them, so searching "Kerinci" finds Jambi and "West Java" finds Jawa Barat. */
 const KEYWORDS = new Map(
-	REGIONS.map((region) => [region.id, [region.name, ...CITIES.filter((city) => city.region === region.id).map((city) => city.name)]])
+	REGIONS.map((region) => [region.id, [region.name, region.nameEn, ...CITIES.filter((city) => city.region === region.id).map((city) => city.name)]])
 );
 
 /** Substring match: fuzzy matching surfaces unrelated places. */
@@ -36,6 +38,8 @@ export function RegionPicker({
 	variant?: 'pill' | 'title' | 'display';
 }) {
 	const [open, setOpen] = useState(false);
+	const t = useDictionary();
+	const locale = useLocale();
 	const current = REGIONS.find((region) => region.id === value) ?? REGIONS.find((region) => region.id === DEFAULT_REGION)!;
 	const islands = ISLANDS.map((island) => ({ ...island, regions: REGIONS.filter((region) => region.island === island.id) })).filter(
 		(island) => island.regions.length > 0
@@ -47,7 +51,7 @@ export function RegionPicker({
 				<Button
 					variant={variant === 'pill' ? 'outline' : 'ghost'}
 					size="lg"
-					aria-label={`Wilayah: ${current.name}. Ganti wilayah`}
+					aria-label={fill(t.regionPicker.trigger, { name: placeName(current, locale) })}
 					className={cn(
 						variant === 'title' && '-ml-2 h-11 min-w-0 rounded-full px-2 text-lg font-semibold [&_svg:not([class*=size-])]:size-5',
 						variant === 'display' &&
@@ -57,19 +61,19 @@ export function RegionPicker({
 					)}
 				>
 					{variant !== 'display' && <MapPin data-icon="inline-start" className={cn(variant === 'title' && 'text-primary')} />}
-					<span className={cn(variant !== 'display' && 'truncate')}>{current.name}</span>
+					<span className={cn(variant !== 'display' && 'truncate')}>{placeName(current, locale)}</span>
 					<ChevronDown data-icon="inline-end" className="text-muted-foreground" />
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent align="start" sideOffset={8} className="w-76 overflow-hidden rounded-2xl p-0">
 				<Command filter={filterRegions} loop>
-					<CommandInput placeholder="Cari provinsi atau kota…" className="h-10" />
+					<CommandInput placeholder={t.regionPicker.placeholder} className="h-10" />
 					<CommandList className="max-h-80">
-						<CommandEmpty>Wilayah tidak ditemukan.</CommandEmpty>
+						<CommandEmpty>{t.regionPicker.empty}</CommandEmpty>
 						{islands.map((island) => (
 							<CommandGroup
 								key={island.id}
-								heading={island.name}
+								heading={placeName(island, locale)}
 								// Island headings are category labels, not choices: small caps-style text that stays pinned while
 								// its provinces scroll under it. The group must not clip, or sticky has nothing to stick to.
 								className="overflow-visible **:[[cmdk-group-items]]:flex **:[[cmdk-group-items]]:flex-col **:[[cmdk-group-items]]:gap-1 **:[[cmdk-group-heading]]:sticky **:[[cmdk-group-heading]]:top-0 **:[[cmdk-group-heading]]:z-10 **:[[cmdk-group-heading]]:bg-popover **:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:pt-3 **:[[cmdk-group-heading]]:pb-1.5 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:tracking-[0.08em] **:[[cmdk-group-heading]]:uppercase"
@@ -92,10 +96,10 @@ export function RegionPicker({
 											)}
 										>
 											<span className="min-w-0 flex-1 truncate">
-												{region.name}
-												{active && <span className="sr-only"> (dipilih)</span>}
+												{placeName(region, locale)}
+												{active && <span className="sr-only">{t.regionPicker.selected}</span>}
 											</span>
-											<span className="text-xs font-normal text-muted-foreground tabular-nums">{COUNTS.get(region.id)} lokasi</span>
+											<span className="text-xs font-normal text-muted-foreground tabular-nums">{plural(t.common.locations, COUNTS.get(region.id) ?? 0, locale)}</span>
 										</CommandItem>
 									);
 								})}

@@ -7,27 +7,9 @@ import { aqiBandIndex } from '@/lib/aqi';
 import { HEALTH_GROUPS, type HealthGroup } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { useDictionary } from './locale-provider';
 
-const GROUP_LABELS: Record<HealthGroup, string> = {
-	generalPopulation: 'Umum',
-	children: 'Anak',
-	elderly: 'Lansia',
-	pregnantWomen: 'Ibu hamil',
-	lungDiseasePopulation: 'Penyakit paru',
-	heartDiseasePopulation: 'Penyakit jantung',
-	athletes: 'Atlet'
-};
-
-/** One line to act on, by UAQI band (0 = worst). Google's own advice follows it verbatim. */
-const HEADLINES = [
-	'Sebaiknya tetap di dalam ruangan',
-	'Kurangi aktivitas berat di luar ruangan',
-	'Kelompok sensitif perlu berhati-hati',
-	'Aman untuk beraktivitas di luar ruangan',
-	'Udara bersih, nikmati aktivitas di luar'
-];
-
-/** Long enough that three lines usually cut it off, so the full text sits behind "Selengkapnya". */
+/** Long enough that three lines usually cut it off, so the full text sits behind "show more". */
 const CLAMP_FROM = 180;
 
 export function Recommendation({
@@ -39,6 +21,7 @@ export function Recommendation({
 	recommendations: Partial<Record<HealthGroup, string>>;
 	className?: string;
 }) {
+	const { health } = useDictionary();
 	const groups = HEALTH_GROUPS.filter((group) => recommendations[group]);
 	const [picked, setPicked] = useState<HealthGroup>('generalPopulation');
 	const [expanded, setExpanded] = useState(false);
@@ -51,10 +34,10 @@ export function Recommendation({
 			<div>
 				<p className="flex items-center gap-2 text-sm text-muted-foreground">
 					<HeartPulse className="size-4 text-primary" aria-hidden="true" />
-					Rekomendasi kesehatan
+					{health.title}
 				</p>
 				<h3 id="health-advice" className="mt-1 text-lg leading-snug font-semibold">
-					{HEADLINES[aqiBandIndex(aqi)]}
+					{health.headlines[aqiBandIndex(aqi)]}
 				</h3>
 			</div>
 			{groups.length > 1 && (
@@ -66,7 +49,7 @@ export function Recommendation({
 						setPicked(next as HealthGroup);
 						setExpanded(false);
 					}}
-					aria-label="Saran untuk kelompok"
+					aria-label={health.groupsLabel}
 					className="flex flex-wrap gap-1.5"
 				>
 					{groups.map((item) => (
@@ -75,7 +58,7 @@ export function Recommendation({
 							value={item}
 							className="h-8 rounded-full border bg-card px-3 text-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=on]:border-foreground data-[state=on]:bg-foreground data-[state=on]:text-background"
 						>
-							{GROUP_LABELS[item]}
+							{health.groups[item]}
 						</ToggleGroupPrimitive.Item>
 					))}
 				</ToggleGroupPrimitive.Root>
@@ -90,12 +73,12 @@ export function Recommendation({
 							aria-expanded={expanded}
 							className="mt-1 min-h-8 text-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
 						>
-							{expanded ? 'Ringkas' : 'Selengkapnya'}
+							{expanded ? health.less : health.more}
 						</button>
 					)}
 				</div>
 			) : (
-				<p className="text-muted-foreground">Saran lengkap belum tersedia untuk lokasi ini.</p>
+				<p className="text-muted-foreground">{health.missing}</p>
 			)}
 		</section>
 	);

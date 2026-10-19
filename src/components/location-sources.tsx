@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import Link from 'next/link';
+import { Link } from './link';
 import { ArrowLeft, LocateFixed, MapPinOff } from 'lucide-react';
-import { CITIES, DEFAULT_REGION, REGIONS } from '@/lib/config/cities';
+import { CITIES, DEFAULT_REGION, placeName, REGIONS } from '@/lib/config/cities';
 import { MAP_BOUNDS, MAP_TIME_ZONE } from '@/lib/config/map';
 import { parseCoordinates, roundCoordinates } from '@/lib/coordinates';
 import { cityFeed, LocationFeed } from '@/lib/client/location-feed';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { StateMessage } from './info-blocks';
 import { LocationDetail } from './location-detail';
+import { useDictionary, useLocale } from './locale-provider';
 
 /** A one-off feed (device or map point) that is aborted when the page leaves. */
 function useOwnFeed(create: () => LocationFeed | null, deps: unknown[]) {
@@ -36,21 +37,23 @@ function SourceShell({ back, children }: { back: { href: string; label: string }
 
 export function CityDetail({ cityId, configured }: { cityId: string; configured: boolean }) {
 	const city = CITIES.find((c) => c.id === cityId)!;
-	const feed = useMemo(() => cityFeed(city), [city]);
+	const locale = useLocale();
+	const t = useDictionary();
+	const feed = useMemo(() => cityFeed(city, locale), [city, locale]);
 	const region = REGIONS.find((r) => r.id === city.region)!;
-	const back = { href: region.id === DEFAULT_REGION ? '/' : `/?region=${region.id}`, label: 'Kembali ke Pantauan' };
+	const back = { href: region.id === DEFAULT_REGION ? '/' : `/?region=${region.id}`, label: t.common.backToOverview };
 	const related = useMemo(
 		() =>
 			CITIES.filter((c) => c.region === city.region).map((c) => ({
 				href: `/location/${c.id}`,
 				name: c.name,
 				current: c.id === city.id,
-				feed: cityFeed(c)
+				feed: cityFeed(c, locale)
 			})),
-		[city]
+		[city, locale]
 	);
 
-	return <LocationDetail feed={feed} configured={configured} back={back} eyebrow={region.name} related={related} />;
+	return <LocationDetail feed={feed} configured={configured} back={back} region={placeName(region, locale)} related={related} />;
 }
 
 type GeoState =
@@ -58,16 +61,17 @@ type GeoState =
 	| { status: 'ready'; coordinates: Coordinates }
 	| { status: 'error'; message: string };
 
-const HOME = { href: '/', label: 'Kembali ke Pantauan' };
-
 /** Asks the browser for the device position on this page; the coordinates never go into a URL. */
 export function DeviceDetail({ configured }: { configured: boolean }) {
 	const [geo, setGeo] = useState<GeoState>({ status: 'locating' });
 	const [attempt, setAttempt] = useState(0);
+	const locale = useLocale();
+	const t = useDictionary();
+	const home = { href: '/', label: t.common.backToOverview };
 
 	useEffect(() => {
 		if (!('geolocation' in navigator)) {
-			setGeo({ status: 'error', message: 'Browser ini tidak mendukung lokasi perangkat. Silakan pilih kota.' });
+			setGeo({ status: 'error', message: t.device.unsupported });
 			return;
 		}
 		let active = true;
@@ -80,15 +84,15 @@ export function DeviceDetail({ configured }: { configured: boolean }) {
 					status: 'error',
 					message:
 						error.code === error.PERMISSION_DENIED
-							? 'Izin lokasi ditolak. Kamu tetap bisa memilih kota dari daftar.'
-							: 'Lokasi tidak dapat ditemukan. Coba lagi atau pilih kota dari daftar.'
+							? t.device.denied
+							: t.device.notFound
 				}),
 			{ enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 }
 		);
 		return () => {
 			active = false;
 		};
-	}, [attempt]);
+	}, [attempt, t]);
 
 	const coordinates = geo.status === 'ready' ? geo.coordinates : null;
 	const feed = useOwnFeed(
@@ -96,42 +100,40 @@ export function DeviceDetail({ configured }: { configured: boolean }) {
 			coordinates &&
 			new LocationFeed({
 				key: 'device',
-				name: 'Lokasi saya',
-				note: 'Berdasarkan lokasi perangkat, dibulatkan sekitar 100 m',
+				name: t.device.name,
+				note: t.device.note,
 				coordinates,
 				// The device is at the location, so its own time zone is the right one.
 				timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 				region: null
-			}),
-		[coordinates?.latitude, coordinates?.longitude]
+			}, locale),
+		[coordinates?.latitude, coordinates?.longitude, locale, t]
 	);
 
-	if (feed) return <LocationDetail feed={feed} configured={configured} back={HOME} />;
+	if (feed) return <LocationDetail feed={feed} configured={configured} back={home} />;
 
 	return (
-		<SourceShell back={HOME}>
+		<SourceShell back={home}>
 			{geo.status === 'error' ? (
-				<StateMessage tone="error" icon={MapPinOff} title="Lokasi belum didapat" description={geo.message}>
+				<StateMessage tone="error" icon={MapPinOff} title={t.device.errorTitle} description={geo.message}>
 					<div className="flex flex-wrap justify-center gap-2">
 						<Button size="lg" onClick={() => setAttempt((n) => n + 1)}>
 							<LocateFixed data-icon="inline-start" />
-							Coba lagi
+							{t.common.retry}
 						</Button>
 						<Button asChild variant="outline" size="lg">
-							<Link href="/">Pilih kota</Link>
+							<Link href="/">{t.device.pickCity}</Link>
 						</Button>
 					</div>
 				</StateMessage>
 			) : (
-				<StateMessage icon={LocateFixed} title="Mencari lokasimu…" description="Izinkan akses lokasi di browser. Koordinat dibulatkan sekitar 100 meter sebelum dikirim.">
+				<StateMessage icon={LocateFixed} title={t.device.locating} description={t.device.locatingHint}>
 					<Spinner className="size-6 text-primary" />
 				</StateMessage>
 			)}
 		</SourceShell>
 	);
 }
-
-const MAP_BACK = { href: '/map', label: 'Kembali ke Peta' };
 
 function subscribeHash(callback: () => void) {
 	window.addEventListener('hashchange', callback);
@@ -144,6 +146,9 @@ function subscribeHash(callback: () => void) {
  */
 export function PointDetail({ configured }: { configured: boolean }) {
 	const hash = useSyncExternalStore(subscribeHash, () => window.location.hash, () => null);
+	const locale = useLocale();
+	const t = useDictionary();
+	const mapBack = { href: '/map', label: t.common.backToMap };
 	const coordinates = useMemo(() => {
 		if (!hash) return null;
 		const [latitude, longitude] = hash.slice(1).split(',').map(Number);
@@ -157,23 +162,23 @@ export function PointDetail({ configured }: { configured: boolean }) {
 		const onMap = longitude >= MAP_BOUNDS.west && longitude <= MAP_BOUNDS.east && latitude >= MAP_BOUNDS.south && latitude <= MAP_BOUNDS.north;
 		return new LocationFeed({
 			key: `point:${latitude},${longitude}`,
-			name: 'Titik dipilih',
+			name: t.point.name,
 			note: `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`,
 			coordinates,
 			// The map is limited to Sumatra, which is entirely WIB.
 			timeZone: onMap ? MAP_TIME_ZONE : Intl.DateTimeFormat().resolvedOptions().timeZone,
 			region: null
-		});
-	}, [coordinates?.latitude, coordinates?.longitude]);
+		}, locale);
+	}, [coordinates?.latitude, coordinates?.longitude, locale, t]);
 
-	if (feed) return <LocationDetail feed={feed} configured={configured} back={MAP_BACK} eyebrow="Titik di peta" />;
+	if (feed) return <LocationDetail feed={feed} configured={configured} back={mapBack} />;
 	if (hash === null) return null;
 
 	return (
-		<SourceShell back={MAP_BACK}>
-			<StateMessage tone="error" icon={MapPinOff} title="Titik tidak valid" description="Pilih titik langsung di peta untuk melihat kualitas udaranya.">
+		<SourceShell back={mapBack}>
+			<StateMessage tone="error" icon={MapPinOff} title={t.point.invalidTitle} description={t.point.invalidDescription}>
 				<Button asChild size="lg">
-					<Link href="/map">Buka peta</Link>
+					<Link href="/map">{t.point.openMap}</Link>
 				</Button>
 			</StateMessage>
 		</SourceShell>

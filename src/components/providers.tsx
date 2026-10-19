@@ -2,11 +2,24 @@
 
 import { MotionConfig } from 'motion/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import type { Locale } from '@/lib/i18n/config';
+import type { Dictionary } from '@/lib/i18n/dictionaries/id';
+import { LocaleProvider } from './locale-provider';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+	locale,
+	dictionary,
+	children
+}: {
+	locale: Locale;
+	dictionary: Dictionary;
+	children: React.ReactNode;
+}) {
 	return (
-		<MotionConfig reducedMotion="user">
-			<TooltipProvider>{children}</TooltipProvider>
-		</MotionConfig>
+		<LocaleProvider locale={locale} dictionary={dictionary}>
+			<MotionConfig reducedMotion="user">
+				<TooltipProvider>{children}</TooltipProvider>
+			</MotionConfig>
+		</LocaleProvider>
 	);
 }

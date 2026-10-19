@@ -1,16 +1,25 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from '@/components/link';
 import { AQI_BANDS, UAQI_GRADIENT } from '@/lib/aqi';
+import { toLocale } from '@/lib/i18n/config';
+import { getDictionary, localeAlternates } from '@/lib/i18n/server';
 
-export const metadata: Metadata = {
-	title: 'Tentang',
-	alternates: { canonical: '/about' },
-	description: 'Apa itu Niskala, cara membaca Universal AQI, sumber data, dan batasannya.'
-};
+type Props = { params: Promise<{ lang: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+	const locale = toLocale((await params).lang);
+	const page = getDictionary(locale).pages.about;
+	return {
+		title: page.title,
+		description: page.description,
+		alternates: localeAlternates('/about', locale)
+	};
+}
 
 const RANGES = AQI_BANDS.map((band, i) => ({ ...band, max: (AQI_BANDS[i + 1]?.min ?? 101) - 1 }));
 
-export default function AboutPage() {
+export default async function AboutPage({ params }: Props) {
+	const { aqi } = getDictionary(toLocale((await params).lang));
 	return (
 		<article className="mx-auto grid max-w-3xl gap-12 px-4 pt-10 sm:px-6 md:pt-14 [&_h2]:text-xl [&_h2]:font-semibold [&_p]:text-foreground/85">
 			<header>
@@ -38,11 +47,11 @@ export default function AboutPage() {
 						<span>100</span>
 					</div>
 					<dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-						{RANGES.map(({ label, icon: Icon, ink, min, max }) => (
+						{RANGES.map(({ key, icon: Icon, ink, min, max }) => (
 							<div key={min} className="grid content-start gap-1 rounded-xl bg-muted/60 p-3">
 								<dt className="flex items-center gap-1.5 text-sm font-semibold">
 									<Icon className="size-4 shrink-0" style={{ color: ink }} aria-hidden="true" />
-									{label}
+									{aqi.bands[key]}
 								</dt>
 								<dd className="text-sm text-muted-foreground tabular-nums">
 									{min}–{max}

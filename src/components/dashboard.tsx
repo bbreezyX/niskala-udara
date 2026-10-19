@@ -2,50 +2,55 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from './link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { LocateFixed, RotateCw } from 'lucide-react';
 import { CITIES, DEFAULT_REGION, REGIONS, type RegionId } from '@/lib/config/cities';
+import { fill, plural } from '@/lib/i18n/config';
+import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 import { cityFeed, isBusy, needsLoad, useFeeds, type FeedState } from '@/lib/client/location-feed';
-import { ERROR_MESSAGES, formatHour, timeZoneLabel } from '@/lib/format';
+import { formatHour, timeZoneLabel } from '@/lib/format';
 import { aqiBandIndex, AQI_BANDS } from '@/lib/aqi';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AqiSpread } from './aqi-spread';
 import { CityCard } from './city-card';
 import { StateMessage } from './info-blocks';
+import { useDictionary, useLocale } from './locale-provider';
 import { RegionPicker } from './region-picker';
 import { DEFAULT_FILTER, SortFilter, type ListFilter } from './sort-filter';
 
 const noopSubscribe = () => () => {};
 
 /** Greeting from the device's clock. The server renders a neutral one, so hydration never mismatches. */
-function useGreeting() {
+function useGreeting(greetings: Dictionary['dashboard']['greetings']) {
 	return useSyncExternalStore(
 		noopSubscribe,
 		() => {
 			const hour = new Date().getHours();
-			if (hour < 4 || hour >= 18) return 'Selamat malam';
-			if (hour < 11) return 'Selamat pagi';
-			if (hour < 15) return 'Selamat siang';
-			return 'Selamat sore';
+			if (hour < 4 || hour >= 18) return greetings.evening;
+			if (hour < 11) return greetings.morning;
+			if (hour < 15) return greetings.midday;
+			return greetings.afternoon;
 		},
-		() => 'Halo'
+		() => greetings.neutral
 	);
 }
 
 const aqiOf = (state: FeedState) => (state.current.status === 'success' ? state.current.data.index.aqi : null);
 
 export function Dashboard({ configured }: { configured: boolean }) {
-	const greeting = useGreeting();
+	const t = useDictionary();
+	const greeting = useGreeting(t.dashboard.greetings);
+	const locale = useLocale();
 	const router = useRouter();
 	const pathname = usePathname();
 	// The region lives in the URL, so "back" from a city page returns to the same region.
 	const requested = useSearchParams().get('region');
 	const region: RegionId = REGIONS.find((r) => r.id === requested)?.id ?? DEFAULT_REGION;
 	// Only the active region is shown and loaded, so a page view costs one region's requests.
-	const feeds = useMemo(() => CITIES.filter((city) => city.region === region).map(cityFeed), [region]);
+	const feeds = useMemo(() => CITIES.filter((city) => city.region === region).map((city) => cityFeed(city, locale)), [region, locale]);
 	const states = useFeeds(feeds);
 	const [filter, setFilter] = useState<ListFilter>(DEFAULT_FILTER);
 
@@ -62,7 +67,7 @@ export function Dashboard({ configured }: { configured: boolean }) {
 				const aqi = aqiOf(state);
 				return aqi === null || filter.bands.includes(aqiBandIndex(aqi));
 			});
-		if (filter.sort === 'name') return list.toSorted((a, b) => a.feed.location.name.localeCompare(b.feed.location.name, 'id'));
+		if (filter.sort === 'name') return list.toSorted((a, b) => a.feed.location.name.localeCompare(b.feed.location.name, locale));
 		if (filter.sort === 'best' || filter.sort === 'worst') {
 			const direction = filter.sort === 'best' ? -1 : 1;
 			return list.toSorted((a, b) => {
@@ -84,7 +89,8 @@ export function Dashboard({ configured }: { configured: boolean }) {
 	const pendingCount = states.filter((state) => aqiOf(state) === null).length;
 	const loadingCount = states.filter((state) => state.current.status === 'loading').length;
 	const loadedCount = states.filter((state) => state.current.status === 'success').length;
-	const announcement = loadingCount > 0 ? `Memuat data ${loadingCount} lokasi.` : loadedCount > 0 ? `Data ${loadedCount} lokasi dimuat.` : '';
+	const announcement =
+		loadingCount > 0 ? plural(t.dashboard.loading, loadingCount, locale) : loadedCount > 0 ? plural(t.dashboard.loaded, loadedCount, locale) : '';
 
 	// Load cities that have no data yet (or only stale data). Feeds are shared with the detail pages,
 	// so returning from one does not ask Google again. Without a key, the not-configured notice is shown.
@@ -113,7 +119,7 @@ export function Dashboard({ configured }: { configured: boolean }) {
 			<SortFilter value={filter} onApply={setFilter} bandCounts={bandCounts} pendingCount={pendingCount} />
 			<Button variant="outline" size="lg" className="h-10 rounded-full bg-card px-4" disabled={anyBusy || !configured} onClick={refreshAll}>
 				<RotateCw data-icon="inline-start" className={cn(anyBusy && 'animate-spin')} />
-				{anyBusy ? 'Memperbarui…' : 'Perbarui'}
+				{anyBusy ? t.common.refreshing : t.common.refresh}
 			</Button>
 		</div>
 	);
@@ -145,16 +151,16 @@ export function Dashboard({ configured }: { configured: boolean }) {
 							<h1 id="page-title" className="font-display text-5xl leading-none tracking-[-0.02em] sm:text-6xl lg:text-7xl">
 								{greeting}
 							</h1>
-							<p className="mt-3 text-base text-muted-foreground sm:text-lg">Begini kualitas udara di kota pantauanmu sekarang.</p>
+							<p className="mt-3 text-base text-muted-foreground sm:text-lg">{t.dashboard.lead}</p>
 							{/* UAQI runs the opposite way to ISPU, so the explanation stays one tap away. From lg up it sits under the hero, beside the cards it explains. */}
 							<Link href="/about" className="mt-2 inline-flex min-h-8 items-center text-sm font-medium text-primary underline-offset-4 hover:underline lg:hidden">
-								Skala 0–100, makin tinggi makin baik. Cara membaca AQI
+								{t.common.scale} {t.common.howToRead}
 							</Link>
 						</div>
 						<Button asChild size="lg" className="h-11 rounded-full px-5">
 							<Link href="/location/me">
 								<LocateFixed data-icon="inline-start" />
-								Gunakan lokasi saya
+								{t.dashboard.useMyLocation}
 							</Link>
 						</Button>
 					</div>
@@ -165,7 +171,7 @@ export function Dashboard({ configured }: { configured: boolean }) {
 						{/* The region is the heading, in the hero's serif; the bar under it sums the region up and filters by band. */}
 						<div className="flex items-center gap-4">
 							<h2 className="flex">
-								<span className="sr-only">Pantauan, </span>
+								<span className="sr-only">{t.dashboard.overviewPrefix}</span>
 								<RegionPicker value={region} onChange={setRegion} variant="display" />
 							</h2>
 							<AqiSpread bandCounts={bandCounts} pendingCount={pendingCount} filter={filter} onFilter={setFilter} />
@@ -176,7 +182,7 @@ export function Dashboard({ configured }: { configured: boolean }) {
 						href="/about"
 						className="absolute top-full right-1 mt-1 hidden min-h-8 items-center text-sm font-medium text-primary underline-offset-4 hover:underline lg:inline-flex"
 					>
-						Skala 0–100, makin tinggi makin baik. Cara membaca AQI
+						{t.common.scale} {t.common.howToRead}
 					</Link>
 				</section>
 
@@ -184,12 +190,13 @@ export function Dashboard({ configured }: { configured: boolean }) {
 				<div className="flex items-center justify-between gap-3 pt-5 lg:hidden">
 					<div className="min-w-0">
 						<h2 className="flex min-w-0">
-							<span className="sr-only">Pantauan, </span>
+							<span className="sr-only">{t.dashboard.overviewPrefix}</span>
 							<RegionPicker value={region} onChange={setRegion} variant="title" />
 						</h2>
 						<p className="text-sm text-muted-foreground tabular-nums">
-							{visible.length} lokasi
-							{latest && ` · data ${formatHour(latest.time, latest.timeZone)} ${timeZoneLabel(latest.timeZone, new Date(latest.time))}`}
+							{plural(t.common.locations, visible.length, locale)}
+							{latest &&
+								fill(t.dashboard.dataAt, { time: `${formatHour(latest.time, latest.timeZone, locale)} ${timeZoneLabel(latest.timeZone, new Date(latest.time))}` })}
 						</p>
 					</div>
 					<div className="flex shrink-0 gap-2">
@@ -200,7 +207,7 @@ export function Dashboard({ configured }: { configured: boolean }) {
 							className="size-11 rounded-full bg-card"
 							disabled={anyBusy || !configured}
 							onClick={refreshAll}
-							aria-label={anyBusy ? 'Memperbarui data' : 'Perbarui data'}
+							aria-label={anyBusy ? t.dashboard.refreshingData : t.dashboard.refreshData}
 						>
 							<RotateCw className={cn(anyBusy && 'animate-spin')} aria-hidden="true" />
 						</Button>
@@ -209,16 +216,16 @@ export function Dashboard({ configured }: { configured: boolean }) {
 			</div>
 
 			<div className="mx-auto grid max-w-7xl gap-12 px-4 pt-6 sm:px-6 lg:pt-12">
-				<section aria-label="Daftar lokasi pantauan">
+				<section aria-label={t.dashboard.listLabel}>
 					<p className="sr-only" role="status">
 						{announcement}
 					</p>
 					{!configured ? (
-						<StateMessage tone="error" title={ERROR_MESSAGES.not_configured.title} description={ERROR_MESSAGES.not_configured.description} />
+						<StateMessage tone="error" title={t.errors.not_configured.title} description={t.errors.not_configured.description} />
 					) : visible.length === 0 ? (
-						<StateMessage title="Tidak ada lokasi di kategori ini" description="Pilih kategori AQI lain atau atur ulang filter untuk melihat semua lokasi.">
+						<StateMessage title={t.dashboard.emptyTitle} description={t.dashboard.emptyDescription}>
 							<Button size="lg" onClick={() => setFilter(DEFAULT_FILTER)}>
-								Atur ulang filter
+								{t.dashboard.resetFilter}
 							</Button>
 						</StateMessage>
 					) : (
@@ -241,9 +248,9 @@ export function Dashboard({ configured }: { configured: boolean }) {
 							</ul>
 							{hiddenCount > 0 && (
 								<p className="mt-4 text-sm text-muted-foreground">
-									{hiddenCount} lokasi disembunyikan oleh filter.{' '}
+									{plural(t.dashboard.hidden, hiddenCount, locale)}{' '}
 									<Button variant="link" className="h-11 px-1" onClick={() => setFilter(DEFAULT_FILTER)}>
-										Tampilkan semua
+										{t.dashboard.showAll}
 									</Button>
 								</p>
 							)}

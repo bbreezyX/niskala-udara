@@ -159,3 +159,127 @@
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Hotspot details in Google's InfoWindow (built in map-view.tsx). Unlayered on purpose:
+ * Google's own InfoWindow CSS is unlayered, and any @layer rule would lose to it.
+ */
+.gm-style .gm-style-iw-c:has(.hotspot-card) {
+    padding-left: 16px;
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgb(31 31 31 / 0.08), 0 12px 32px -8px rgb(31 31 31 / 0.28);
+}
+/* Google sets overflow: scroll inline; the card fits, so no scrollbar unless the map is tiny. */
+.gm-style .gm-style-iw-d:has(.hotspot-card) {
+    overflow: auto !important;
+}
+/* Centers the 20px title line on the 48px close button. */
+.gm-style .gm-style-iw-ch:has(.hotspot-card__title) {
+    padding-top: 14px;
+}
+.hotspot-card__title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 20px;
+    color: var(--foreground);
+}
+.hotspot-card {
+    display: grid;
+    gap: 12px;
+    width: 232px;
+    padding: 4px 16px 16px 0;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--foreground);
+}
+.hotspot-card__level {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 4px 10px 4px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--level) 12%, white);
+    font-size: 12px;
+    font-weight: 500;
+}
+.hotspot-card__level::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--level);
+}
+.hotspot-card__time {
+    display: grid;
+    gap: 2px;
+}
+.hotspot-card__ago {
+    font-family: var(--font-display);
+    font-size: 30px;
+    line-height: 1;
+}
+.hotspot-card__date {
+    font-size: 12px;
+    color: var(--muted-foreground);
+}
+.hotspot-card__facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+.hotspot-card__facts dt {
+    color: var(--muted-foreground);
+}
+.hotspot-card__facts dd {
+    margin: 0;
+    text-align: right;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+.hotspot-card__action {
+    min-height: 40px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--primary);
+    font: inherit;
+    font-weight: 600;
+    transition: background-color 150ms;
+}
+.hotspot-card__action:hover {
+    background: var(--secondary);
+}
+.hotspot-card__action:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--ring) 50%, transparent);
+    outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+    .hotspot-card__action {
+        transition: none;
+    }
+}
+
+/*
+ * Switching language is a full page load (each language has its own root layout). Supporting browsers
+ * crossfade the two documents instead of flashing white, and the header capsule (view-transition-name
+ * site-header) morphs in place. Others, and readers who ask for less motion, simply load the new page.
+ */
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition {
+        navigation: auto;
+    }
+}
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}

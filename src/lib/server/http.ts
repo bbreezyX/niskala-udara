@@ -11,7 +11,7 @@ export const STATUS: Record<ApiErrorCode, number> = {
 	upstream_error: 502
 };
 
-/** Google data is never cached (Maps Platform terms); NASA FIRMS data may be cached briefly. */
+/** JSON is not cached by default; callers opt in where the source's terms allow it. */
 export function respond(body: ApiResponse<unknown>, status = 200, cacheControl = 'no-store'): Response {
 	return new Response(JSON.stringify(body), {
 		status,

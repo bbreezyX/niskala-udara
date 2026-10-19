@@ -2,7 +2,9 @@
 
 import { motion } from 'motion/react';
 import { UAQI_STOPS } from '@/lib/aqi';
+import { fill } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils';
+import { useDictionary } from './locale-provider';
 
 /** The ring covers 270°, open at the bottom, running from 0 (bottom left) to 100 (bottom right). */
 const SWEEP = 270;
@@ -12,7 +14,7 @@ const CONIC = `conic-gradient(from ${START}deg, ${UAQI_STOPS.map(([at, color]) =
 
 const SIZES = {
 	sm: { box: 'size-[72px]', ring: 7, number: 'text-xl', unit: 'text-[10px]' },
-	md: { box: 'size-32 sm:size-36', ring: 11, number: 'text-4xl sm:text-5xl', unit: 'text-xs' },
+	md: { box: 'size-24 min-[400px]:size-28 sm:size-36', ring: 10, number: 'text-4xl sm:text-5xl', unit: 'text-xs' },
 	lg: { box: 'size-48 sm:size-56', ring: 14, number: 'text-6xl sm:text-7xl', unit: 'text-sm' }
 } as const;
 
@@ -24,13 +26,14 @@ interface Props {
 }
 
 export function AqiGauge({ aqi, display, size = 'sm', className }: Props) {
+	const { aqi: names } = useDictionary();
 	const { box, ring, number, unit } = SIZES[size];
 	const angle = START + (Math.min(100, Math.max(0, aqi)) / 100) * SWEEP;
 	const mask = `radial-gradient(farthest-side, transparent calc(100% - ${ring}px), #000 calc(100% - ${ring}px + 1px))`;
 	const knob = ring + 6;
 
 	return (
-		<div role="img" aria-label={`AQI ${display} dari 100`} className={cn('relative grid shrink-0 place-items-center', box, className)}>
+		<div role="img" aria-label={fill(names.gauge, { value: display })} className={cn('relative grid shrink-0 place-items-center', box, className)}>
 			<div aria-hidden="true" className="absolute inset-0 rounded-full" style={{ background: CONIC, mask, WebkitMask: mask }} />
 			{/* Round caps at both ends of the arc. */}
 			{[START, START + SWEEP].map((at, i) => (

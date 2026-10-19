@@ -1,8 +1,19 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from '@/components/link';
 import { LegalArticle } from '@/components/legal-article';
+import { toLocale } from '@/lib/i18n/config';
+import { getDictionary, localeAlternates } from '@/lib/i18n/server';
 
-export const metadata: Metadata = { title: 'Ketentuan Penggunaan', alternates: { canonical: '/terms' } };
+type Props = { params: Promise<{ lang: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+	const locale = toLocale((await params).lang);
+	const page = getDictionary(locale).pages.terms;
+	return {
+		title: page.title,
+		alternates: localeAlternates('/terms', locale)
+	};
+}
 
 export default function TermsPage() {
 	return (

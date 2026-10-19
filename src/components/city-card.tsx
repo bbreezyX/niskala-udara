@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { Clock, MapPin, RotateCw } from 'lucide-react';
 import { isBusy, useFeed, type LocationFeed } from '@/lib/client/location-feed';
 import { aqiBand } from '@/lib/aqi';
-import { ERROR_MESSAGES, formatHour, timeZoneLabel } from '@/lib/format';
+import { formatHour, timeZoneLabel } from '@/lib/format';
+import { fill } from '@/lib/i18n/config';
 import type { PollutantCode } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,13 +13,17 @@ import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
 import { PollutantTiles } from './pollutant-tiles';
 import { TrendChart } from './trend-chart';
+import { Link } from './link';
+import { useDictionary, useLocale } from './locale-provider';
 
 const SUMMARY_POLLUTANTS: PollutantCode[] = ['pm25', 'pm10', 'no2', 'o3'];
 
-/** Small section labels share one style, so the pollutant names and "Prakiraan" read as one set. */
+/** Small section labels share one style, so the pollutant names and the forecast label read as one set. */
 const LABEL = 'text-xs font-semibold text-muted-foreground';
 
 export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
+	const locale = useLocale();
+	const t = useDictionary();
 	const state = useFeed(feed);
 	const { location } = feed;
 	const titleId = `city-${location.key}`;
@@ -32,7 +36,7 @@ export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
 	);
 
 	if (state.current.status === 'error') {
-		const message = ERROR_MESSAGES[state.current.code];
+		const message = t.errors[state.current.code];
 		return (
 			<Card className="h-full rounded-2xl" aria-labelledby={titleId}>
 				<CardHeader>
@@ -47,7 +51,7 @@ export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
 						<p className="text-sm text-muted-foreground">{message.description}</p>
 						<Button variant="outline" size="lg" className="mt-2" onClick={() => feed.load()}>
 							<RotateCw data-icon="inline-start" />
-							Coba lagi
+							{t.common.retry}
 						</Button>
 					</div>
 				</CardContent>
@@ -72,7 +76,7 @@ export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
 					<Skeleton className="h-[74px] rounded-xl" />
 					<Skeleton className="h-28 rounded-xl" />
 				</CardContent>
-				<p className="sr-only">Memuat data {location.name}</p>
+				<p className="sr-only">{fill(t.common.loadingPlace, { name: location.name })}</p>
 			</Card>
 		);
 	}
@@ -108,20 +112,20 @@ export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
 			<CardContent className="grid gap-4">
 				<PollutantTiles pollutants={pollutants} codes={SUMMARY_POLLUTANTS} />
 				<div className="grid gap-1">
-					<p className={LABEL}>Prakiraan 24 jam</p>
+					<p className={LABEL}>{t.card.forecast24}</p>
 					{state.forecast.status === 'success' ? (
 						<TrendChart
 							variant="compact"
 							color={band.ink}
 							timeZone={location.timeZone}
-							label={`Prakiraan AQI 24 jam untuk ${location.name}`}
+							label={fill(t.card.forecastLabel, { name: location.name })}
 							points={[
 								{ dateTime: dataTime, aqi: index.aqi },
 								...state.forecast.data.map((h) => ({ dateTime: h.dataTime, aqi: h.index.aqi, forecast: true }))
 							]}
 						/>
 					) : state.forecast.status === 'error' ? (
-						<p className="flex h-24 items-center text-sm text-muted-foreground">Prakiraan belum tersedia</p>
+						<p className="flex h-24 items-center text-sm text-muted-foreground">{t.card.forecastMissing}</p>
 					) : (
 						<Skeleton className="h-24 rounded-xl" />
 					)}
@@ -130,8 +134,8 @@ export function CityCard({ feed, href }: { feed: LocationFeed; href: string }) {
 
 			<CardFooter className="mt-auto gap-1.5 border-t-0 bg-transparent pt-0 text-xs text-muted-foreground">
 				<Clock className="size-3.5" aria-hidden="true" />
-				Data {formatHour(dataTime, location.timeZone)} {timeZoneLabel(location.timeZone, new Date(dataTime))}
-				{busy && <span className="ml-auto">Memperbarui…</span>}
+				{fill(t.card.dataAt, { time: `${formatHour(dataTime, location.timeZone, locale)} ${timeZoneLabel(location.timeZone, new Date(dataTime))}` })}
+				{busy && <span className="ml-auto">{t.common.refreshing}</span>}
 			</CardFooter>
 		</Card>
 	);
