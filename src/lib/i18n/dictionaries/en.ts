@@ -53,11 +53,16 @@ export const en: Dictionary = {
 			title: 'About',
 			description: 'What Niskala is, how to read the Universal AQI, where the data comes from, and its limits.'
 		},
-		privacy: { title: 'Privacy' },
-		terms: { title: 'Terms of Use' },
+		privacy: { title: 'Privacy', heading: 'Privacy Policy' },
+		terms: { title: 'Terms of Use', heading: 'Terms of Use' },
 		locationMe: { title: 'My location' },
 		locationPoint: { title: 'Point on the map' },
 		city: { description: 'Current air quality, 24-hour trend, forecast, and pollutant levels in {name}.' }
+	},
+	legal: {
+		updated: 'Last updated: {date}',
+		translationNote:
+			'This English version is a translation provided for convenience. If it differs from the Indonesian version, the Indonesian version prevails.'
 	},
 	common: {
 		refresh: 'Refresh',

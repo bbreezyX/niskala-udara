@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { Link } from '@/components/link';
 import { LegalArticle } from '@/components/legal-article';
+import { TermsEn } from '@/content/terms/en';
+import { TermsId } from '@/content/terms/id';
 import { toLocale } from '@/lib/i18n/config';
 import { getDictionary, localeAlternates } from '@/lib/i18n/server';
 
@@ -15,48 +16,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	};
 }
 
-export default function TermsPage() {
+const CONTENT = { id: TermsId, en: TermsEn };
+
+export default async function TermsPage({ params }: Props) {
+	const locale = toLocale((await params).lang);
+	const Content = CONTENT[locale];
 	return (
-		<LegalArticle title="Ketentuan Penggunaan" updated="19 Oktober 2026">
-			<h2>Layanan</h2>
-			<p>
-				Niskala menampilkan perkiraan kualitas udara terkini, kadar polutan, dan rekomendasi kesehatan umum untuk lokasi
-				yang kamu pilih. Layanan ini gratis, tanpa akun, dan disediakan apa adanya.
-			</p>
-
-			<h2>Sumber data</h2>
-			<p>
-				Data berasal dari Google Maps Platform Air Quality API dan ditampilkan tanpa diubah. Data merupakan perkiraan per jam,
-				dapat tertunda, tidak lengkap, atau berbeda dengan kondisi di lapangan.
-			</p>
-
-			<h2>Bukan nasihat medis</h2>
-			<p>
-				Informasi di situs ini bersifat umum. Untuk keputusan kesehatan, ikuti arahan tenaga kesehatan dan informasi resmi
-				pemerintah setempat.
-			</p>
-
-			<h2>Ketentuan Google</h2>
-			<p>
-				Dengan menggunakan Niskala, kamu juga terikat pada{' '}
-				<a href="https://maps.google.com/help/terms_maps/" rel="noopener noreferrer">
-					Persyaratan Layanan Tambahan Google Maps/Google Earth
-				</a>{' '}
-				dan{' '}
-				<a href="https://policies.google.com/privacy" rel="noopener noreferrer">
-					Kebijakan Privasi Google
-				</a>
-				. Penggunaan Google Maps Platform oleh situs ini diatur oleh{' '}
-				<a href="https://cloud.google.com/maps-platform/terms" rel="noopener noreferrer">
-					Google Maps Platform Terms of Service
-				</a>
-				.
-			</p>
-
-			<h2>Privasi</h2>
-			<p>
-				Cara kami memproses lokasi dijelaskan di <Link href="/privacy">Kebijakan Privasi</Link>.
-			</p>
+		<LegalArticle locale={locale} title={getDictionary(locale).pages.terms.heading} updated="2026-10-19">
+			<Content />
 		</LegalArticle>
 	);
 }

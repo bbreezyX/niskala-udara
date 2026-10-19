@@ -52,11 +52,16 @@ export const id = {
 			description: 'Riwayat kualitas udara per jam untuk kota-kota pantauan.'
 		},
 		about: { title: 'Tentang', description: 'Apa itu Niskala, cara membaca Universal AQI, sumber data, dan batasannya.' },
-		privacy: { title: 'Privasi' },
-		terms: { title: 'Ketentuan Penggunaan' },
+		privacy: { title: 'Privasi', heading: 'Kebijakan Privasi' },
+		terms: { title: 'Ketentuan Penggunaan', heading: 'Ketentuan Penggunaan' },
 		locationMe: { title: 'Lokasi saya' },
 		locationPoint: { title: 'Titik di peta' },
 		city: { description: 'Kualitas udara terkini, tren 24 jam, prakiraan, dan kadar polutan di {name}.' }
+	},
+	legal: {
+		updated: 'Terakhir diperbarui: {date}',
+		// Only translations carry a note; the Indonesian original needs none.
+		translationNote: ''
 	},
 	common: {
 		refresh: 'Perbarui',
