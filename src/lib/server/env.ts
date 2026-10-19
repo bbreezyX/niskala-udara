@@ -5,7 +5,7 @@ const optional = (value: string | undefined) => value?.trim() || undefined;
 /** Server-only key for the Google Air Quality API. Without it the app reports that the data source is not configured. */
 export const airQualityKey = () => optional(process.env.GOOGLE_AIR_QUALITY_API_KEY);
 
-/** Public origin used for canonical URLs and the sitemap, e.g. https://niskala.id. */
+/** Public origin used for canonical URLs and the sitemap, e.g. https://niskalasense.com. */
 export const siteUrl = () => optional(process.env.SITE_URL) ?? 'http://localhost:3000';
 
 /** Server-only NASA FIRMS MAP_KEY. Without it the map hides the hotspot layer. */

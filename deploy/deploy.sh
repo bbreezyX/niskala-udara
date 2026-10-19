@@ -12,7 +12,7 @@ sudo systemctl restart niskala-udara
 
 # Ask the way Caddy does (HTTPS forwarded) and require a 200: a redirect or a proxy error must fail the deploy.
 healthy() {
-	[ "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' -H 'Host: udaraniskala.web.id' "http://127.0.0.1:3000$1")" = 200 ]
+	[ "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' -H 'Host: niskalasense.com' "http://127.0.0.1:3000$1")" = 200 ]
 }
 
 for _ in $(seq 1 30); do

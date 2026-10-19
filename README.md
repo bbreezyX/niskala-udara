@@ -26,8 +26,17 @@ Isi `.env`:
 | `FIRMS_MAP_KEY`              | server saja   | hotspot NASA FIRMS ([minta gratis](https://firms.modaps.eosdis.nasa.gov/api/map_key/)) |
 | `PUBLIC_GOOGLE_MAPS_API_KEY` | dikirim ke browser | Maps JavaScript API di halaman Peta           |
 | `OPEN_METEO_API_KEY`         | server saja   | opsional: API komersial Open-Meteo untuk angin; tanpa ini memakai API gratis (non-komersial) |
+| `SITE_URL`                   | server saja   | origin publik untuk canonical, sitemap dan robots; produksi: `https://niskalasense.com` |
 
 Semua opsional saat start. Bagian yang key-nya kosong menampilkan status "belum dikonfigurasi", bukan angka karangan.
+
+### Domain produksi
+
+Alamat utama adalah `https://niskalasense.com`. Konfigurasi Caddy di `deploy/Caddyfile` melayani domain utama dan mengalihkan `www.niskalasense.com` serta domain lama `udaraniskala.web.id` dengan HTTP 301, mempertahankan path dan query. File ini dipasang ke `/etc/caddy/Caddyfile` secara terpisah; skrip deploy aplikasi tidak mengubah konfigurasi Caddy.
+
+Di VPS, isi `SITE_URL=https://niskalasense.com` pada `.env`, lalu jalankan deployment agar metadata dan sitemap yang dibuat saat build memakai domain tersebut. Domain utama dan `www` harus menuju VPS yang sama melalui Cloudflare, dengan HTTPS Full (strict). Terapkan pula aturan cache dan pembatasan API di bagian "Cache Cloudflare", termasuk pengecualian tile heatmap. Domain lama tetap dikelola agar tautan lama dapat dialihkan.
+
+Pada key Maps JavaScript, izinkan `https://niskalasense.com/*`. Akses SSH, alamat Tailscale, tag CI, nama service `niskala-udara`, dan direktori `/srv/niskala-udara` tetap menggunakan konfigurasi yang sudah ada.
 
 ## Perintah
 
@@ -94,7 +103,9 @@ Pantauan tidak lagi menunggu JavaScript untuk mulai memuat data. Server memulai 
 
 Satu proses Node di VPS (2 vCPU) hanya sanggup merender Pantauan sekitar 30 kali per detik, karena tiap tampilan merender data 11 kota (diukur dengan cache hangat; endpoint wilayah sekitar 300/detik, halaman statis sekitar 450/detik). Supaya lonjakan pengunjung tidak mengantre di VPS, `/` dan `/api/air-quality/region/[id]` mengirim `Cache-Control: public, max-age=0, s-maxage=60`: Cloudflare boleh menyajikan salinannya 60 detik, browser selalu memeriksa ulang. VPS cukup merender sekali per menit per wilayah, berapa pun jumlah pengunjungnya. Request navigasi klien Next.js (header `RSC` atau query `_rsc`) tidak diberi header ini, karena Cloudflare mengabaikan `Vary` dan tidak boleh menyajikan payload RSC sebagai HTML.
 
-Cloudflare tidak meng-cache HTML secara bawaan. Pasang sekali di dashboard Cloudflare → zona `udaraniskala.web.id`:
+Cloudflare tidak meng-cache HTML secara bawaan. Pasang sekali di dashboard Cloudflare → zona `niskalasense.com`:
+
+Untuk pengaturan cache zona, gunakan **Browser Cache TTL → Respect Existing Headers** agar Cloudflare mengikuti batas cache yang dikirim aplikasi.
 
 1. **Caching → Cache Rules → Create rule**, nama `Pantauan edge cache`, *Custom filter expression* → *Edit expression*:
    ```
@@ -102,7 +113,7 @@ Cloudflare tidak meng-cache HTML secara bawaan. Pasang sekali di dashboard Cloud
    ```
    *Cache eligibility*: **Eligible for cache**. *Edge TTL*: **Use cache-control header if present, bypass cache if not**. *Browser TTL*: **Respect origin TTL**. Simpan.
 2. **Security → WAF → Rate limiting rules → Create rule**, nama `API air quality`: bila `starts_with(http.request.uri.path, "/api/air-quality") and not starts_with(http.request.uri.path, "/api/air-quality/tiles/")`, hitung per IP, lebih dari 60 request per 10 detik → **Block** selama 10 detik. Ini rem untuk lokasi perangkat dan titik peta, yang tetap memanggil Google untuk setiap sel grid baru. Tile heatmap dikecualikan: sekali geser atau zoom, peta meminta 20–50 tile, sehingga batas 60 memblokir pengunjung biasa dan heatmap tampil berpetak kosong. Jika paket Cloudflare mengizinkan rule kedua, buat `Heatmap tiles`: bila `starts_with(http.request.uri.path, "/api/air-quality/tiles/")`, lebih dari 300 request per 10 detik → **Block** 10 detik. Jika tidak, rem untuk tile adalah kuota Air Quality API di Google Cloud (lihat "Mengamankan API key").
-3. Cek: `curl -sI https://udaraniskala.web.id/` dua kali; yang kedua harus `cf-cache-status: HIT`.
+3. Cek: `curl -sI https://niskalasense.com/` dua kali; yang kedua harus `cf-cache-status: HIT`.
 
 Jika nanti halaman memilih bahasa dari header `Accept-Language` atau cookie di URL yang sama, cache rule ini harus disesuaikan dulu, karena Cloudflare tidak membedakan salinan berdasarkan header itu.
 
@@ -148,7 +159,7 @@ Key ini hanya dipakai dari server, jadi pembatasannya berbeda dari key untuk bro
 
 Key Maps JavaScript (`PUBLIC_GOOGLE_MAPS_API_KEY`) memang terlihat di browser, jadi pembatasannya berbeda:
 
-1. *Application restrictions* → **Websites (HTTP referrers)**: isi domain produksi (mis. `https://udara.example.id/*`) dan `http://localhost:3000/*` untuk pengembangan.
+1. *Application restrictions* → **Websites (HTTP referrers)**: isi domain produksi `https://niskalasense.com/*` dan `http://localhost:3000/*` untuk pengembangan.
 2. *API restrictions* → hanya **Maps JavaScript API**. Jangan centang Air Quality API pada key ini; tile heatmap sudah lewat server.
 3. Pasang kuota harian untuk *Map loads* agar penyalahgunaan dari domain palsu tetap terbatas.
 
