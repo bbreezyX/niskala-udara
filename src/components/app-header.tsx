@@ -180,10 +180,11 @@ function SectionNav({
 								onClick={(event) => onNavClick(event, href)}
 								className={cn(
 									'relative flex h-8 items-center rounded-full px-3.5 text-sm font-semibold outline-none transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96] max-[379px]:px-2.5 max-[379px]:text-[13px] sm:px-4',
-									active ? 'text-background' : 'text-muted-foreground hover:text-foreground'
+									active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
 								)}
 							>
-								{active && <m.span layoutId="nav-active" transition={SPRING} className="absolute inset-0 rounded-full bg-foreground" />}
+								{/* White pill whose 1px edge (input, 3.45:1 on the track) marks the page, light enough not to outweigh the content. */}
+								{active && <m.span layoutId="nav-active" transition={SPRING} className="absolute inset-0 rounded-full bg-card inset-ring inset-ring-input" />}
 								<span className="relative">{t.nav[key]}</span>
 							</Link>
 						</li>

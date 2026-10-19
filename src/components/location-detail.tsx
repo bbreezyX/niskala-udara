@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ChevronRight, Clock, CloudOff, Hourglass, Lock, MapPin, MapPinOff, RotateCw, type LucideIcon } from 'lucide-react';
 import { postJson, toRemote, withLanguage, type Remote } from '@/lib/client/api';
+import { useKlhkStation } from '@/lib/client/klhk-feed';
 import { isBusy, needsLoad, useFeed, useFeeds, type LocationFeed } from '@/lib/client/location-feed';
+import type { KlhkStation } from '@/lib/server/klhk-ispu';
 import { aqiBand, bandEdge } from '@/lib/aqi';
 import { dateTimeFormat } from '@/lib/date-format';
 import { fill, plural } from '@/lib/i18n/config';
@@ -15,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
+import { IspuChip, useStationSource } from './ispu-chip';
 import { Attribution, DataUnavailable, Recommendation, StateMessage } from './info-blocks';
 import { PollutantBreakdown } from './pollutant-breakdown';
 import { TrendChart, type TrendPoint } from './trend-chart';
@@ -152,6 +155,9 @@ function SummaryCard({
 }) {
 	const t = useDictionary();
 	const { location } = feed;
+	const station = useKlhkStation(location);
+	// Mirrors IspuChip: a station reading, or Google's once the station lookup has come back empty.
+	const ispuShown = Boolean(station || (station === null && current?.ispu));
 
 	return (
 		<Card className="mt-2 gap-0 rounded-[20px] py-0">
@@ -164,7 +170,7 @@ function SummaryCard({
 					)}
 				</div>
 				<div className="min-w-0 [grid-area:title] min-[360px]:self-end">
-					<h1 className="font-display text-[1.75rem] leading-[1.05] tracking-[-0.02em] text-balance [overflow-wrap:anywhere] min-[400px]:text-[2rem] sm:text-5xl">
+					<h1 className="font-display text-[1.75rem] leading-[1.1] tracking-[-0.02em] text-balance [overflow-wrap:anywhere] min-[400px]:text-[2rem] sm:text-5xl">
 						{location.name}
 					</h1>
 					<p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
@@ -182,6 +188,12 @@ function SummaryCard({
 								color={current.index.color}
 								className="rounded-2xl px-3 py-1.5 text-sm max-[399px]:px-2.5 max-[399px]:text-[13px] [&>span:last-child]:whitespace-normal"
 							/>
+							<IspuChip
+								station={station}
+								google={current.ispu}
+								timeZone={location.timeZone}
+								className="px-3 py-1.5 text-sm max-[399px]:px-2.5 max-[399px]:text-[13px]"
+							/>
 							{current.index.dominantPollutant && (
 								<p className="text-sm text-muted-foreground">
 									{t.common.dominantPollutant}{' '}
@@ -193,10 +205,16 @@ function SummaryCard({
 				</div>
 				{/* UAQI runs the opposite way from ISPU, so the direction is stated next to the dial. */}
 				<p className="text-xs leading-relaxed text-muted-foreground [grid-area:note] sm:self-start">
-					{t.common.scale}{' '}
+					{ispuShown ? t.common.scaleIspu : t.common.scale}{' '}
 					<Link href="/about" className="font-medium whitespace-nowrap text-primary underline-offset-4 hover:underline">
 						{t.common.howToRead}
 					</Link>
+					{/* The chip's tooltip never reaches touch screens, so the source is also written out here. */}
+					{station ? (
+						<StationSource station={station} timeZone={location.timeZone} />
+					) : (
+						ispuShown && <span className="mt-1 block">{t.ispu.sourceModel}</span>
+					)}
 				</p>
 			</header>
 			{/* Freshness and the way to renew it share one row, so neither floats on its own. */}
@@ -512,7 +530,7 @@ function RelatedList({ places, region }: { places: RelatedPlace[]; region?: stri
 	return (
 		<nav aria-labelledby="related-title" className="mt-10">
 			<div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-				<h2 id="related-title" className="font-display text-3xl leading-tight tracking-[-0.01em]">
+				<h2 id="related-title" className="font-heading text-xl leading-snug font-semibold sm:text-2xl">
 					{fill(t.location.relatedTitle, { region: region ?? t.location.thisArea })}
 				</h2>
 				<p className="text-sm text-muted-foreground">{t.location.relatedOrder}</p>
@@ -565,4 +583,9 @@ function RelatedList({ places, region }: { places: RelatedPlace[]; region?: stri
 			{missing && <p className="mt-2 text-xs text-muted-foreground">{t.location.relatedNote}</p>}
 		</nav>
 	);
+}
+
+/** Its own component so the source hook runs only when there is a station. */
+function StationSource({ station, timeZone }: { station: KlhkStation; timeZone: string }) {
+	return <span className="mt-1 block">{useStationSource(station, timeZone)}</span>;
 }

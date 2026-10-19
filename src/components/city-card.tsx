@@ -3,6 +3,7 @@
 import { Suspense, use, useEffect } from 'react';
 import { Clock, MapPin, RotateCw } from 'lucide-react';
 import { fromApi, toRemote, type Remote } from '@/lib/client/api';
+import { useKlhkStation } from '@/lib/client/klhk-feed';
 import { isBusy, useFeed, type LocationFeed } from '@/lib/client/location-feed';
 import { aqiBand } from '@/lib/aqi';
 import { formatHour, timeZoneLabel } from '@/lib/format';
@@ -13,6 +14,7 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Skeleton } from '@/components/ui/skeleton';
 import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
+import { IspuChip } from './ispu-chip';
 import { PollutantTiles } from './pollutant-tiles';
 import { TrendChart } from './trend-chart';
 import { Link } from './link';
@@ -83,6 +85,7 @@ export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: s
 	const t = useDictionary();
 	const state = useFeed(feed);
 	const current = useStreamed(feed, 'current', state.current, streamed?.current);
+	const station = useKlhkStation(feed.location);
 	const { location } = feed;
 	const titleId = `city-${location.key}`;
 
@@ -124,7 +127,11 @@ export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: s
 		>
 			{/* Color stays on the badge only, so a grid of cards does not turn into a wall of color. */}
 			<CardHeader className="gap-1.5">
-				<AqiBadge aqi={index.aqi} category={index.category} color={index.color} className="mb-0.5 justify-self-start" />
+				{/* Stacked, so every card's header keeps one shape whatever the category lengths. */}
+				<div className="mb-0.5 flex flex-col items-start gap-1.5">
+					<AqiBadge aqi={index.aqi} category={index.category} color={index.color} />
+					<IspuChip station={station} google={data.ispu} timeZone={location.timeZone} />
+				</div>
 				<CardTitle id={titleId} className="text-lg font-semibold">
 					{/* Stretched over the whole card so the card is one large tap target. */}
 					<Link

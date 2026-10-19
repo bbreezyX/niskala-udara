@@ -39,7 +39,7 @@ export function Recommendation({
 					{health.headlines[aqiBandIndex(aqi)]}
 				</h3>
 			</div>
-			<p className={cn('max-w-prose leading-relaxed', !general && 'text-muted-foreground')}>{general ?? health.missing}</p>
+			<p className={cn('max-w-prose text-base leading-relaxed', !general && 'text-muted-foreground')}>{general ?? health.missing}</p>
 			{groups.length > 0 && (
 				<div className="grid gap-2 border-t pt-3">
 					<p id="health-groups" className="text-sm text-muted-foreground">
@@ -63,7 +63,7 @@ export function Recommendation({
 						))}
 					</ToggleGroupPrimitive.Root>
 					<div aria-live="polite">
-						{groupText && <p className="max-w-prose rounded-lg bg-muted px-3 py-2.5 leading-relaxed">{groupText}</p>}
+						{groupText && <p className="max-w-prose rounded-lg bg-muted px-3 py-2.5 text-base leading-relaxed">{groupText}</p>}
 					</div>
 				</div>
 			)}

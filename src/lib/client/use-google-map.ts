@@ -4,15 +4,16 @@ import { useEffect, useMemo, useState, type RefObject } from 'react';
 import { MAP_BOUNDS, MAP_CENTER, MAP_ZOOM } from '@/lib/config/map';
 import type { Locale } from '@/lib/i18n/config';
 import { loadGoogleMaps, MapsLoadError, onMapsAuthFailure } from './google-maps';
+import { createHeatmapType } from './heatmap-tiles';
 import { syncOverlays, type HotspotLayer } from './hotspot-layer';
 import { createWindOverlay, type WindField } from './wind-layer';
 
 // Google Maps objects are imperative handles; they live here only while the map is usable.
 export type MapState =
 	| { status: 'unconfigured' | 'loading' | 'network' | 'auth' }
-	| { status: 'ready'; map: google.maps.Map; heatmap: google.maps.ImageMapType };
+	| { status: 'ready'; map: google.maps.Map; heatmap: google.maps.MapType };
 
-function createMap({ Map, ImageMapType }: google.maps.MapsLibrary, element: HTMLElement) {
+function createMap({ Map }: google.maps.MapsLibrary, element: HTMLElement) {
 	const map = new Map(element, {
 		center: MAP_CENTER,
 		zoom: MAP_ZOOM.initial,
@@ -21,23 +22,17 @@ function createMap({ Map, ImageMapType }: google.maps.MapsLibrary, element: HTML
 		restriction: { latLngBounds: MAP_BOUNDS, strictBounds: false },
 		mapTypeControl: false,
 		streetViewControl: false,
+		// Plain +/- buttons instead of the camera control, which hides zoom behind a click.
+		cameraControl: false,
+		zoomControl: true,
+		zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM },
+		// A km scale, for judging how far a hotspot sits from a city.
+		scaleControl: true,
 		clickableIcons: false,
 		gestureHandling: 'greedy'
 	});
 
-	const heatmap = new ImageMapType({
-		name: 'Universal AQI',
-		tileSize: new google.maps.Size(256, 256),
-		maxZoom: MAP_ZOOM.max,
-		opacity: 0.55,
-		getTileUrl: (coord, zoom) => {
-			const n = 2 ** zoom;
-			if (coord.x < 0 || coord.y < 0 || coord.x >= n || coord.y >= n) return null;
-			return `/api/air-quality/tiles/${zoom}/${coord.x}/${coord.y}`;
-		}
-	});
-
-	return { map, heatmap };
+	return { map, heatmap: createHeatmapType(0.55) };
 }
 
 /** Loads the Maps API and mounts the map into `element`. Without a key it stays `unconfigured`. */

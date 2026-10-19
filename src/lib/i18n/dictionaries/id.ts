@@ -39,6 +39,7 @@ export const id = {
 		terms: 'Ketentuan Penggunaan',
 		dataSources: 'Sumber data',
 		airQualitySource: 'Kualitas udara: Google Air Quality API',
+		ispuSource: 'ISPU stasiun:',
 		hotspotSource: 'Hotspot:',
 		windSource: 'Angin:'
 	},
@@ -74,6 +75,7 @@ export const id = {
 		loadingPlace: 'Memuat data {name}',
 		locations: { one: '{n} lokasi', other: '{n} lokasi' },
 		scale: 'Skala 0–100, makin tinggi makin baik.',
+		scaleIspu: 'AQI 0–100, makin tinggi makin baik. ISPU sebaliknya, makin tinggi makin buruk.',
 		howToRead: 'Cara membaca AQI',
 		dominantPollutant: 'Polutan dominan',
 		backToOverview: 'Kembali ke Pantauan',
@@ -84,6 +86,20 @@ export const id = {
 		bands: { poor: 'Buruk', low: 'Rendah', moderate: 'Sedang', good: 'Baik', excellent: 'Sangat baik' },
 		gauge: 'AQI {value} dari 100',
 		categories: 'Kategori'
+	},
+	ispu: {
+		label: 'ISPU',
+		spoken: 'ISPU {value}, {category}',
+		atLeast: '≥ {value}',
+		bands: {
+			good: 'Baik',
+			moderate: 'Sedang',
+			unhealthy: 'Tidak sehat',
+			veryUnhealthy: 'Sangat tidak sehat',
+			hazardous: 'Berbahaya'
+		},
+		sourceStation: 'ISPU dari stasiun KLH/BPLH {name}, {time}.',
+		sourceModel: 'ISPU dihitung Google dari data model; belum ada stasiun KLH/BPLH aktif untuk lokasi ini.'
 	},
 	health: {
 		title: 'Rekomendasi kesehatan',
@@ -377,6 +393,16 @@ export const id = {
 		windLegend: 'Garis bergerak searah angin 10 m di atas tanah. Makin pekat, makin kencang.',
 		windValid: 'Prakiraan model untuk pukul {time}.',
 		windFailed: 'Data angin gagal dimuat.',
+		stations: {
+			title: 'ISPU stasiun KLH/BPLH',
+			scaleLow: '0, baik',
+			scaleHigh: '≥ 300, berbahaya',
+			count: { one: '{n} stasiun melapor dalam 3 jam terakhir.', other: '{n} stasiun melapor dalam 3 jam terakhir.' },
+			missing: 'Sebagian provinsi gagal dimuat, jumlah bisa lebih rendah.',
+			failed: 'ISPU stasiun gagal dimuat.',
+			critical: 'Parameter kritis',
+			marker: 'Stasiun {name}: ISPU {value}, {category}'
+		},
 		compass: ['utara', 'timur laut', 'timur', 'tenggara', 'selatan', 'barat daya', 'barat', 'barat laut'],
 		checkCenter: 'Cek AQI di tengah peta',
 		clickHint: 'Atau klik titik mana pun di peta.',

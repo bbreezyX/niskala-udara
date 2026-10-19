@@ -13,7 +13,7 @@ export interface PollutantReading {
 	units: string;
 }
 
-/** Universal AQI (code "uaqi") picked from the response by code. */
+/** An index picked from the response by code: Universal AQI ("uaqi") or Indonesia's ISPU ("idn_menlhk"). */
 export interface UniversalAqi {
 	displayName: string;
 	aqi: number;
@@ -40,6 +40,11 @@ export interface AirQualityData {
 	/** Timestamp of the data itself (ISO 8601, UTC), not of the request. */
 	dataTime: string;
 	index: UniversalAqi;
+	/**
+	 * Indonesia's ISPU as Google computes it from its model (higher is worse, unlike UAQI). Only current
+	 * conditions ask for it, and Google omits it outside Indonesia.
+	 */
+	ispu?: UniversalAqi;
 	pollutants: PollutantReading[];
 	/** Google's advice per group, verbatim; groups Google left out are absent. */
 	recommendations: Partial<Record<HealthGroup, string>>;

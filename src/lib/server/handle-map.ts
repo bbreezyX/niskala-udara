@@ -1,4 +1,5 @@
-import { MAP_BOUNDS, MAP_ZOOM, type Bounds } from '@/lib/config/map';
+import { MAP_ZOOM } from '@/lib/config/map';
+import { tileInBounds } from '@/lib/tile-bounds';
 import { getHotspots } from './firms';
 import { getWind } from './wind';
 import { AirQualityError } from './google-air-quality';
@@ -30,16 +31,6 @@ export async function handleFiresRequest(
 		log('fires', code, error instanceof Error ? error.message : 'unexpected', startedAt);
 		return fail(code);
 	}
-}
-
-function tileBounds(z: number, x: number, y: number): Bounds {
-	const n = 2 ** z;
-	const lat = (row: number) => (Math.atan(Math.sinh(Math.PI * (1 - (2 * row) / n))) * 180) / Math.PI;
-	return { west: (x / n) * 360 - 180, east: ((x + 1) / n) * 360 - 180, north: lat(y), south: lat(y + 1) };
-}
-
-function intersects(a: Bounds, b: Bounds): boolean {
-	return a.west < b.east && a.east > b.west && a.south < b.north && a.north > b.south;
 }
 
 /** Strict integer parsing: "07", "1e2" or "-0" are not tile coordinates. */
@@ -121,7 +112,7 @@ export async function handleTileRequest(
 	if (z === null || x === null || y === null || z > MAP_ZOOM.max || x >= 2 ** z || y >= 2 ** z) {
 		return fail('invalid_request');
 	}
-	if (!intersects(tileBounds(z, x, y), MAP_BOUNDS)) return fail('invalid_request', 404);
+	if (!tileInBounds(z, x, y)) return fail('invalid_request', 404);
 	if (!apiKey) return fail('not_configured');
 
 	const { at, tile } = getTile(`${z}/${x}/${y}`, apiKey, fetchFn);

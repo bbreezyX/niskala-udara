@@ -15,13 +15,13 @@ import { useDictionary, useLocale } from './locale-provider';
 
 /**
  * Best and worst borrow the face and fill of the top and bottom AQI bands, matching the solid band buttons above;
- * the neutral orders use the app's blue. White text passes AA on all three (5.0, 5.8, 6.4).
+ * the neutral orders use the app's primary. White text passes AA on all three (5.0, 5.8, 11.6).
  */
 const SORT_OPTIONS: { value: SortKey; icon: LucideIcon; fill: string }[] = [
-	{ value: 'default', icon: List, fill: '#0b57d0' },
+	{ value: 'default', icon: List, fill: 'var(--primary)' },
 	{ value: 'best', icon: AQI_BANDS.at(-1)!.icon, fill: AQI_BANDS.at(-1)!.fill },
 	{ value: 'worst', icon: AQI_BANDS[0].icon, fill: AQI_BANDS[0].fill },
-	{ value: 'name', icon: ArrowDownAZ, fill: '#0b57d0' }
+	{ value: 'name', icon: ArrowDownAZ, fill: 'var(--primary)' }
 ];
 
 /** Stiffer than the navbar's spring: the hop is short, and the thumb must land as the label turns white. */
@@ -72,7 +72,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount }: Props) 
 					size="lg"
 					// Icon-only below lg, like the refresh button beside it, so the region and both actions share one row on phones.
 					className={cn(
-						'h-11 w-11 gap-2 rounded-full border-input bg-card px-0 lg:w-auto lg:px-4',
+						'h-11 w-11 gap-2 rounded-full border-input bg-card px-0 text-muted-foreground lg:w-auto lg:px-4',
 						filtered && 'border-primary/50 text-primary hover:text-primary aria-expanded:text-primary'
 					)}
 					title={t.filter.trigger}
@@ -94,7 +94,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount }: Props) 
 			>
 				<div className="grid gap-5 p-5">
 					<div>
-						<p className="font-display text-2xl leading-tight">{t.filter.title}</p>
+						<p className="font-heading text-lg leading-snug font-semibold">{t.filter.title}</p>
 						<p className="mt-1 text-sm text-muted-foreground">{t.filter.hint}</p>
 					</div>
 

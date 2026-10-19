@@ -181,7 +181,7 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 			<Button
 				variant="outline"
 				size="lg"
-				className="h-11 w-11 gap-2 rounded-full bg-card px-0 text-muted-foreground hover:text-foreground lg:w-auto lg:px-4"
+				className="h-11 w-11 gap-2 rounded-full border-input bg-card px-0 text-muted-foreground lg:w-auto lg:px-4"
 				disabled={anyBusy || !configured}
 				onClick={refreshAll}
 				aria-label={anyBusy ? t.dashboard.refreshingData : t.dashboard.refreshData}
@@ -196,7 +196,7 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 
 	return (
 		<>
-			<div className="page-frame pt-3">
+			<div className="page-frame pt-5">
 				{/*
 				  Sky panel. From lg up, its bottom-left corner is cut into a notch (page background, concave
 				  fillets) that holds the list title and region switch, so they read as the top of the card list.
@@ -222,7 +222,7 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 					</div>
 					<div className="relative flex flex-wrap items-end justify-between gap-6 px-5 pt-10 pb-10 sm:px-10 md:pt-14 lg:pb-28">
 						<div className="min-w-0 flex-1 basis-[28rem]">
-							<h1 id="page-title" className="max-w-[18ch] font-display text-4xl leading-[1.08] tracking-[-0.02em] text-balance sm:text-5xl lg:text-6xl">
+							<h1 id="page-title" className="max-w-[18ch] font-display text-4xl leading-[1.1] tracking-[-0.02em] text-balance sm:text-5xl lg:text-6xl">
 								{t.dashboard.heading}
 							</h1>
 							<p className="mt-3 max-w-[52ch] text-base text-pretty text-muted-foreground sm:text-lg">{t.dashboard.lead}</p>
@@ -238,7 +238,7 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 					<div className="absolute bottom-0 left-0 hidden rounded-tr-[20px] bg-background pt-3 pr-5 lg:block">
 						<span aria-hidden="true" className="absolute bottom-full left-0 size-5 bg-[radial-gradient(circle_at_100%_0,transparent_19.5px,var(--background)_20px)]" />
 						<span aria-hidden="true" className="absolute bottom-0 left-full size-5 bg-[radial-gradient(circle_at_100%_0,transparent_19.5px,var(--background)_20px)]" />
-						{/* The region is the heading, in the hero's serif; the bar under it sums the region up and filters by band. */}
+						{/* The region is the list heading; the bar beside it sums the region up and filters by band. */}
 						<div className="flex items-center gap-4">
 							<h2 className="flex">
 								<span className="sr-only">{t.dashboard.overviewPrefix}</span>

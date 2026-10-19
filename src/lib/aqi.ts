@@ -35,7 +35,7 @@ export interface AqiBand {
 /** Google's UAQI bands: Poor 0–19, Low 20–39, Moderate 40–59, Good 60–79, Excellent 80–100. */
 export const AQI_BANDS: readonly AqiBand[] = [
 	{ min: 0, key: 'poor', icon: Angry, ink: '#991b1b', fill: '#c5221f', onFill: '#ffffff' },
-	{ min: 20, key: 'low', icon: Frown, ink: '#c2410c', fill: '#fa7b17', onFill: '#1f1f1f' },
+	{ min: 20, key: 'low', icon: Frown, ink: '#c2410c', fill: '#fa7b17', onFill: '#141920' },
 	{ min: 40, key: 'moderate', icon: Meh, ink: '#a16207', fill: '#fdd663', onFill: '#3c2c00' },
 	{ min: 60, key: 'good', icon: Smile, ink: '#4d7c0f', fill: '#a8da6b', onFill: '#1f3a00' },
 	{ min: 80, key: 'excellent', icon: Laugh, ink: '#15803d', fill: '#188038', onFill: '#ffffff' }

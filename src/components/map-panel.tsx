@@ -6,6 +6,8 @@ import { UAQI_GRADIENT } from '@/lib/aqi';
 import type { Remote } from '@/lib/client/api';
 import { formatDataTime, formatHour, numberFormat, timeZoneLabel } from '@/lib/format';
 import { fill, plural } from '@/lib/i18n/config';
+import { ISPU_BANDS } from '@/lib/ispu';
+import type { KlhkNationalData } from '@/lib/server/klhk-ispu';
 import type { FireData, WindData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -78,7 +80,7 @@ function FireCounts({ data }: { data: FireData }) {
 	return (
 		<>
 			<p className="-mt-1 flex items-baseline gap-2">
-				<span className="font-display text-5xl leading-none tabular-nums">{hotspots.length}</span>
+				<span className="font-sans text-5xl leading-none font-semibold tabular-nums">{hotspots.length}</span>
 				<span className="text-muted-foreground">{plural(t.map.detections, hotspots.length, locale)}</span>
 			</p>
 			{hotspots.length > 0 && (
@@ -118,10 +120,15 @@ interface LayerControlsProps {
 	onRetryWind: () => void;
 	mapReady: boolean;
 	firesConfigured: boolean;
+	showStations: boolean;
+	onShowStations: (checked: boolean) => void;
+	stations: Remote<KlhkNationalData>;
+	onRetryStations: () => void;
 }
 
 export function LayerControls(props: LayerControlsProps) {
 	const { showHeatmap, onShowHeatmap, showFires, onShowFires, showWind, onShowWind, wind, mapReady, firesConfigured } = props;
+	const { showStations, onShowStations, stations } = props;
 	const t = useDictionary();
 	return (
 		<section className="grid gap-1 p-5" aria-labelledby="layers-title">
@@ -141,6 +148,18 @@ export function LayerControls(props: LayerControlsProps) {
 				<span>{t.map.scaleHigh}</span>
 			</div>
 			<div className="mt-2 flex min-h-11 items-center justify-between gap-3">
+				<Label htmlFor="layer-stations" className="font-semibold">
+					{t.map.stations.title}
+				</Label>
+				<Switch
+					id="layer-stations"
+					checked={showStations}
+					onCheckedChange={onShowStations}
+					disabled={!mapReady || stations.status !== 'success'}
+				/>
+			</div>
+			<StationsStatus {...props} />
+			<div className="mt-2 flex min-h-11 items-center justify-between gap-3">
 				<Label htmlFor="layer-fires" className="font-semibold">
 					{t.map.hotspots}
 				</Label>
@@ -154,6 +173,47 @@ export function LayerControls(props: LayerControlsProps) {
 			</div>
 			<WindStatus {...props} />
 		</section>
+	);
+}
+
+/**
+ * KLH's five ISPU bands as one segmented bar, laid out like the heatmap legend above it so the panel reads as one
+ * set; the band names stay available to screen readers. Then how many stations are reporting.
+ */
+function StationsStatus({ stations, onRetryStations }: LayerControlsProps) {
+	const t = useDictionary();
+	const locale = useLocale();
+	if (stations.status === 'error') {
+		return (
+			<div className="flex items-center justify-between gap-3 text-sm">
+				<p className="font-semibold text-destructive">{t.map.stations.failed}</p>
+				<Button variant="outline" size="sm" onClick={onRetryStations}>
+					<RotateCw data-icon="inline-start" />
+					{t.common.retry}
+				</Button>
+			</div>
+		);
+	}
+	if (stations.status !== 'success') return <Skeleton className="h-12 rounded-md" />;
+	const { stations: list, missingProvinces } = stations.data;
+	return (
+		<>
+			<ul className="flex h-2 overflow-hidden rounded-full" aria-label={t.aqi.categories}>
+				{ISPU_BANDS.map((band) => (
+					<li key={band.key} className="flex-1" style={{ background: band.color }}>
+						<span className="sr-only">{t.ispu.bands[band.key]}</span>
+					</li>
+				))}
+			</ul>
+			<div className="flex justify-between text-xs text-muted-foreground">
+				<span>{t.map.stations.scaleLow}</span>
+				<span>{t.map.stations.scaleHigh}</span>
+			</div>
+			<p className="text-xs text-muted-foreground">
+				{plural(t.map.stations.count, list.length, locale)}
+				{missingProvinces.length > 0 && ` ${t.map.stations.missing}`}
+			</p>
+		</>
 	);
 }
 
@@ -207,6 +267,12 @@ export function MapAbout() {
 			<p className="grid gap-0.5">
 				<span lang="en" translate="no">
 					Source: Includes air quality data from Google
+				</span>
+				<span>
+					{t.footer.ispuSource}{' '}
+					<a href="https://ispu.kemenlh.go.id/" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+						KLH/BPLH
+					</a>
 				</span>
 				<span>
 					{t.map.hotspotSource}{' '}

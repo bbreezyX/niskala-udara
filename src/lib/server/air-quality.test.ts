@@ -120,7 +120,7 @@ describe('handleAirQualityRequest', () => {
 			location: jakarta,
 			universalAqi: true,
 			languageCode: 'id',
-			extraComputations: ['POLLUTANT_CONCENTRATION', 'HEALTH_RECOMMENDATIONS']
+			extraComputations: ['POLLUTANT_CONCENTRATION', 'HEALTH_RECOMMENDATIONS', 'LOCAL_AQI']
 		});
 	});
 
