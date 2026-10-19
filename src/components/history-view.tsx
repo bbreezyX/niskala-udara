@@ -17,7 +17,7 @@ import { CITIES, DEFAULT_REGION, type City, type RegionId } from '@/lib/config/c
 import { HISTORY_RANGES, type HistoryRange } from '@/lib/coordinates';
 import { postJson, toRemote, withLanguage, type Remote } from '@/lib/client/api';
 import { useRememberedRegion } from '@/lib/client/region-memory';
-import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
+import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel, type ClientErrorCode } from '@/lib/format';
 import { dateTimeFormat } from '@/lib/date-format';
 import { fill, type Locale } from '@/lib/i18n/config';
 import type { Dictionary } from '@/lib/i18n/dictionaries/id';
@@ -183,13 +183,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 	);
 	const columns = useMemo(() => columnsFor(city.timeZone, locale, t), [city.timeZone, locale, t]);
 
-	const table = useTable({
-		features,
-		columns,
-		data: rows,
-		initialState: { sorting: [{ id: 't', desc: true }], pagination: { pageIndex: 0, pageSize: PAGE_SIZE } },
-		enableSortingRemoval: false
-	});
+	const table = useHistoryTable(columns, rows);
 
 	const newest = rows.at(-1);
 	const selected = rows.find((row) => row.t === selectedTime) ?? newest;
@@ -249,118 +243,28 @@ export function HistoryView({ configured }: { configured: boolean }) {
 					<TabsPrimitive.Content value={String(range)} asChild>
 						<CardContent className="grid gap-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
 							{history.status === 'error' ? (
-								<div role="alert" className="grid justify-items-start gap-2 rounded-xl bg-destructive/5 p-6">
-									<p className="font-semibold text-destructive">{t.errors[history.code].title}</p>
-									<p className="text-sm text-muted-foreground">{t.errors[history.code].description}</p>
-									<Button size="lg" className="mt-2" onClick={() => setReloadVersion((v) => v + 1)}>
-										{t.common.retry}
-									</Button>
-								</div>
+								<HistoryError code={history.code} onRetry={() => setReloadVersion((v) => v + 1)} />
 							) : (
 								<>
 									<Table aria-busy={history.status !== 'success'} data-grouped={groupedByDay} className="text-sm">
 										<TableCaption className="sr-only">{fill(t.history.caption, { name: city.name })}</TableCaption>
 										<TableHeader>
-											{table.getHeaderGroups().map((group) => (
-												<TableRow key={group.id} className="hover:bg-transparent">
-													{group.headers.map((header) => {
-														const sorted = header.column.getIsSorted();
-														const SortIcon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
-														return (
-															<TableHead
-																key={header.id}
-																aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-																className={cn('h-10 px-2 text-xs font-semibold text-muted-foreground', COLUMN_CLASS[header.column.id])}
-															>
-																{header.column.getCanSort() ? (
-																	<button
-																		type="button"
-																		onClick={header.column.getToggleSortingHandler()}
-																		className="inline-flex min-h-9 items-center gap-1 hover:text-foreground"
-																	>
-																		{headerText(header.column)}
-																		<SortIcon className={cn('size-3.5', !sorted && 'opacity-40')} aria-hidden="true" />
-																	</button>
-																) : (
-																	<table.FlexRender header={header} />
-																)}
-															</TableHead>
-														);
-													})}
-												</TableRow>
-											))}
+											<HistoryTableHead table={table} />
 										</TableHeader>
 										<TableBody>
-											{history.status === 'success'
-												? table.getRowModel().rows.map((row, i, all) => {
-														const isSelected = row.original.t === selected?.t;
-														const day = dayLabel.format(row.original.t);
-														const newDay = groupedByDay && (i === 0 || dayLabel.format(all[i - 1].original.t) !== day);
-														return (
-															<Fragment key={row.id}>
-																{newDay && (
-																	<TableRow className="border-0 hover:bg-transparent">
-																		<TableCell colSpan={4} className="px-2 pt-4 pb-1 text-xs font-semibold text-muted-foreground">
-																			{day}
-																		</TableCell>
-																	</TableRow>
-																)}
-																<TableRow
-																	data-state={isSelected ? 'selected' : undefined}
-																	onClick={() => select(row.original.t)}
-																	className="cursor-pointer border-0 hover:bg-muted/60 data-[state=selected]:bg-secondary [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl"
-																>
-																	{row.getAllCells().map((cell) => (
-																		<TableCell key={cell.id} className={cn('h-11 px-2 py-1', COLUMN_CLASS[cell.column.id])}>
-																			{cell.column.id === 't' ? (
-																				<button
-																					type="button"
-																					aria-pressed={isSelected}
-																					aria-label={fill(t.history.showHour, {
-																						time: `${formatHour(row.original.hour.dataTime, city.timeZone, locale)}, ${formatDay(row.original.hour.dataTime, city.timeZone, locale)}`
-																					})}
-																					onClick={(event) => {
-																						event.stopPropagation();
-																						select(row.original.t);
-																					}}
-																					className="min-h-10 rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-																				>
-																					<table.FlexRender cell={cell} />
-																				</button>
-																			) : (
-																				<table.FlexRender cell={cell} />
-																			)}
-																		</TableCell>
-																	))}
-																</TableRow>
-															</Fragment>
-														);
-													})
-												: Array.from({ length: 8 }, (_, i) => (
-														<TableRow key={i} aria-hidden="true">
-															<TableCell colSpan={4}>
-																<Skeleton className="h-8" />
-															</TableCell>
-														</TableRow>
-													))}
+											<HistoryRows
+												loaded={history.status === 'success'}
+												table={table}
+												selectedTime={selected?.t}
+												groupedByDay={groupedByDay}
+												dayLabel={dayLabel}
+												city={city}
+												onSelect={select}
+											/>
 										</TableBody>
 									</Table>
 
-									{pageCount > 1 && (
-										<nav aria-label={t.history.pagesLabel} className="flex items-center justify-between gap-2">
-											<Button variant="outline" size="lg" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>
-												<ChevronLeft data-icon="inline-start" />
-												{t.history.previous}
-											</Button>
-											<p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
-												{fill(t.history.page, { page: String(pageIndex + 1), count: String(pageCount) })}
-											</p>
-											<Button variant="outline" size="lg" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
-												{t.history.next}
-												<ChevronRight data-icon="inline-end" />
-											</Button>
-										</nav>
-									)}
+									{pageCount > 1 && <HistoryPager table={table} pageIndex={pageIndex} pageCount={pageCount} />}
 								</>
 							)}
 						</CardContent>
@@ -404,6 +308,162 @@ export function HistoryView({ configured }: { configured: boolean }) {
 				<Skeleton className="h-48 rounded-2xl" />
 			)}
 		</div>
+	);
+}
+
+type HistoryTable = ReturnType<typeof useHistoryTable>;
+
+function useHistoryTable(columns: ReturnType<typeof columnsFor>, rows: HourRow[]) {
+	return useTable({
+		features,
+		columns,
+		data: rows,
+		initialState: { sorting: [{ id: 't', desc: true }], pagination: { pageIndex: 0, pageSize: PAGE_SIZE } },
+		enableSortingRemoval: false
+	});
+}
+
+/** Why the history failed to load, with a way to ask again. */
+function HistoryError({ code, onRetry }: { code: ClientErrorCode; onRetry: () => void }) {
+	const t = useDictionary();
+	return (
+		<div role="alert" className="grid justify-items-start gap-2 rounded-xl bg-destructive/5 p-6">
+			<p className="font-semibold text-destructive">{t.errors[code].title}</p>
+			<p className="text-sm text-muted-foreground">{t.errors[code].description}</p>
+			<Button size="lg" className="mt-2" onClick={onRetry}>
+				{t.common.retry}
+			</Button>
+		</div>
+	);
+}
+
+/** Column headers; sortable ones are buttons that name their column and show the direction. */
+function HistoryTableHead({ table }: { table: HistoryTable }) {
+	return (
+		<>
+			{table.getHeaderGroups().map((group) => (
+				<TableRow key={group.id} className="hover:bg-transparent">
+					{group.headers.map((header) => {
+						const sorted = header.column.getIsSorted();
+						const SortIcon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
+						return (
+							<TableHead
+								key={header.id}
+								aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
+								className={cn('h-10 px-2 text-xs font-semibold text-muted-foreground', COLUMN_CLASS[header.column.id])}
+							>
+								{header.column.getCanSort() ? (
+									<button
+										type="button"
+										onClick={header.column.getToggleSortingHandler()}
+										className="inline-flex min-h-9 items-center gap-1 hover:text-foreground"
+									>
+										{headerText(header.column)}
+										<SortIcon className={cn('size-3.5', !sorted && 'opacity-40')} aria-hidden="true" />
+									</button>
+								) : (
+									<table.FlexRender header={header} />
+								)}
+							</TableHead>
+						);
+					})}
+				</TableRow>
+			))}
+		</>
+	);
+}
+
+/** One row per hour, grouped under a day heading while sorted by time; skeleton rows until the data arrives. */
+function HistoryRows({
+	loaded,
+	table,
+	selectedTime,
+	groupedByDay,
+	dayLabel,
+	city,
+	onSelect
+}: {
+	loaded: boolean;
+	table: HistoryTable;
+	selectedTime: number | undefined;
+	groupedByDay: boolean;
+	dayLabel: Intl.DateTimeFormat;
+	city: City;
+	onSelect: (t: number) => void;
+}) {
+	const locale = useLocale();
+	const t = useDictionary();
+	if (!loaded) {
+		return Array.from({ length: 8 }, (_, i) => (
+			<TableRow key={i} aria-hidden="true">
+				<TableCell colSpan={4}>
+					<Skeleton className="h-8" />
+				</TableCell>
+			</TableRow>
+		));
+	}
+	return table.getRowModel().rows.map((row, i, all) => {
+		const isSelected = row.original.t === selectedTime;
+		const day = dayLabel.format(row.original.t);
+		const newDay = groupedByDay && (i === 0 || dayLabel.format(all[i - 1].original.t) !== day);
+		return (
+			<Fragment key={row.id}>
+				{newDay && (
+					<TableRow className="border-0 hover:bg-transparent">
+						<TableCell colSpan={4} className="px-2 pt-4 pb-1 text-xs font-semibold text-muted-foreground">
+							{day}
+						</TableCell>
+					</TableRow>
+				)}
+				<TableRow
+					data-state={isSelected ? 'selected' : undefined}
+					onClick={() => onSelect(row.original.t)}
+					className="cursor-pointer border-0 hover:bg-muted/60 data-[state=selected]:bg-secondary [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl"
+				>
+					{row.getAllCells().map((cell) => (
+						<TableCell key={cell.id} className={cn('h-11 px-2 py-1', COLUMN_CLASS[cell.column.id])}>
+							{cell.column.id === 't' ? (
+								<button
+									type="button"
+									aria-pressed={isSelected}
+									aria-label={fill(t.history.showHour, {
+										time: `${formatHour(row.original.hour.dataTime, city.timeZone, locale)}, ${formatDay(row.original.hour.dataTime, city.timeZone, locale)}`
+									})}
+									onClick={(event) => {
+										event.stopPropagation();
+										onSelect(row.original.t);
+									}}
+									className="min-h-10 rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+								>
+									<table.FlexRender cell={cell} />
+								</button>
+							) : (
+								<table.FlexRender cell={cell} />
+							)}
+						</TableCell>
+					))}
+				</TableRow>
+			</Fragment>
+		);
+	});
+}
+
+function HistoryPager({ table, pageIndex, pageCount }: { table: HistoryTable; pageIndex: number; pageCount: number }) {
+	const t = useDictionary();
+	return (
+		<nav aria-label={t.history.pagesLabel} className="flex items-center justify-between gap-2">
+			<Button variant="outline" size="lg" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>
+				<ChevronLeft data-icon="inline-start" />
+				{t.history.previous}
+			</Button>
+			<p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+				{fill(t.history.page, { page: String(pageIndex + 1), count: String(pageCount) })}
+			</p>
+			<Button variant="outline" size="lg" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
+				{t.history.next}
+				<ChevronRight data-icon="inline-end" />
+			</Button>
+		</nav>
 	);
 }
 
