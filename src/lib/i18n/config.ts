@@ -5,10 +5,10 @@ export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = 'id';
 
 /**
- * Locales readers can reach in production. English joins once its pages are translated; until then the
- * proxy sends /en/* back to the Indonesian page and the switch stays hidden, so nothing half-done ships.
+ * Locales readers can reach. A locale left out here is a draft: the proxy sends its URLs back to the
+ * Indonesian page, the switch hides, and hreflang and the sitemap skip it, so nothing half-done ships.
  */
-export const LIVE_LOCALES: readonly Locale[] = process.env.NODE_ENV === 'production' ? ['id'] : LOCALES;
+export const LIVE_LOCALES: readonly Locale[] = LOCALES;
 
 /**
  * BCP 47 tags for Intl. British English gives the 24-hour clock and day-month order Indonesian readers
