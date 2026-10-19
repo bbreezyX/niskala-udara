@@ -70,15 +70,20 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount }: Props) 
 				<Button
 					variant="outline"
 					size="lg"
-					className={cn('h-11 gap-2 rounded-full border-input bg-card px-4', filtered && 'border-primary/50 text-primary hover:text-primary aria-expanded:text-primary')}
+					// Icon-only below lg, like the refresh button beside it, so the region and both actions share one row on phones.
+					className={cn(
+						'h-11 w-11 gap-2 rounded-full border-input bg-card px-0 lg:w-auto lg:px-4',
+						filtered && 'border-primary/50 text-primary hover:text-primary aria-expanded:text-primary'
+					)}
+					title={t.filter.trigger}
 				>
 					<span className="relative">
 						<SlidersHorizontal className="size-4" aria-hidden="true" />
 						{filtered && <span aria-hidden="true" className="absolute -top-1 -right-1 size-2 rounded-full bg-primary ring-2 ring-card" />}
 					</span>
-					{t.filter.trigger}
+					<span className="sr-only lg:not-sr-only">{t.filter.trigger}</span>
 					{filtered && <span className="sr-only">{t.filter.active}</span>}
-					<ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+					<ChevronDown className="hidden size-4 text-muted-foreground lg:block" aria-hidden="true" />
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent

@@ -226,10 +226,6 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 								{t.dashboard.heading}
 							</h1>
 							<p className="mt-3 max-w-[52ch] text-base text-pretty text-muted-foreground sm:text-lg">{t.dashboard.lead}</p>
-							{/* UAQI runs the opposite way to ISPU, so the explanation stays one tap away. From lg up it sits under the hero, beside the cards it explains. */}
-							<Link href="/about" className="mt-2 inline-flex min-h-8 items-center text-sm font-medium text-primary underline-offset-4 hover:underline lg:hidden">
-								{t.common.scale} {t.common.howToRead}
-							</Link>
 						</div>
 						<Button asChild size="lg" className="h-11 rounded-full px-5">
 							<Link href="/location/me">
@@ -252,6 +248,7 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 						</div>
 					</div>
 					<div className="absolute right-4 bottom-4 hidden lg:flex">{listActions}</div>
+					{/* UAQI runs the opposite way to ISPU, so the explanation stays one tap away, under the hero beside the cards it explains. */}
 					<Link
 						href="/about"
 						className="absolute top-full right-1 mt-1 hidden min-h-8 items-center text-sm font-medium text-primary underline-offset-4 hover:underline lg:inline-flex"
@@ -287,6 +284,10 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 							)
 						}
 					/>
+					{/* Off the photo, where it reads clearly: the fact stays quiet and only the action is a link color. */}
+					<Link href="/about" className="group min-h-8 justify-self-start text-sm text-pretty text-muted-foreground">
+						{t.common.scale} <span className="font-medium text-primary underline-offset-4 group-hover:underline">{t.common.howToRead}</span>
+					</Link>
 				</div>
 			</div>
 

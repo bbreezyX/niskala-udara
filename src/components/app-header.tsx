@@ -270,8 +270,16 @@ function NavSearchSlot({
 			className="relative overflow-hidden"
 		>
 			<SectionNav ref={navRef} hidden={searching} target={target} pathname={pathname} onNavClick={onNavClick} />
-			{/* Sizes the open slot: the field's own width rule, measured once instead of mirrored in JS. */}
-			<div ref={searchRef} aria-hidden="true" className="invisible absolute top-0 left-0 box-content h-0 w-[min(22rem,calc(100vw-9rem))] px-1.5 max-[379px]:px-1" />
+			{/*
+			  Sizes the open slot: the field's own width rule, measured once instead of mirrored in JS. What the viewport
+			  leaves after everything else in the header: its 16px gutters, the capsule padding, logo, slot padding, the
+			  close button and the language switch (hidden below 360px). Each step matches where those controls shrink.
+			*/}
+			<div
+				ref={searchRef}
+				aria-hidden="true"
+				className="invisible absolute top-0 left-0 box-content h-0 w-[min(22rem,calc(100vw-10.625rem))] px-1.5 max-[379px]:w-[calc(100vw-9.5rem)] max-[379px]:px-1 max-[359px]:w-[calc(100vw-7.25rem)]"
+			/>
 			<SearchField open={searching} query={query} onQueryChange={onQueryChange} />
 		</m.div>
 	);
