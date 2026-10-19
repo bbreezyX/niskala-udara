@@ -114,9 +114,10 @@ export class HotspotLayer {
 
 /** Keeps `layers` as the map's overlays, in that order, without touching ones already in place. */
 export function syncOverlays(overlays: google.maps.MVCArray<google.maps.MapType | null>, layers: google.maps.MapType[]) {
+	const wanted = new Set(layers);
 	for (let i = overlays.getLength() - 1; i >= 0; i--) {
 		const overlay = overlays.getAt(i);
-		if (!overlay || !layers.includes(overlay)) overlays.removeAt(i);
+		if (!overlay || !wanted.has(overlay)) overlays.removeAt(i);
 	}
 	layers.forEach((layer, i) => {
 		if (overlays.getAt(i) !== layer) overlays.insertAt(i, layer);

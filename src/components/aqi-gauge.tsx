@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { UAQI_STOPS } from '@/lib/aqi';
 import { fill } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils';
@@ -44,7 +44,7 @@ export function AqiGauge({ aqi, display, size = 'sm', className }: Props) {
 					/>
 				</div>
 			))}
-			<motion.div
+			<m.div
 				aria-hidden="true"
 				className="absolute inset-0"
 				initial={{ rotate: START }}
@@ -55,7 +55,7 @@ export function AqiGauge({ aqi, display, size = 'sm', className }: Props) {
 					className="absolute left-1/2 rounded-full border-[3px] border-white bg-foreground shadow-md"
 					style={{ top: ring / 2, width: knob, height: knob, transform: 'translate(-50%, -50%)' }}
 				/>
-			</motion.div>
+			</m.div>
 			<span aria-hidden="true" className="relative grid justify-items-center leading-none">
 				<span className={cn('font-bold tracking-tight tabular-nums', number)}>{display}</span>
 				<span className={cn('mt-1 font-semibold tracking-wide text-muted-foreground', unit)}>AQI</span>

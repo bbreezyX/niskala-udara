@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { fill, localizePath, type Locale } from '@/lib/i18n/config';
 import { useDictionary } from './locale-provider';
 
@@ -75,7 +75,7 @@ export function LanguageSwitch({ value, path }: { value: Locale; path: string })
 			className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-[13px] font-bold tracking-wide text-foreground outline-none transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.92] max-[379px]:size-8"
 		>
 			<AnimatePresence initial={false} mode="popLayout">
-				<motion.span
+				<m.span
 					key={shown}
 					lang={shown}
 					initial={{ y: offset, opacity: 0 }}
@@ -85,7 +85,7 @@ export function LanguageSwitch({ value, path }: { value: Locale; path: string })
 					className="col-start-1 row-start-1"
 				>
 					{LOCALES[shown].code}
-				</motion.span>
+				</m.span>
 			</AnimatePresence>
 		</a>
 	);

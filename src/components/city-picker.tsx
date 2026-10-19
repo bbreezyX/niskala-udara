@@ -9,7 +9,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { numberFormat } from '@/lib/format';
 import { fill } from '@/lib/i18n/config';
-import { filterCities } from './city-search';
+import { filterCities } from './city-filter';
 import { useDictionary, useLocale } from './locale-provider';
 
 const NEARBY_COUNT = 3;

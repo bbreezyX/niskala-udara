@@ -1,29 +1,39 @@
 import { Link } from '@/components/link';
+import type { LegalSection } from '../legal-sections';
 
 /** Indonesian original. It prevails over the English translation. */
-export function TermsId() {
-	return (
-		<>
-			<h2>Layanan</h2>
-			<p>
+export const TERMS_ID: LegalSection[] = [
+	{
+		title: 'Layanan',
+		body: (
+			<>
 				Niskala menampilkan perkiraan kualitas udara terkini, kadar polutan, dan rekomendasi kesehatan umum untuk lokasi
 				yang kamu pilih. Layanan ini gratis, tanpa akun, dan disediakan apa adanya.
-			</p>
-
-			<h2>Sumber data</h2>
-			<p>
+			</>
+		)
+	},
+	{
+		title: 'Sumber data',
+		body: (
+			<>
 				Data berasal dari Google Maps Platform Air Quality API dan ditampilkan tanpa diubah. Data merupakan perkiraan per jam,
 				dapat tertunda, tidak lengkap, atau berbeda dengan kondisi di lapangan.
-			</p>
-
-			<h2>Bukan nasihat medis</h2>
-			<p>
+			</>
+		)
+	},
+	{
+		title: 'Bukan nasihat medis',
+		body: (
+			<>
 				Informasi di situs ini bersifat umum. Untuk keputusan kesehatan, ikuti arahan tenaga kesehatan dan informasi resmi
 				pemerintah setempat.
-			</p>
-
-			<h2>Ketentuan Google</h2>
-			<p>
+			</>
+		)
+	},
+	{
+		title: 'Ketentuan Google',
+		body: (
+			<>
 				Dengan menggunakan Niskala, kamu juga terikat pada{' '}
 				<a href="https://maps.google.com/help/terms_maps/" rel="noopener noreferrer">
 					Persyaratan Layanan Tambahan Google Maps/Google Earth
@@ -37,12 +47,15 @@ export function TermsId() {
 					Google Maps Platform Terms of Service
 				</a>
 				.
-			</p>
-
-			<h2>Privasi</h2>
-			<p>
+			</>
+		)
+	},
+	{
+		title: 'Privasi',
+		body: (
+			<>
 				Cara kami memproses lokasi dijelaskan di <Link href="/privacy">Kebijakan Privasi</Link>.
-			</p>
-		</>
-	);
-}
+			</>
+		)
+	}
+];

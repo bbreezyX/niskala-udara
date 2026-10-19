@@ -5,12 +5,6 @@ import { CITIES, placeName, REGIONS } from '@/lib/config/cities';
 import { CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { useDictionary, useLocale } from './locale-provider';
 
-/** Substring match on the name and reference point: fuzzy matching surfaces unrelated places. */
-export function filterCities(_: string, query: string, keywords: string[] = []) {
-	const needle = query.trim().toLocaleLowerCase('id');
-	return keywords.some((keyword) => keyword.toLocaleLowerCase('id').includes(needle)) ? 1 : 0;
-}
-
 /** Every row is icon then name, so the names share one left edge. */
 const ROW = 'min-h-11 gap-3 rounded-xl px-3';
 

@@ -13,8 +13,8 @@ function isPlainObject(input: unknown): input is Record<string, unknown> {
 }
 
 function hasExactKeys(input: Record<string, unknown>, keys: string[]): boolean {
-	const actual = Object.keys(input);
-	return actual.length === keys.length && keys.every((key) => actual.includes(key));
+	const actual = new Set(Object.keys(input));
+	return actual.size === keys.length && keys.every((key) => actual.has(key));
 }
 
 function toCoordinates({ latitude, longitude }: Record<string, unknown>): Coordinates | null {

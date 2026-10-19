@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { connection } from 'next/server';
 import { Dashboard } from '@/components/dashboard';
+import { DashboardSkeleton } from '@/components/dashboard-skeleton';
 import { regionFromParam } from '@/lib/config/cities';
 import { airQualityKey } from '@/lib/server/env';
 import { loadRegion } from '@/lib/server/region-air-quality';
@@ -25,5 +27,11 @@ export default async function HomePage({ params, searchParams }: Props) {
 	// Not awaited: the page goes out at once and each city's data streams in as it settles,
 	// already part of the HTML when the server cache is warm.
 	const initial: RegionStream | null = apiKey ? { region, cities: loadRegion(region, apiKey, fetch, locale) } : null;
-	return <Dashboard configured={Boolean(apiKey)} initial={initial} />;
+	// Dashboard reads ?region= through useSearchParams. Rendered per request it never suspends, so the
+	// skeleton is only a safety net should this page ever be prerendered.
+	return (
+		<Suspense fallback={<DashboardSkeleton />}>
+			<Dashboard configured={Boolean(apiKey)} initial={initial} />
+		</Suspense>
+	);
 }

@@ -50,10 +50,15 @@ async function requestJson<T>(path: string, init: RequestInit, signal: AbortSign
 
 	try {
 		const response = await fetch(path, { ...init, signal: controller.signal });
+		if (!response.ok) {
+			// Error statuses still carry `{ error: { code } }`; read it for the code, never as data.
+			const json = (await response.json().catch(() => null)) as ApiResponse<T> | null;
+			if (signal.aborted) return null;
+			return { ok: false, code: errorCode(json) };
+		}
 		const json = (await response.json().catch(() => null)) as ApiResponse<T> | null;
 		if (signal.aborted) return null;
-		if (response.ok && json && 'data' in json) return { ok: true, data: json.data };
-		return { ok: false, code: json && 'error' in json ? json.error.code : 'upstream_error' };
+		return json && 'data' in json ? { ok: true, data: json.data } : { ok: false, code: errorCode(json) };
 	} catch {
 		if (signal.aborted) return null;
 		return { ok: false, code: timedOut ? 'timeout' : 'network' };
@@ -61,6 +66,11 @@ async function requestJson<T>(path: string, init: RequestInit, signal: AbortSign
 		clearTimeout(timer);
 		signal.removeEventListener('abort', forwardAbort);
 	}
+}
+
+/** The code an error payload names, or a generic one when the body is missing or malformed. */
+function errorCode(json: ApiResponse<unknown> | null): ClientErrorCode {
+	return json && 'error' in json ? json.error.code : 'upstream_error';
 }
 
 /** Keeps showing old data while refreshing; otherwise shows a loading state. */

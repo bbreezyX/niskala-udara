@@ -1,5 +1,8 @@
-import { fill, INTL_LOCALES, type Locale } from '@/lib/i18n/config';
+import { dateTimeFormat } from '@/lib/date-format';
+import { fill, type Locale } from '@/lib/i18n/config';
 import { getDictionary } from '@/lib/i18n/server';
+
+const UPDATED_FORMAT: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' };
 
 /** Long-form text page: readable measure, spaced headings, underlined links. `updated` is an ISO date. */
 export function LegalArticle({
@@ -14,9 +17,7 @@ export function LegalArticle({
 	children: React.ReactNode;
 }) {
 	const { legal } = getDictionary(locale);
-	const date = new Intl.DateTimeFormat(INTL_LOCALES[locale], { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
-		new Date(updated)
-	);
+	const date = dateTimeFormat(locale, UPDATED_FORMAT).format(new Date(updated));
 
 	return (
 		<article className="mx-auto grid max-w-3xl gap-4 px-4 pt-10 sm:px-6 [&_a]:text-primary [&_a]:underline [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_p]:text-foreground/85">

@@ -6,7 +6,8 @@ import { ArrowLeft, LocateFixed, MapPinOff } from 'lucide-react';
 import { CITIES, DEFAULT_REGION, placeName, REGIONS } from '@/lib/config/cities';
 import { MAP_BOUNDS, MAP_TIME_ZONE } from '@/lib/config/map';
 import { parseCoordinates, roundCoordinates } from '@/lib/coordinates';
-import { cityFeed, LocationFeed } from '@/lib/client/location-feed';
+import { cityFeed, LocationFeed, type WatchLocation } from '@/lib/client/location-feed';
+import type { Locale } from '@/lib/i18n/config';
 import type { Coordinates } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -14,9 +15,9 @@ import { StateMessage } from './info-blocks';
 import { LocationDetail } from './location-detail';
 import { useDictionary, useLocale } from './locale-provider';
 
-/** A one-off feed (device or map point) that is aborted when the page leaves. */
-function useOwnFeed(create: () => LocationFeed | null, deps: unknown[]) {
-	const feed = useMemo(create, deps);
+/** A one-off feed (device or map point) that is aborted when the page leaves. Pass a memoized `location`. */
+function useOwnFeed(location: WatchLocation | null, locale: Locale) {
+	const feed = useMemo(() => location && new LocationFeed(location, locale), [location, locale]);
 	useEffect(() => () => feed?.dispose(), [feed]);
 	return feed;
 }
@@ -95,10 +96,9 @@ export function DeviceDetail({ configured }: { configured: boolean }) {
 	}, [attempt, t]);
 
 	const coordinates = geo.status === 'ready' ? geo.coordinates : null;
-	const feed = useOwnFeed(
-		() =>
-			coordinates &&
-			new LocationFeed({
+	const location = useMemo(
+		(): WatchLocation | null =>
+			coordinates && {
 				key: 'device',
 				name: t.device.name,
 				note: t.device.note,
@@ -106,9 +106,10 @@ export function DeviceDetail({ configured }: { configured: boolean }) {
 				// The device is at the location, so its own time zone is the right one.
 				timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 				region: null
-			}, locale),
-		[coordinates?.latitude, coordinates?.longitude, locale, t]
+			},
+		[coordinates, t]
 	);
+	const feed = useOwnFeed(location, locale);
 
 	if (feed) return <LocationDetail feed={feed} configured={configured} back={home} />;
 
@@ -156,11 +157,11 @@ export function PointDetail({ configured }: { configured: boolean }) {
 		return parsed && roundCoordinates(parsed);
 	}, [hash]);
 
-	const feed = useOwnFeed(() => {
+	const location = useMemo((): WatchLocation | null => {
 		if (!coordinates) return null;
 		const { latitude, longitude } = coordinates;
 		const onMap = longitude >= MAP_BOUNDS.west && longitude <= MAP_BOUNDS.east && latitude >= MAP_BOUNDS.south && latitude <= MAP_BOUNDS.north;
-		return new LocationFeed({
+		return {
 			key: `point:${latitude},${longitude}`,
 			name: t.point.name,
 			note: `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`,
@@ -168,8 +169,9 @@ export function PointDetail({ configured }: { configured: boolean }) {
 			// The map is limited to Sumatra, which is entirely WIB.
 			timeZone: onMap ? MAP_TIME_ZONE : Intl.DateTimeFormat().resolvedOptions().timeZone,
 			region: null
-		}, locale);
-	}, [coordinates?.latitude, coordinates?.longitude, locale, t]);
+		};
+	}, [coordinates, t]);
+	const feed = useOwnFeed(location, locale);
 
 	if (feed) return <LocationDetail feed={feed} configured={configured} back={mapBack} />;
 	if (hash === null) return null;

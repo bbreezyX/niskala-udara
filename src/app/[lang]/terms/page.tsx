@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { LegalArticle } from '@/components/legal-article';
-import { TermsEn } from '@/content/terms/en';
-import { TermsId } from '@/content/terms/id';
+import { LegalSections } from '@/content/legal-sections';
+import { TERMS_EN } from '@/content/terms/en';
+import { TERMS_ID } from '@/content/terms/id';
 import { toLocale } from '@/lib/i18n/config';
 import { getDictionary, localeAlternates } from '@/lib/i18n/server';
 
@@ -16,14 +17,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	};
 }
 
-const CONTENT = { id: TermsId, en: TermsEn };
+const CONTENT = { id: TERMS_ID, en: TERMS_EN };
 
 export default async function TermsPage({ params }: Props) {
 	const locale = toLocale((await params).lang);
-	const Content = CONTENT[locale];
 	return (
 		<LegalArticle locale={locale} title={getDictionary(locale).pages.terms.heading} updated="2026-10-19">
-			<Content />
+			<LegalSections sections={CONTENT[locale]} />
 		</LegalArticle>
 	);
 }

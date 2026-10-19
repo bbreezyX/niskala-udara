@@ -331,7 +331,8 @@ export const en: Dictionary = {
 		page: 'Page {page} of {count}',
 		trendTitle: '{n}-hour AQI trend',
 		trendLabel: 'AQI trend for {name}, last {n} hours',
-		detail: 'Details'
+		detail: 'Details',
+		showHour: 'Show details for {time}'
 	},
 	map: {
 		unconfigured: {

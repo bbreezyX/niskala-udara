@@ -332,7 +332,8 @@ export const id = {
 		page: 'Halaman {page} dari {count}',
 		trendTitle: 'Tren AQI {n} jam',
 		trendLabel: 'Tren AQI {name}, {n} jam terakhir',
-		detail: 'Detail'
+		detail: 'Detail',
+		showHour: 'Lihat detail {time}'
 	},
 	map: {
 		unconfigured: {

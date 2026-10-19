@@ -3,8 +3,8 @@
 import { AQI_BANDS } from '@/lib/aqi';
 import { fill, plural } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils';
+import { DEFAULT_FILTER, type ListFilter } from './list-filter';
 import { useDictionary, useLocale } from './locale-provider';
-import { DEFAULT_FILTER, type ListFilter } from './sort-filter';
 
 interface Props {
 	/** Locations currently in each band, by AQI_BANDS index. */

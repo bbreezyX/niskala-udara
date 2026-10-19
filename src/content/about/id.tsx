@@ -1,20 +1,17 @@
 import { Link } from '@/components/link';
 import type { Dictionary } from '@/lib/i18n/dictionaries/id';
+import { AboutHeader, AboutSection } from './about-section';
 import { BandsFigure } from './bands-figure';
 
 export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }) {
 	return (
 		<>
-			<header>
-				<h1 className="font-display text-5xl leading-none tracking-[-0.02em] sm:text-6xl">Tentang Niskala</h1>
-				<p className="mt-4 max-w-prose text-lg">
-					Udara itu <em>niskala</em>, tak kasat mata. Niskala membuatnya terbaca: kualitas udara terkini, prakiraan 24
-					jam, dan riwayat per jam untuk kota-kota di Indonesia, tanpa akun dan tanpa iklan.
-				</p>
-			</header>
+			<AboutHeader title="Tentang Niskala">
+				Udara itu <em>niskala</em>, tak kasat mata. Niskala membuatnya terbaca: kualitas udara terkini, prakiraan 24
+				jam, dan riwayat per jam untuk kota-kota di Indonesia, tanpa akun dan tanpa iklan.
+			</AboutHeader>
 
-			<section aria-labelledby="reading-aqi" className="grid gap-4">
-				<h2 id="reading-aqi">Cara membaca angka AQI</h2>
+			<AboutSection id="reading-aqi" title="Cara membaca angka AQI">
 				<p className="max-w-prose">
 					Angka utama di aplikasi ini adalah <strong className="font-semibold text-foreground">Universal AQI</strong> dari
 					Google. Indeks ini dihitung dari kadar beberapa polutan dan memakai skala 0–100:{' '}
@@ -25,19 +22,17 @@ export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 				<BandsFigure names={bandNames}>
 					Pita kategori Universal AQI. Warna mengikuti warna yang dikirim Google untuk setiap angka.
 				</BandsFigure>
-			</section>
+			</AboutSection>
 
-			<section aria-labelledby="bukan-ispu" className="grid gap-4">
-				<h2 id="bukan-ispu">Universal AQI bukan ISPU</h2>
+			<AboutSection id="bukan-ispu" title="Universal AQI bukan ISPU">
 				<p className="max-w-prose">
 					ISPU, indeks resmi pemerintah Indonesia, justru makin buruk saat angkanya makin tinggi. Kedua indeks memakai arah
 					dan skala yang berbeda, jadi jangan membandingkan angkanya secara langsung. AQI 80 di sini berarti udara sangat
 					baik; ISPU 80 berarti udara sedang.
 				</p>
-			</section>
+			</AboutSection>
 
-			<section aria-labelledby="sumber-data" className="grid gap-4">
-				<h2 id="sumber-data">Sumber data</h2>
+			<AboutSection id="sumber-data" title="Sumber data">
 				<p className="max-w-prose">
 					Kondisi terkini, prakiraan, riwayat, dan peta panas kualitas udara berasal dari Google Maps Platform Air Quality
 					API. Data hotspot di halaman Peta berasal dari{' '}
@@ -50,10 +45,9 @@ export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 					Setiap kota memakai satu titik referensi: pusat kota untuk kota, dan ibu kota kabupaten untuk kabupaten. Kondisi di
 					bagian lain wilayah tersebut bisa berbeda.
 				</p>
-			</section>
+			</AboutSection>
 
-			<section aria-labelledby="batasan" className="grid gap-4">
-				<h2 id="batasan">Batasan</h2>
+			<AboutSection id="batasan" title="Batasan">
 				<p className="max-w-prose">
 					Data merupakan perkiraan model per jam, bukan hasil satu alat ukur di titik tersebut, dan bisa tertunda atau tidak
 					lengkap. Gunakan sebagai gambaran umum, bukan nasihat medis. Untuk keputusan kesehatan, ikuti arahan tenaga
@@ -70,7 +64,7 @@ export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 					</Link>
 					.
 				</p>
-			</section>
+			</AboutSection>
 		</>
 	);
 }

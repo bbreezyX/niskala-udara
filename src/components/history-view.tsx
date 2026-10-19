@@ -16,7 +16,8 @@ import { CITIES, DEFAULT_REGION } from '@/lib/config/cities';
 import { HISTORY_RANGES, type HistoryRange } from '@/lib/coordinates';
 import { postJson, toRemote, withLanguage, type Remote } from '@/lib/client/api';
 import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
-import { fill, INTL_LOCALES, type Locale } from '@/lib/i18n/config';
+import { dateTimeFormat } from '@/lib/date-format';
+import { fill, type Locale } from '@/lib/i18n/config';
 import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 import type { AirQualityData } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -124,6 +125,11 @@ const COLUMN_CLASS: Record<string, string> = {
 
 const EMPTY: HourRow[] = [];
 
+/** Headers here are plain strings, so a sort button can carry its column name as its own text. */
+function headerText(column: { id: string; columnDef: { header?: unknown } }) {
+	return typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
+}
+
 export function HistoryView({ configured }: { configured: boolean }) {
 	const locale = useLocale();
 	const t = useDictionary();
@@ -194,7 +200,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 	const pageCount = table.getPageCount();
 	const { pageIndex } = table.state.pagination;
 	const groupedByDay = table.state.sorting[0]?.id === 't';
-	const dayLabel = new Intl.DateTimeFormat(INTL_LOCALES[locale], { weekday: 'long', day: 'numeric', month: 'short', timeZone: city.timeZone });
+	const dayLabel = dateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'short', timeZone: city.timeZone });
 
 	return (
 		<div className="grid items-start gap-5 min-[1100px]:grid-cols-[minmax(0,1.45fr)_minmax(360px,1fr)]">
@@ -266,7 +272,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 																onClick={header.column.getToggleSortingHandler()}
 																className="inline-flex min-h-9 items-center gap-1 hover:text-foreground"
 															>
-																<table.FlexRender header={header} />
+																{headerText(header.column)}
 																<SortIcon className={cn('size-3.5', !sorted && 'opacity-40')} aria-hidden="true" />
 															</button>
 														) : (
@@ -304,6 +310,9 @@ export function HistoryView({ configured }: { configured: boolean }) {
 																		<button
 																			type="button"
 																			aria-pressed={isSelected}
+																			aria-label={fill(t.history.showHour, {
+																				time: `${formatHour(row.original.hour.dataTime, city.timeZone, locale)}, ${formatDay(row.original.hour.dataTime, city.timeZone, locale)}`
+																			})}
 																			onClick={(event) => {
 																				event.stopPropagation();
 																				select(row.original.t);

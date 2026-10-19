@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext } from 'react';
+import { createContext, useCallback, useContext, useMemo } from 'react';
 import { localizePath, type Locale } from '@/lib/i18n/config';
 import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 
@@ -15,7 +15,9 @@ export function LocaleProvider({
 	dictionary: Dictionary;
 	children: React.ReactNode;
 }) {
-	return <LocaleContext value={{ locale, dictionary }}>{children}</LocaleContext>;
+	// Stable while the locale is, so a parent re-render does not re-render every consumer.
+	const value = useMemo(() => ({ locale, dictionary }), [locale, dictionary]);
+	return <LocaleContext value={value}>{children}</LocaleContext>;
 }
 
 function useLocaleContext() {

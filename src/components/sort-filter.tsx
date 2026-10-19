@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { ArrowDownAZ, Check, ChevronDown, Circle, List, RotateCcw, SlidersHorizontal, type LucideIcon } from 'lucide-react';
 import { AQI_BANDS } from '@/lib/aqi';
 import { fill, plural } from '@/lib/i18n/config';
@@ -10,19 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { DEFAULT_FILTER, isFiltered, type ListFilter, type SortKey } from './list-filter';
 import { useDictionary, useLocale } from './locale-provider';
-
-export type SortKey = 'default' | 'best' | 'worst' | 'name';
-
-export interface ListFilter {
-	/** Indexes into AQI_BANDS that stay visible. Bands, not a range, so non-adjacent picks are possible. */
-	bands: number[];
-	sort: SortKey;
-}
-
-const ALL_BANDS = AQI_BANDS.map((_, i) => i);
-
-export const DEFAULT_FILTER: ListFilter = { bands: ALL_BANDS, sort: 'default' };
 
 /**
  * Best and worst borrow the face and fill of the top and bottom AQI bands, matching the solid band buttons above;
@@ -37,10 +26,6 @@ const SORT_OPTIONS: { value: SortKey; icon: LucideIcon; fill: string }[] = [
 
 /** Stiffer than the navbar's spring: the hop is short, and the thumb must land as the label turns white. */
 const THUMB = { type: 'spring', stiffness: 700, damping: 48, mass: 0.6 } as const;
-
-export function isFiltered(filter: ListFilter) {
-	return filter.bands.length < AQI_BANDS.length || filter.sort !== 'default';
-}
 
 interface Props {
 	value: ListFilter;
@@ -168,7 +153,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 							className="relative w-full rounded-full bg-muted p-1"
 						>
 							{/* One thumb for the whole track: it slides and takes the pick's color in the same motion. */}
-							<motion.span
+							<m.span
 								aria-hidden="true"
 								className="absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/4)] rounded-full shadow-sm"
 								initial={false}

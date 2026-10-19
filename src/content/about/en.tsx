@@ -1,21 +1,17 @@
 import { Link } from '@/components/link';
 import type { Dictionary } from '@/lib/i18n/dictionaries/id';
+import { AboutHeader, AboutSection } from './about-section';
 import { BandsFigure } from './bands-figure';
 
-// Section ids match the Indonesian page, so an anchor link works in either language.
 export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }) {
 	return (
 		<>
-			<header>
-				<h1 className="font-display text-5xl leading-none tracking-[-0.02em] sm:text-6xl">About Niskala</h1>
-				<p className="mt-4 max-w-prose text-lg">
-					Air is <em lang="id">niskala</em>: unseen. Niskala makes it readable, with current air quality, a 24-hour
-					forecast, and hourly history for cities across Indonesia. No account, no ads.
-				</p>
-			</header>
+			<AboutHeader title="About Niskala">
+				Air is <em lang="id">niskala</em>: unseen. Niskala makes it readable, with current air quality, a 24-hour
+				forecast, and hourly history for cities across Indonesia. No account, no ads.
+			</AboutHeader>
 
-			<section aria-labelledby="reading-aqi" className="grid gap-4">
-				<h2 id="reading-aqi">How to read the AQI number</h2>
+			<AboutSection id="reading-aqi" title="How to read the AQI number">
 				<p className="max-w-prose">
 					The main number in this app is Google&apos;s <strong className="font-semibold text-foreground">Universal AQI</strong>.
 					It is calculated from the levels of several pollutants on a 0–100 scale:{' '}
@@ -26,19 +22,17 @@ export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 				<BandsFigure names={bandNames}>
 					Universal AQI category bands. The colours follow the colour Google sends for each number.
 				</BandsFigure>
-			</section>
+			</AboutSection>
 
-			<section aria-labelledby="bukan-ispu" className="grid gap-4">
-				<h2 id="bukan-ispu">Universal AQI is not ISPU</h2>
+			<AboutSection id="bukan-ispu" title="Universal AQI is not ISPU">
 				<p className="max-w-prose">
 					ISPU, the Indonesian government&apos;s official index, gets worse as its number rises. The two indexes run in
 					opposite directions on different scales, so don&apos;t compare their numbers directly. An AQI of 80 here means
 					excellent air; an ISPU of 80 means moderate air.
 				</p>
-			</section>
+			</AboutSection>
 
-			<section aria-labelledby="sumber-data" className="grid gap-4">
-				<h2 id="sumber-data">Data sources</h2>
+			<AboutSection id="sumber-data" title="Data sources">
 				<p className="max-w-prose">
 					Current conditions, forecasts, history, and the air quality heatmap come from the Google Maps Platform Air
 					Quality API. Hotspot data on the Map page comes from{' '}
@@ -51,10 +45,9 @@ export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 					Each city uses a single reference point: the city centre for a city (<em lang="id">kota</em>), and the regency
 					seat for a regency (<em lang="id">kabupaten</em>). Conditions elsewhere in the same area may differ.
 				</p>
-			</section>
+			</AboutSection>
 
-			<section aria-labelledby="batasan" className="grid gap-4">
-				<h2 id="batasan">Limits</h2>
+			<AboutSection id="batasan" title="Limits">
 				<p className="max-w-prose">
 					The data are hourly model estimates, not readings from one instrument at that point, and may be delayed or
 					incomplete. Use them as a general picture, not as medical advice. For health decisions, follow health
@@ -71,7 +64,7 @@ export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 					</Link>
 					.
 				</p>
-			</section>
+			</AboutSection>
 		</>
 	);
 }
