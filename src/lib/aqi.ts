@@ -41,6 +41,15 @@ export const AQI_BANDS: readonly AqiBand[] = [
 	{ min: 80, key: 'excellent', icon: Laugh, ink: '#15803d', fill: '#188038', onFill: '#ffffff' }
 ];
 
+/**
+ * A 1px inset outline in the band's ink, as a box-shadow. The fill stays Google's color; the outline
+ * keeps the light bands (Moderate, Good) visible on white. `y` draws only the top and bottom edges, for
+ * segments that sit side by side in a strip.
+ */
+export function bandEdge(band: AqiBand, sides: 'all' | 'y' = 'all'): string {
+	return sides === 'all' ? `inset 0 0 0 1px ${band.ink}` : `inset 0 1px 0 ${band.ink}, inset 0 -1px 0 ${band.ink}`;
+}
+
 export function aqiBand(aqi: number): AqiBand {
 	return AQI_BANDS.findLast((band) => aqi >= band.min) ?? AQI_BANDS[0];
 }

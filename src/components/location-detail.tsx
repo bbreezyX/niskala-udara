@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ChevronRight, MapPin, RotateCw } from 'lucide-react';
 import { postJson, toRemote, withLanguage, type Remote } from '@/lib/client/api';
 import { isBusy, needsLoad, useFeed, useFeeds, type LocationFeed } from '@/lib/client/location-feed';
-import { aqiBand } from '@/lib/aqi';
+import { aqiBand, bandEdge } from '@/lib/aqi';
 import { dateTimeFormat } from '@/lib/date-format';
 import { fill, plural } from '@/lib/i18n/config';
 import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
@@ -304,6 +304,12 @@ function TrendCard({ location, data }: { location: LocationFeed['location']; dat
  * The next 24 hours as one band colored by category: the shape of the day reads at a glance, and only one hour
  * carries a number. The pin marks the best hour; hovering, dragging, tapping, or the arrow keys move it to any hour.
  */
+/** One hour of the 24-hour strip: Google's band color, edged top and bottom so light bands stay visible. */
+function HourSegment({ aqi }: { aqi: number }) {
+	const band = aqiBand(aqi);
+	return <span className="flex-1" style={{ background: band.fill, boxShadow: bandEdge(band, 'y') }} />;
+}
+
 function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; loading: boolean; timeZone: string }) {
 	const next = hours.slice(0, 24);
 	const [active, setActive] = useState<number | null>(null);
@@ -348,7 +354,7 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 					<ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground" aria-label={t.aqi.categories}>
 						{bands.map((band) => (
 							<li key={band.min} className="flex items-center gap-1.5">
-								<span className="size-2.5 rounded-[3px]" style={{ background: band.fill }} aria-hidden="true" />
+								<span className="size-2.5 rounded-[3px]" style={{ background: band.fill, boxShadow: bandEdge(band) }} aria-hidden="true" />
 								{t.aqi.bands[band.key]}
 							</li>
 						))}
@@ -382,7 +388,7 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 							className="relative flex h-4 cursor-pointer touch-pan-y overflow-hidden rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
 						>
 							{next.map((h) => (
-								<span key={h.dataTime} className="flex-1" style={{ background: aqiBand(h.index.aqi).fill }} />
+								<HourSegment key={h.dataTime} aqi={h.index.aqi} />
 							))}
 							<span
 								aria-hidden="true"

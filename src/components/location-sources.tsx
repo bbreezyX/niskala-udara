@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { Link } from './link';
 import { ArrowLeft, LocateFixed, MapPinOff } from 'lucide-react';
-import { CITIES, DEFAULT_REGION, placeName, REGIONS } from '@/lib/config/cities';
+import { CITIES, nearestRegion, placeName, REGIONS } from '@/lib/config/cities';
 import { MAP_BOUNDS, MAP_TIME_ZONE } from '@/lib/config/map';
 import { parseCoordinates, roundCoordinates } from '@/lib/coordinates';
 import { cityFeed, LocationFeed, type WatchLocation } from '@/lib/client/location-feed';
+import { rememberRegion } from '@/lib/client/region-memory';
 import type { Locale } from '@/lib/i18n/config';
 import type { Coordinates } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,8 @@ export function CityDetail({ cityId, configured }: { cityId: string; configured:
 	const t = useDictionary();
 	const feed = useMemo(() => cityFeed(city, locale), [city, locale]);
 	const region = REGIONS.find((r) => r.id === city.region)!;
-	const back = { href: region.id === DEFAULT_REGION ? '/' : `/?region=${region.id}`, label: t.common.backToOverview };
+	// Always names the region: a bare "/" would open the region remembered on this device instead.
+	const back = { href: `/?region=${region.id}`, label: t.common.backToOverview };
 	const related = useMemo(
 		() =>
 			CITIES.filter((c) => c.region === city.region).map((c) => ({
@@ -68,7 +70,14 @@ export function DeviceDetail({ configured }: { configured: boolean }) {
 	const [attempt, setAttempt] = useState(0);
 	const locale = useLocale();
 	const t = useDictionary();
-	const home = { href: '/', label: t.common.backToOverview };
+	const coordinates = geo.status === 'ready' ? geo.coordinates : null;
+	// Only the region id is kept, never the coordinates; the overview then opens where the device is.
+	const nearby = coordinates && nearestRegion(coordinates);
+	const home = { href: nearby ? `/?region=${nearby}` : '/', label: t.common.backToOverview };
+
+	useEffect(() => {
+		if (nearby) rememberRegion(nearby);
+	}, [nearby]);
 
 	useEffect(() => {
 		if (!('geolocation' in navigator)) {
@@ -95,7 +104,6 @@ export function DeviceDetail({ configured }: { configured: boolean }) {
 		};
 	}, [attempt, t]);
 
-	const coordinates = geo.status === 'ready' ? geo.coordinates : null;
 	const location = useMemo(
 		(): WatchLocation | null =>
 			coordinates && {

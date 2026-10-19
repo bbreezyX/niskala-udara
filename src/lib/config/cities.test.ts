@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CITIES, ISLANDS, nearestCities, REGIONS } from './cities';
+import { CITIES, ISLANDS, nearestCities, nearestRegion, REGIONS } from './cities';
 
 // Static routes that share /location/ with city ids; a city with one of these ids would be unreachable.
 const RESERVED_LOCATION_IDS = ['me', 'point'];
@@ -40,5 +40,18 @@ describe('nearestCities', () => {
 		const [bandung] = nearestCities({ latitude: -6.91, longitude: 107.61 }, 1);
 		expect(jakarta.city.region).toBe('dki-jakarta');
 		expect(bandung.city.id).toBe('bandung');
+	});
+});
+
+describe('nearestRegion', () => {
+	it('names the region of the closest listed place', () => {
+		// Kota Jambi and Pekanbaru.
+		expect(nearestRegion({ latitude: -1.61, longitude: 103.61 })).toBe('jambi');
+		expect(nearestRegion({ latitude: 0.51, longitude: 101.45 })).toBe('riau');
+	});
+
+	it('is null far from every listed place', () => {
+		// Middle of the Indian Ocean.
+		expect(nearestRegion({ latitude: -20, longitude: 80 })).toBeNull();
 	});
 });

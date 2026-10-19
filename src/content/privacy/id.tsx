@@ -37,6 +37,17 @@ export const PRIVACY_ID: LegalSection[] = [
 		)
 	},
 	{
+		title: 'Yang disimpan di perangkatmu',
+		body: (
+			<>
+				Supaya Pantauan langsung membuka wilayahmu, browser menyimpan wilayah terakhir yang kamu pilih, atau wilayah
+				terdekat setelah kamu memakai &quot;Gunakan lokasi saya&quot;. Yang disimpan hanya nama wilayah (misalnya Riau),
+				bukan koordinat, di penyimpanan lokal browser (localStorage). Data ini tidak dikirim ke server dan bukan cookie.
+				Kamu bisa menghapusnya dengan membersihkan data situs di pengaturan browser.
+			</>
+		)
+	},
+	{
 		title: 'Yang tidak kami lakukan',
 		body: (
 			<>

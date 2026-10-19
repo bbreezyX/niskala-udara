@@ -1,6 +1,6 @@
 'use client';
 
-import { AQI_BANDS } from '@/lib/aqi';
+import { AQI_BANDS, bandEdge } from '@/lib/aqi';
 import { fill, plural } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils';
 import { DEFAULT_FILTER, type ListFilter } from './list-filter';
@@ -50,7 +50,7 @@ export function AqiSpread({ bandCounts, pendingCount, filter, onFilter }: Props)
 									'block h-2 w-full rounded-[2px] transition-[transform,opacity] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-y-150',
 									!filter.bands.includes(i) && 'opacity-30'
 								)}
-								style={{ background: band.fill }}
+								style={{ background: band.fill, boxShadow: bandEdge(band) }}
 							/>
 						</button>
 					);

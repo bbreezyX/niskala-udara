@@ -37,6 +37,17 @@ export const PRIVACY_EN: LegalSection[] = [
 		)
 	},
 	{
+		title: 'What stays on your device',
+		body: (
+			<>
+				So the overview opens on your region, your browser keeps the region you last picked, or the nearest one after you use
+				&quot;Use my location&quot;. Only the region name (for example Riau) is kept, never coordinates, in the browser&apos;s
+				local storage (localStorage). It is never sent to the server and is not a cookie. You can remove it by clearing this
+				site&apos;s data in your browser settings.
+			</>
+		)
+	},
+	{
 		title: "What we don't do",
 		body: (
 			<>

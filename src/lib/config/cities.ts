@@ -275,3 +275,12 @@ export function nearestCities(from: { latitude: number; longitude: number }, cou
 		.toSorted((a, b) => a.km - b.km)
 		.slice(0, count);
 }
+
+/** Farther than this from every listed place, a device is not "in" any region (e.g. abroad). */
+const NEAREST_REGION_MAX_KM = 250;
+
+/** The region of the listed place closest to a point, or null when nothing is within reach. */
+export function nearestRegion(from: { latitude: number; longitude: number }): RegionId | null {
+	const [nearest] = nearestCities(from, 1);
+	return nearest && nearest.km <= NEAREST_REGION_MAX_KM ? nearest.city.region : null;
+}

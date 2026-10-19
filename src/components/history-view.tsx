@@ -11,10 +11,11 @@ import {
 	useTable
 } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { aqiBand } from '@/lib/aqi';
-import { CITIES, DEFAULT_REGION } from '@/lib/config/cities';
+import { aqiBand, bandEdge } from '@/lib/aqi';
+import { CITIES, DEFAULT_REGION, type City, type RegionId } from '@/lib/config/cities';
 import { HISTORY_RANGES, type HistoryRange } from '@/lib/coordinates';
 import { postJson, toRemote, withLanguage, type Remote } from '@/lib/client/api';
+import { useRememberedRegion } from '@/lib/client/region-memory';
 import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
 import { dateTimeFormat } from '@/lib/date-format';
 import { fill, type Locale } from '@/lib/i18n/config';
@@ -82,7 +83,7 @@ function columnsFor(timeZone: string, locale: Locale, t: Dictionary) {
 					<span className="flex items-center gap-3">
 						{/* The bar is the AQI out of 100, in the band's color: the category is read from its color. */}
 						<span className="h-2.5 max-w-64 flex-1 rounded-full bg-muted" aria-hidden="true">
-							<span className="block h-full rounded-full" style={{ width: `${Math.max(3, Math.min(100, index.aqi))}%`, background: band.fill }} />
+							<span className="block h-full rounded-full" style={{ width: `${Math.max(3, Math.min(100, index.aqi))}%`, background: band.fill, boxShadow: bandEdge(band) }} />
 						</span>
 						<span className="w-7 text-right font-semibold tabular-nums">{index.aqiDisplay}</span>
 						<span className="sr-only">{index.category ?? t.aqi.bands[band.key]}</span>
@@ -130,11 +131,17 @@ function headerText(column: { id: string; columnDef: { header?: unknown } }) {
 	return typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
 }
 
+/** The first city of the region remembered on this device, else of the default region. */
+function firstCity(remembered: RegionId | null): City {
+	const region = remembered ?? DEFAULT_REGION;
+	return CITIES.find((c) => c.region === region) ?? CITIES[0];
+}
+
 export function HistoryView({ configured }: { configured: boolean }) {
 	const locale = useLocale();
 	const t = useDictionary();
 	// The city the user picked; until then, the nearest one (when location access was already granted)
-	// or the default region's first city.
+	// or the first city of the region remembered on this device, else of the default region.
 	const [pickedId, setPickedId] = useState<string | null>(null);
 	const { nearby, locate } = useNearby();
 	const [range, setRange] = useState<HistoryRange>(HISTORY_RANGES[0]);
@@ -143,7 +150,7 @@ export function HistoryView({ configured }: { configured: boolean }) {
 	const [reloadVersion, setReloadVersion] = useState(0);
 	const panel = useRef<HTMLElement>(null);
 
-	const fallback = CITIES.find((c) => c.region === DEFAULT_REGION) ?? CITIES[0];
+	const fallback = firstCity(useRememberedRegion());
 	const city =
 		CITIES.find((c) => c.id === pickedId) ?? (nearby.status === 'ready' ? nearby.list[0].city : fallback);
 	// Hold the first request while an automatic location lookup may still change the city.

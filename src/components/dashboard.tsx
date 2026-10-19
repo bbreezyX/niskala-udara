@@ -10,6 +10,7 @@ import { CITIES, DEFAULT_REGION, regionFromParam, type RegionId } from '@/lib/co
 import { fill, plural, type Locale } from '@/lib/i18n/config';
 import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 import { cityFeed, isBusy, loadRegion, needsLoad, useFeeds, type FeedState, type LocationFeed } from '@/lib/client/location-feed';
+import { rememberedRegion, rememberRegion } from '@/lib/client/region-memory';
 import type { RegionStream } from '@/lib/types';
 import { formatHour, timeZoneLabel } from '@/lib/format';
 import { aqiBandIndex, AQI_BANDS } from '@/lib/aqi';
@@ -131,7 +132,8 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 	const locale = useLocale();
 	const pathname = usePathname();
 	// The region lives in the URL, so "back" from a city page returns to the same region.
-	const region = regionFromParam(useSearchParams().get('region'));
+	const regionParam = useSearchParams().get('region');
+	const region = regionFromParam(regionParam);
 	// Only the active region is shown and loaded, so a page view costs one region's requests.
 	const feeds = useMemo(() => CITIES.filter((city) => city.region === region).map((city) => cityFeed(city, locale)), [region, locale]);
 	const states = useFeeds(feeds);
@@ -141,9 +143,18 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 	// The native history API keeps useSearchParams in sync without a server round trip, so switching
 	// region is instant; the new region then loads with one streamed request.
 	function setRegion(next: RegionId) {
+		rememberRegion(next);
 		const query = next === DEFAULT_REGION ? '' : `?region=${next}`;
 		window.history.replaceState(null, '', `${pathname}${query}`);
 	}
+
+	// A bare URL opens the region last picked on this device. A ?region= link is opened as sent and
+	// is not remembered: only the visitor's own pick or location is.
+	useEffect(() => {
+		if (regionParam !== null) return;
+		const saved = rememberedRegion();
+		if (saved && saved !== DEFAULT_REGION) window.history.replaceState(null, '', `${pathname}?region=${saved}`);
+	}, [regionParam, pathname]);
 
 	const visible = useMemo(() => applyFilter(feeds, states, filter, locale), [feeds, states, filter, locale]);
 
