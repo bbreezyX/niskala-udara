@@ -47,14 +47,14 @@ function parseColor(value: unknown): string | null {
 	return `rgb(${r} ${g} ${b})`;
 }
 
-function parseUniversalAqi(indexes: unknown): UniversalAqi | null {
+function parseIndex(indexes: unknown, code: 'uaqi' | 'idn_menlhk', fallbackName: string): UniversalAqi | null {
 	if (!Array.isArray(indexes)) return null;
 	// Select by code, never by array position.
-	const raw = indexes.find((entry) => isRecord(entry) && entry.code === 'uaqi');
+	const raw = indexes.find((entry) => isRecord(entry) && entry.code === code);
 	if (!isRecord(raw) || typeof raw.aqi !== 'number' || !Number.isFinite(raw.aqi)) return null;
 
 	return {
-		displayName: nonEmptyString(raw.displayName) ?? 'Universal AQI',
+		displayName: nonEmptyString(raw.displayName) ?? fallbackName,
 		aqi: raw.aqi,
 		aqiDisplay: nonEmptyString(raw.aqiDisplay) ?? String(raw.aqi),
 		category: nonEmptyString(raw.category),
@@ -89,8 +89,10 @@ export function normalizeResponse(raw: unknown): AirQualityData {
 		throw new AirQualityError('no_data', 'missing or invalid dateTime');
 	}
 
-	const index = parseUniversalAqi(raw.indexes);
+	const index = parseIndex(raw.indexes, 'uaqi', 'Universal AQI');
 	if (!index) throw new AirQualityError('no_data', 'universal AQI not present');
+	// Optional: a missing or malformed ISPU never hides the reading.
+	const ispu = parseIndex(raw.indexes, 'idn_menlhk', 'ISPU');
 
 	const advice = raw.healthRecommendations;
 	const recommendations: Partial<Record<HealthGroup, string>> = {};
@@ -104,6 +106,7 @@ export function normalizeResponse(raw: unknown): AirQualityData {
 	return {
 		dataTime,
 		index,
+		...(ispu && { ispu }),
 		pollutants: parsePollutants(raw.pollutants),
 		recommendations
 	};
@@ -210,7 +213,7 @@ export async function fetchCurrentConditions(
 ): Promise<AirQualityData> {
 	const body = await callGoogle(
 		'currentConditions:lookup',
-		{ ...location(coordinates), extraComputations: ['POLLUTANT_CONCENTRATION', 'HEALTH_RECOMMENDATIONS'] },
+		{ ...location(coordinates), extraComputations: ['POLLUTANT_CONCENTRATION', 'HEALTH_RECOMMENDATIONS', 'LOCAL_AQI'] },
 		apiKey,
 		fetchFn,
 		language
