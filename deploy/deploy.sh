@@ -10,14 +10,19 @@ npm ci --no-audit --no-fund
 npm run build
 sudo systemctl restart niskala-udara
 
+# Ask the way Caddy does (HTTPS forwarded) and require a 200: a redirect or a proxy error must fail the deploy.
+healthy() {
+	[ "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' -H 'Host: udaraniskala.web.id' "http://127.0.0.1:3000$1")" = 200 ]
+}
+
 for _ in $(seq 1 30); do
-	if curl -fsS -o /dev/null http://127.0.0.1:3000/; then
+	if healthy / && healthy /about && healthy /en; then
 		echo "Deployed $(git rev-parse --short HEAD)"
 		exit 0
 	fi
 	sleep 1
 done
 
-echo "App did not respond on :3000 after restart" >&2
+echo "App did not answer 200 on :3000 after restart" >&2
 journalctl -u niskala-udara -n 50 --no-pager >&2
 exit 1
