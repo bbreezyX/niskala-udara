@@ -1,3 +1,4 @@
+import { EDGE_CACHE_CONTROL } from '@/lib/config/cache';
 import { citiesInRegion, REGIONS, type RegionId } from '@/lib/config/cities';
 import type { ApiResponse, RegionLine, StreamedCity } from '@/lib/types';
 import { getCurrentConditions, getForecast } from './air-quality-cache';
@@ -79,6 +80,7 @@ export function handleRegionRequest(
 	});
 
 	return new Response(body, {
-		headers: { 'content-type': 'application/x-ndjson; charset=utf-8', 'cache-control': 'no-store' }
+		// Same for every visitor, so Cloudflare may share it briefly (see src/lib/config/cache.ts).
+		headers: { 'content-type': 'application/x-ndjson; charset=utf-8', 'cache-control': EDGE_CACHE_CONTROL }
 	});
 }
