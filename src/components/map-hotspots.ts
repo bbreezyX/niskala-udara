@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useEffectEvent } from 'react';
-import { MAP_TIME_ZONE, MAP_ZOOM } from '@/lib/config/map';
+import { timeZoneAt } from '@/lib/config/cities';
+import { MAP_ZOOM } from '@/lib/config/map';
 import type { HotspotLayer, HotspotStyle } from '@/lib/client/hotspot-layer';
 import { formatAgo, formatDataTime, numberFormat } from '@/lib/format';
 import type { Locale } from '@/lib/i18n/config';
@@ -48,7 +49,7 @@ function hotspotContent(hotspot: Hotspot, locale: Locale, t: Dictionary['map'], 
 	time.dateTime = hotspot.acquiredAt;
 	time.append(
 		element('span', 'hotspot-card__ago', formatAgo(hotspot.acquiredAt, locale)),
-		element('span', 'hotspot-card__date', formatDataTime(hotspot.acquiredAt, MAP_TIME_ZONE, locale))
+		element('span', 'hotspot-card__date', formatDataTime(hotspot.acquiredAt, timeZoneAt(hotspot), locale))
 	);
 
 	const facts = element('dl', 'hotspot-card__facts');

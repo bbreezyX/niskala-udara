@@ -5,13 +5,20 @@ export interface Bounds {
 	north: number;
 }
 
-/** The map is limited to Sumatra: all of it is WIB, and the tile proxy refuses anything outside. */
-export const MAP_BOUNDS: Bounds = { west: 94.5, south: -6.5, east: 106.8, north: 6.5 };
+/** All of Indonesia, Sabang to Merauke and Rote to Miangas. The tile proxy refuses anything outside. */
+export const MAP_BOUNDS: Bounds = { west: 94.5, south: -11.5, east: 141.5, north: 6.5 };
 
 export const MAP_CENTER = { lat: -1.65, lng: 102.9 };
-export const MAP_ZOOM = { initial: 8, min: 6, max: 14 };
-export const MAP_TIME_ZONE = 'Asia/Jakarta';
+/** Zoom 4 fits the whole country on a laptop screen. */
+export const MAP_ZOOM = { initial: 8, min: 4, max: 14 };
 
-/** Hotspot area: Provinsi Jambi plus a margin, since smoke from neighbouring fires drifts in. */
-export const FIRE_AREA: Bounds = { west: 100.7, south: -3.2, east: 104.9, north: -0.5 };
+/** Hotspots cover the whole map. */
+export const FIRE_AREA: Bounds = MAP_BOUNDS;
 export const FIRE_WINDOW_HOURS = 24;
+
+/**
+ * Wind is sampled on a regular grid over the map, since point forecasts are all the source offers.
+ * 1.5° (about 165 km) keeps one refresh at 33 × 13 = 429 locations, inside Open-Meteo's
+ * 600 calls a minute; the particles interpolate between them.
+ */
+export const WIND_GRID = { west: 94.5, south: -11.5, step: 1.5, columns: 33, rows: 13 } as const;

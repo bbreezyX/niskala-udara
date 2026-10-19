@@ -31,8 +31,8 @@ export const PRIVACY_ID: LegalSection[] = [
 			<>
 				Peta dimuat langsung dari Google Maps di browsermu, sehingga Google menerima data teknis seperti alamat IP dan dapat
 				memakai cookie sesuai kebijakannya. Titik yang kamu klik di peta dibulatkan menjadi sekitar 100 meter, lalu dikirim
-				lewat server Niskala ke Google untuk mengambil kualitas udara. Data hotspot diambil server dari NASA FIRMS tanpa
-				data apa pun tentang dirimu.
+				lewat server Niskala ke Google untuk mengambil kualitas udara. Data hotspot diambil server dari NASA FIRMS dan data
+				angin dari Open-Meteo, keduanya tanpa data apa pun tentang dirimu.
 			</>
 		)
 	},

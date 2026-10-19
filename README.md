@@ -4,10 +4,10 @@ Dashboard kualitas udara dari Google Maps Platform Air Quality API: Universal AQ
 
 - **Pantauan** (`/`): kartu per lokasi dengan gauge AQI, empat polutan utama, dan sparkline prakiraan. Wilayah aktif tersimpan di URL (`?region=jawa-barat`).
 - **Detail lokasi** (`/location/[id]`, mis. `/location/bandung`): halaman sendiri berisi gauge, ringkasan 24 jam (terendah, tertinggi, rata-rata, jam terbaik berikutnya), rekomendasi, tren 24 jam terakhir + prakiraan, dan enam polutan. `/location/me` meminta lokasi perangkat di halaman itu sendiri; `/location/point#lat,lng` untuk titik dari peta. Koordinat perangkat tidak pernah masuk URL, dan koordinat titik peta hanya ada di hash sehingga tidak terkirim ke server.
-- **Peta** (`/map`): Google Map berpusat di Jambi dengan heatmap Universal AQI dan hotspot NASA FIRMS (VIIRS) 24 jam terakhir. Klik titik mana pun untuk membuka halaman detail kualitas udara di titik itu.
+- **Peta** (`/map`): Google Map seluruh Indonesia (awalnya berpusat di Jambi) dengan heatmap Universal AQI, hotspot NASA FIRMS (VIIRS) 24 jam terakhir, dan aliran angin 10 m dari Open-Meteo yang dianimasikan sebagai partikel (panah diam bila *reduced motion* aktif). Klik titik mana pun untuk membuka halaman detail kualitas udara di titik itu.
 - **Riwayat** (`/history`): tabel per jam (24 atau 72 jam) dengan panel detail untuk jam yang dipilih.
 
-Stack: Next.js 16 (App Router, TypeScript strict), React 19, Tailwind CSS v4, [shadcn/ui](https://ui.shadcn.com) (Radix), Recharts untuk grafik, TanStack Table untuk tabel Riwayat, Motion untuk animasi, ikon Lucide. Tanpa database, tanpa akun. Cuaca, suhu, dan angin tidak ditampilkan karena tidak tersedia di Air Quality API.
+Stack: Next.js 16 (App Router, TypeScript strict), React 19, Tailwind CSS v4, [shadcn/ui](https://ui.shadcn.com) (Radix), Recharts untuk grafik, TanStack Table untuk tabel Riwayat, Motion untuk animasi, ikon Lucide. Tanpa database, tanpa akun. Angin hanya ada di Peta, dari [Open-Meteo](https://open-meteo.com/) (model ECMWF/ICON/GFS, CC BY 4.0) pada grid 1,5°; satu kali ambil berisi prakiraan per jam selama 2 hari dan disimpan 3 jam di server (429 titik × 8 = 3.432 panggilan/hari, di bawah batas gratis 10.000). API gratis Open-Meteo hanya untuk penggunaan non-komersial; isi `OPEN_METEO_API_KEY` bila situs memakai iklan atau langganan.
 
 ## Setup
 
@@ -25,6 +25,7 @@ Isi `.env`:
 | `GOOGLE_AIR_QUALITY_API_KEY` | server saja   | kondisi terkini, prakiraan, riwayat, tile heatmap  |
 | `FIRMS_MAP_KEY`              | server saja   | hotspot NASA FIRMS ([minta gratis](https://firms.modaps.eosdis.nasa.gov/api/map_key/)) |
 | `PUBLIC_GOOGLE_MAPS_API_KEY` | dikirim ke browser | Maps JavaScript API di halaman Peta           |
+| `OPEN_METEO_API_KEY`         | server saja   | opsional: API komersial Open-Meteo untuk angin; tanpa ini memakai API gratis (non-komersial) |
 
 Semua opsional saat start. Bagian yang key-nya kosong menampilkan status "belum dikonfigurasi", bukan angka karangan.
 

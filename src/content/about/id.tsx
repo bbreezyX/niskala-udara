@@ -39,7 +39,12 @@ export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 					<a href="https://firms.modaps.eosdis.nasa.gov/" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
 						NASA FIRMS
 					</a>{' '}
-					(satelit VIIRS), yaitu anomali panas yang belum tentu kebakaran.
+					(satelit VIIRS), yaitu anomali panas yang belum tentu kebakaran. Arah angin di peta adalah prakiraan model cuaca
+					dari{' '}
+					<a href="https://open-meteo.com/" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
+						Open-Meteo
+					</a>{' '}
+					(CC BY 4.0).
 				</p>
 				<p className="max-w-prose">
 					Setiap kota memakai satu titik referensi: pusat kota untuk kota, dan ibu kota kabupaten untuk kabupaten. Kondisi di

@@ -16,7 +16,8 @@ export const TERMS_EN: LegalSection[] = [
 		title: 'Data sources',
 		body: (
 			<>
-				Data comes from the Google Maps Platform Air Quality API and is shown unaltered. It is an hourly estimate and may be
+				Air quality data comes from the Google Maps Platform Air Quality API and is shown unaltered. Hotspots come from NASA
+				FIRMS, and wind on the map from Open-Meteo (CC BY 4.0). It is an hourly estimate and may be
 				delayed, incomplete, or differ from conditions on the ground.
 			</>
 		)

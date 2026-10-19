@@ -39,13 +39,14 @@ export const id = {
 		terms: 'Ketentuan Penggunaan',
 		dataSources: 'Sumber data',
 		airQualitySource: 'Kualitas udara: Google Air Quality API',
-		hotspotSource: 'Hotspot:'
+		hotspotSource: 'Hotspot:',
+		windSource: 'Angin:'
 	},
 	pages: {
 		map: {
 			title: 'Peta',
 			heading: 'Peta udara & hotspot',
-			description: 'Peta kualitas udara (Universal AQI) dan hotspot kebakaran 24 jam di sekitar Provinsi Jambi.'
+			description: 'Peta kualitas udara (Universal AQI), hotspot kebakaran 24 jam, dan arah angin di seluruh Indonesia.'
 		},
 		history: {
 			title: 'Riwayat',
@@ -358,8 +359,8 @@ export const id = {
 			description: 'Pastikan Maps JavaScript API aktif dan domain ini diizinkan di pembatasan key.'
 		},
 		network: { title: 'Peta gagal dimuat', description: 'Periksa koneksi internetmu, lalu muat ulang halaman.' },
-		regionLabel: 'Peta kualitas udara dan hotspot',
-		firesTitle: 'Hotspot sekitar Jambi, {n} jam',
+		regionLabel: 'Peta kualitas udara, hotspot, dan angin',
+		firesTitle: 'Hotspot di Indonesia, {n} jam',
 		firesUnconfigured: 'Data hotspot belum dikonfigurasi di server.',
 		detections: { one: 'deteksi', other: 'deteksi' },
 		confidence: { high: 'Keyakinan tinggi', nominal: 'Keyakinan sedang', low: 'Keyakinan rendah' },
@@ -372,12 +373,20 @@ export const id = {
 		scaleLow: '0, buruk',
 		scaleHigh: '100, sangat baik',
 		hotspots: 'Titik hotspot',
+		wind: 'Angin',
+		windCentre: 'Tengah peta: {speed} km/j, bertiup ke {toward}',
+		windCalm: 'Tengah peta: angin tenang',
+		windLegend: 'Garis bergerak searah angin 10 m di atas tanah. Makin pekat, makin kencang.',
+		windValid: 'Prakiraan model untuk pukul {time}.',
+		windFailed: 'Data angin gagal dimuat.',
+		compass: ['utara', 'timur laut', 'timur', 'tenggara', 'selatan', 'barat daya', 'barat', 'barat laut'],
 		checkCenter: 'Cek AQI di tengah peta',
 		clickHint: 'Atau klik titik mana pun di peta.',
 		about: 'Tentang data ini',
 		aboutText:
-			'Hotspot adalah anomali panas dari satelit, belum tentu kebakaran. Awan atau asap tebal bisa menutupi titik api. Warna peta adalah perkiraan model per 500 m, bukan hasil alat ukur.',
+			'Hotspot adalah anomali panas dari satelit, belum tentu kebakaran. Awan atau asap tebal bisa menutupi titik api. Warna peta adalah perkiraan model per 500 m, bukan hasil alat ukur. Angin adalah prakiraan model cuaca (ECMWF, ICON, GFS) dengan jarak titik sekitar 165 km, jadi angin lokal seperti angin laut tidak terlihat.',
 		hotspotSource: 'Hotspot:',
+		windSource: 'Angin:',
 		card: {
 			title: 'Titik hotspot',
 			satellite: 'Satelit',

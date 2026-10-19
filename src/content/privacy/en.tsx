@@ -31,8 +31,8 @@ export const PRIVACY_EN: LegalSection[] = [
 			<>
 				The map loads directly from Google Maps in your browser, so Google receives technical data such as your IP address and
 				may use cookies under its own policy. A point you click on the map is rounded to about 100 metres, then sent through the
-				Niskala server to Google to fetch its air quality. Hotspot data is fetched by the server from NASA FIRMS without any
-				data about you.
+				Niskala server to Google to fetch its air quality. Hotspot data from NASA FIRMS and wind data from Open-Meteo are
+				fetched by the server without any data about you.
 			</>
 		)
 	},

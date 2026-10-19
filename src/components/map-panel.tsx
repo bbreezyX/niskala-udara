@@ -1,18 +1,32 @@
 'use client';
 
 import { ChevronDown, RotateCw } from 'lucide-react';
-import { FIRE_WINDOW_HOURS, MAP_TIME_ZONE } from '@/lib/config/map';
+import { FIRE_WINDOW_HOURS } from '@/lib/config/map';
 import { UAQI_GRADIENT } from '@/lib/aqi';
 import type { Remote } from '@/lib/client/api';
-import { formatDataTime, formatHour, timeZoneLabel } from '@/lib/format';
+import { formatDataTime, formatHour, numberFormat, timeZoneLabel } from '@/lib/format';
 import { fill, plural } from '@/lib/i18n/config';
-import type { FireData } from '@/lib/types';
+import type { FireData, WindData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { useDictionary, useLocale } from './locale-provider';
 import { LEVELS } from './map-hotspots';
+
+/** Only called for data fetched in the browser, so it never runs during server rendering. */
+function viewerTimeZone(): string {
+	return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+/** Wind at the map centre: speed in m/s and the bearing it blows toward. */
+export interface CentreWind {
+	speed: number;
+	toward: number;
+}
+
+/** Below this (m/s) the air is calm and has no meaningful direction. */
+const CALM = 0.5;
 
 /** The hotspot count leads: it is what changes day to day. Its legend doubles as the breakdown. */
 export function FiresSummary({ configured, fires, onRetry }: { configured: boolean; fires: Remote<FireData>; onRetry: () => void }) {
@@ -58,6 +72,8 @@ function FireCounts({ data }: { data: FireData }) {
 	const counts = { high: 0, nominal: 0, low: 0 };
 	for (const hotspot of hotspots) counts[hotspot.confidence]++;
 	const latest = hotspots[0]?.acquiredAt ?? null;
+	// Hotspots span three time zones; the summary uses the reader's own, labelled.
+	const zone = viewerTimeZone();
 
 	return (
 		<>
@@ -82,8 +98,8 @@ function FireCounts({ data }: { data: FireData }) {
 				))}
 			</ul>
 			<p className="text-xs text-muted-foreground">
-				{latest && fill(t.map.lastDetected, { time: formatDataTime(latest, MAP_TIME_ZONE, locale) })}
-				{fill(t.map.updated, { time: `${formatHour(data.fetchedAt, MAP_TIME_ZONE, locale)} ${timeZoneLabel(MAP_TIME_ZONE)}` })}
+				{latest && fill(t.map.lastDetected, { time: formatDataTime(latest, zone, locale) })}
+				{fill(t.map.updated, { time: `${formatHour(data.fetchedAt, zone, locale)} ${timeZoneLabel(zone)}` })}
 			</p>
 			{data.missingSources.length > 0 && <p className="text-xs text-muted-foreground">{t.map.missingSources}</p>}
 		</>
@@ -95,11 +111,17 @@ interface LayerControlsProps {
 	onShowHeatmap: (checked: boolean) => void;
 	showFires: boolean;
 	onShowFires: (checked: boolean) => void;
+	showWind: boolean;
+	onShowWind: (checked: boolean) => void;
+	wind: Remote<WindData>;
+	centreWind: CentreWind | null;
+	onRetryWind: () => void;
 	mapReady: boolean;
 	firesConfigured: boolean;
 }
 
-export function LayerControls({ showHeatmap, onShowHeatmap, showFires, onShowFires, mapReady, firesConfigured }: LayerControlsProps) {
+export function LayerControls(props: LayerControlsProps) {
+	const { showHeatmap, onShowHeatmap, showFires, onShowFires, showWind, onShowWind, wind, mapReady, firesConfigured } = props;
 	const t = useDictionary();
 	return (
 		<section className="grid gap-1 p-5" aria-labelledby="layers-title">
@@ -124,7 +146,49 @@ export function LayerControls({ showHeatmap, onShowHeatmap, showFires, onShowFir
 				</Label>
 				<Switch id="layer-fires" checked={showFires} onCheckedChange={onShowFires} disabled={!mapReady || !firesConfigured} />
 			</div>
+			<div className="mt-2 flex min-h-11 items-center justify-between gap-3">
+				<Label htmlFor="layer-wind" className="font-semibold">
+					{t.map.wind}
+				</Label>
+				<Switch id="layer-wind" checked={showWind} onCheckedChange={onShowWind} disabled={!mapReady || wind.status !== 'success'} />
+			</div>
+			<WindStatus {...props} />
 		</section>
+	);
+}
+
+/** What the wind layer shows, in words: the reading at the map centre and the hour it is for. */
+function WindStatus({ wind, centreWind, onRetryWind }: LayerControlsProps) {
+	const t = useDictionary();
+	const locale = useLocale();
+	if (wind.status === 'error') {
+		return (
+			<div className="flex items-center justify-between gap-3 text-sm">
+				<p className="font-semibold text-destructive">{t.map.windFailed}</p>
+				<Button variant="outline" size="sm" onClick={onRetryWind}>
+					<RotateCw data-icon="inline-start" />
+					{t.common.retry}
+				</Button>
+			</div>
+		);
+	}
+	if (wind.status !== 'success') return <Skeleton className="h-9 rounded-md" />;
+
+	const zone = viewerTimeZone();
+	let reading: string | null = null;
+	if (centreWind) {
+		const speed = numberFormat(locale, 0).format(centreWind.speed * 3.6);
+		reading =
+			centreWind.speed < CALM
+				? t.map.windCalm
+				: fill(t.map.windCentre, { speed, toward: t.map.compass[Math.round(centreWind.toward / 45) % 8] });
+	}
+	return (
+		<div className="grid gap-0.5 text-xs text-muted-foreground" aria-live="polite">
+			{reading && <p className="text-sm text-foreground">{reading}</p>}
+			<p>{t.map.windLegend}</p>
+			<p>{fill(t.map.windValid, { time: `${formatHour(wind.data.validAt, zone, locale)} ${timeZoneLabel(zone)}` })}</p>
+		</div>
 	);
 }
 
@@ -150,6 +214,17 @@ export function MapAbout() {
 						NASA FIRMS
 					</a>{' '}
 					(LANCE/ESDIS)
+				</span>
+				<span>
+					{t.map.windSource}{' '}
+					<a href="https://open-meteo.com/" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+						Open-Meteo
+					</a>{' '}
+					(
+					<a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+						CC BY 4.0
+					</a>
+					)
 				</span>
 			</p>
 		</div>

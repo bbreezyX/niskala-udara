@@ -42,7 +42,7 @@ describe('parseFirmsCsv', () => {
 describe('fetchHotspots', () => {
 	const now = new Date('2026-10-19T00:00:00Z');
 
-	it('queries the fixed Jambi area per VIIRS source and keeps only the last 24 hours, newest first', async () => {
+	it('queries all of Indonesia per VIIRS source and keeps only the last 24 hours, newest first', async () => {
 		const fetchFn = vi.fn<typeof fetch>().mockImplementation(async () =>
 			text(
 				csv(
@@ -56,7 +56,7 @@ describe('fetchHotspots', () => {
 
 		expect(fetchFn).toHaveBeenCalledTimes(3);
 		expect(String(fetchFn.mock.calls[0][0])).toBe(
-			`https://firms.modaps.eosdis.nasa.gov/api/area/csv/${MAP_KEY}/VIIRS_SNPP_NRT/100.7,-3.2,104.9,-0.5/2`
+			`https://firms.modaps.eosdis.nasa.gov/api/area/csv/${MAP_KEY}/VIIRS_SNPP_NRT/94.5,-11.5,141.5,6.5/2`
 		);
 		expect(data.hotspots.map((h) => h.acquiredAt)).toEqual([
 			'2026-10-18T18:00:00.000Z',
@@ -120,7 +120,7 @@ describe('handleTileRequest', () => {
 	// Zoom 8 tile containing Kota Jambi.
 	const jambi = { z: '8', x: '201', y: '129' };
 
-	it('proxies a tile over Sumatra with header auth and a private, time-limited cache', async () => {
+	it('proxies a tile over Indonesia with header auth and a private, time-limited cache', async () => {
 		const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(png());
 		const response = await handleTileRequest(request(), jambi, API_KEY, fetchFn);
 		expect(response.status).toBe(200);
@@ -168,7 +168,7 @@ describe('handleTileRequest', () => {
 		['x out of range', { z: '2', x: '4', y: '0' }, 400],
 		['non-integer', { z: '8', x: '1e2', y: '129' }, 400],
 		['leading zero', { z: '08', x: '201', y: '129' }, 400],
-		['tile outside Sumatra (Surabaya)', { z: '8', x: '208', y: '133' }, 404]
+		['tile outside Indonesia (Bangkok)', { z: '8', x: '199', y: '118' }, 404]
 	])('rejects %s', async (_, params, status) => {
 		const fetchFn = vi.fn<typeof fetch>();
 		const response = await handleTileRequest(request(), params, API_KEY, fetchFn);

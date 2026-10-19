@@ -16,3 +16,9 @@ export const firmsKey = () => optional(process.env.FIRMS_MAP_KEY);
  * domains (HTTP referrers) and to the Maps JavaScript API only.
  */
 export const mapsBrowserKey = () => optional(process.env.PUBLIC_GOOGLE_MAPS_API_KEY);
+
+/**
+ * Optional Open-Meteo commercial key. Without it the free API is used, which only allows
+ * non-commercial use (no ads or subscriptions on the site).
+ */
+export const openMeteoKey = () => optional(process.env.OPEN_METEO_API_KEY);

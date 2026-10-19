@@ -94,3 +94,15 @@ export interface FireData {
 	sources: string[];
 	missingSources: string[];
 }
+
+/** Wind 10 m above ground for one hour, on a regular latitude/longitude grid. */
+export interface WindData {
+	grid: { west: number; south: number; step: number; columns: number; rows: number };
+	/** Eastward and northward components in m/s, row by row from the south-west corner. */
+	u: number[];
+	v: number[];
+	/** Start of the forecast hour these values are for (ISO 8601, UTC). */
+	validAt: string;
+	/** When the server fetched the model run, not when it was computed. */
+	fetchedAt: string;
+}

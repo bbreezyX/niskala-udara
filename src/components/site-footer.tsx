@@ -29,7 +29,7 @@ function columns(t: Dictionary) {
  */
 export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 	return (
-		<footer className="mx-auto mt-16 w-full max-w-7xl px-4 pb-6 sm:px-6">
+		<footer className="page-frame mt-16 pb-6">
 			<div className="relative rounded-[20px] bg-sky sm:rounded-[28px]">
 				<div className="grid gap-10 px-6 pt-10 pb-20 sm:px-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-16 md:pt-14 md:pb-20">
 					<div className="grid grid-cols-2 content-start gap-x-10 gap-y-8 text-sm">
@@ -64,6 +64,12 @@ export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 									NASA FIRMS
 								</a>{' '}
 								(LANCE/ESDIS)
+								<br />
+								{t.footer.windSource}{' '}
+								<a href="https://open-meteo.com/" rel="noopener noreferrer" className="underline underline-offset-4">
+									Open-Meteo
+								</a>{' '}
+								(CC BY 4.0)
 							</p>
 						</div>
 					</div>

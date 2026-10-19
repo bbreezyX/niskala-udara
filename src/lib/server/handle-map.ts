@@ -1,12 +1,13 @@
 import { MAP_BOUNDS, MAP_ZOOM, type Bounds } from '@/lib/config/map';
 import { getHotspots } from './firms';
+import { getWind } from './wind';
 import { AirQualityError } from './google-air-quality';
 import { fail, isCrossSite, log, respond } from './http';
 
 const TILE_URL = 'https://airquality.googleapis.com/v1/mapTypes/UAQI_RED_GREEN/heatmapTiles';
 const TIMEOUT_MS = 10_000;
 
-/** GET /api/fires: hotspots around Jambi over the last 24 hours. */
+/** GET /api/fires: hotspots across Indonesia over the last 24 hours. */
 export async function handleFiresRequest(
 	request: Request,
 	apiKey: string | undefined,
@@ -105,7 +106,7 @@ export function clearTileCache() {
 
 /**
  * GET /api/air-quality/tiles/[z]/[x]/[y]: proxies Google's UAQI heatmap tile so the
- * Air Quality key never reaches the browser. Only tiles over Sumatra, up to MAP_ZOOM.max.
+ * Air Quality key never reaches the browser. Only tiles over Indonesia, up to MAP_ZOOM.max.
  */
 export async function handleTileRequest(
 	request: Request,
@@ -141,4 +142,22 @@ export async function handleTileRequest(
 			'cache-control': `private, max-age=${maxAge}`
 		}
 	});
+}
+
+/** GET /api/wind: the current hour's wind grid over the map, from Open-Meteo. */
+export async function handleWindRequest(
+	request: Request,
+	apiKey: string | undefined,
+	fetchFn: typeof fetch = fetch
+): Promise<Response> {
+	const startedAt = performance.now();
+	if (isCrossSite(request)) return fail('invalid_request', 403);
+	try {
+		// Short: the hour these values are for turns over on the hour.
+		return respond({ data: await getWind(apiKey, fetchFn) }, 200, 'public, max-age=300');
+	} catch (error) {
+		const code = error instanceof AirQualityError ? error.code : 'upstream_error';
+		log('wind', code, error instanceof Error ? error.message : 'unexpected', startedAt);
+		return fail(code);
+	}
 }

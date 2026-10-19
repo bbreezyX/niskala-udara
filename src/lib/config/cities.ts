@@ -276,6 +276,14 @@ export function nearestCities(from: { latitude: number; longitude: number }, cou
 		.slice(0, count);
 }
 
+/**
+ * WIB, WITA or WIT at a point in Indonesia, from the nearest listed place. Zone borders follow
+ * provinces, and every province has listed places, so the nearest one is right away from the borders.
+ */
+export function timeZoneAt(from: { latitude: number; longitude: number }): string {
+	return nearestCities(from, 1)[0].city.timeZone;
+}
+
 /** Farther than this from every listed place, a device is not "in" any region (e.g. abroad). */
 const NEAREST_REGION_MAX_KM = 250;
 

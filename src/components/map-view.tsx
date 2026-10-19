@@ -6,8 +6,9 @@ import { Crosshair } from 'lucide-react';
 import { roundCoordinates } from '@/lib/coordinates';
 import { getJson, toRemote, type Remote } from '@/lib/client/api';
 import { HotspotLayer } from '@/lib/client/hotspot-layer';
-import { useGoogleMap, useMapOverlays, type MapState } from '@/lib/client/use-google-map';
-import type { FireData } from '@/lib/types';
+import { describeWind, WindField } from '@/lib/client/wind-layer';
+import { useGoogleMap, useMapOverlays, useWindOverlay, type MapState } from '@/lib/client/use-google-map';
+import type { FireData, WindData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -15,30 +16,47 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StateMessage } from './info-blocks';
 import { useDictionary, useLocale, useLocalePath } from './locale-provider';
 import { hotspotStyle, useHotspotClicks } from './map-hotspots';
-import { FiresSummary, LayerControls, MapAbout } from './map-panel';
+import { FiresSummary, LayerControls, MapAbout, type CentreWind } from './map-panel';
 
-/** FIRMS hotspots for the map. A newer request aborts the one before it. */
-function useFires(configured: boolean) {
-	const [fires, setFires] = useState<Remote<FireData>>({ status: 'idle' });
+/** One map data source. A newer request aborts the one before it; nothing loads while `enabled` is off. */
+function useRemoteJson<T>(path: string, enabled: boolean) {
+	const [remote, setRemote] = useState<Remote<T>>({ status: 'idle' });
 	const controllerRef = useRef<AbortController | null>(null);
 
-	const loadFires = useCallback(() => {
-		if (!configured) return;
+	const load = useCallback(() => {
+		if (!enabled) return;
 		controllerRef.current?.abort();
 		const controller = new AbortController();
 		controllerRef.current = controller;
-		setFires({ status: 'loading' });
-		getJson<FireData>('/api/fires', controller.signal).then((result) => {
-			if (result) setFires(toRemote(result));
+		setRemote({ status: 'loading' });
+		getJson<T>(path, controller.signal).then((result) => {
+			if (result) setRemote(toRemote(result));
 		});
-	}, [configured]);
+	}, [path, enabled]);
 
 	useEffect(() => {
-		loadFires();
+		load();
 		return () => controllerRef.current?.abort();
-	}, [loadFires]);
+	}, [load]);
 
-	return [fires, loadFires] as const;
+	return [remote, load] as const;
+}
+
+/** The wind at the map centre, read again whenever the map comes to rest. */
+function useCentreWind(map: google.maps.Map | null, field: WindField | null): CentreWind | null {
+	const [centre, setCentre] = useState<CentreWind | null>(null);
+	useEffect(() => {
+		if (!map || !field) return;
+		const read = () => {
+			const point = map.getCenter();
+			const wind = point && field.at(point.lat(), point.lng());
+			setCentre(wind ? describeWind(wind) : null);
+		};
+		read();
+		const listener = map.addListener('idle', read);
+		return () => listener.remove();
+	}, [map, field]);
+	return map && field ? centre : null;
 }
 
 function MapError({ status }: { status: MapState['status'] }) {
@@ -57,7 +75,9 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	const mapElement = useRef<HTMLDivElement>(null);
 	const [showHeatmap, setShowHeatmap] = useState(true);
 	const [showFires, setShowFires] = useState(true);
-	const [fires, loadFires] = useFires(firesConfigured);
+	const [showWind, setShowWind] = useState(true);
+	const [fires, loadFires] = useRemoteJson<FireData>('/api/fires', firesConfigured);
+	const [wind, loadWind] = useRemoteJson<WindData>('/api/wind', true);
 	const router = useRouter();
 	const localize = useLocalePath();
 	const locale = useLocale();
@@ -79,6 +99,10 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	const hotspots = useMemo(() => (fireData ? new HotspotLayer(fireData.hotspots, hotspotStyle) : null), [fireData]);
 	useMapOverlays(mapState, hotspots, showHeatmap, showFires);
 	useHotspotClicks(map, showFires ? hotspots : null, selectPoint);
+	const windData = wind.status === 'success' ? wind.data : null;
+	const windField = useMemo(() => (windData ? new WindField(windData) : null), [windData]);
+	useWindOverlay(mapState, windField, showWind);
+	const centreWind = useCentreWind(map, windField);
 
 	const failed = mapState.status === 'unconfigured' || mapState.status === 'auth' || mapState.status === 'network';
 
@@ -102,6 +126,11 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 					onShowHeatmap={setShowHeatmap}
 					showFires={showFires}
 					onShowFires={setShowFires}
+					showWind={showWind}
+					onShowWind={setShowWind}
+					wind={wind}
+					centreWind={centreWind}
+					onRetryWind={loadWind}
 					mapReady={map !== null}
 					firesConfigured={firesConfigured}
 				/>

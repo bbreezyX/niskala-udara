@@ -37,13 +37,14 @@ export const en: Dictionary = {
 		terms: 'Terms of Use',
 		dataSources: 'Data sources',
 		airQualitySource: 'Air quality: Google Air Quality API',
-		hotspotSource: 'Fire hotspots:'
+		hotspotSource: 'Fire hotspots:',
+		windSource: 'Wind:'
 	},
 	pages: {
 		map: {
 			title: 'Map',
 			heading: 'Air & hotspot map',
-			description: 'Air quality map (Universal AQI) and 24-hour fire hotspots around Jambi Province.'
+			description: 'Air quality map (Universal AQI), 24-hour fire hotspots, and wind direction across Indonesia.'
 		},
 		history: {
 			title: 'History',
@@ -357,8 +358,8 @@ export const en: Dictionary = {
 			description: 'Make sure the Maps JavaScript API is enabled and this domain is allowed in the key restrictions.'
 		},
 		network: { title: 'The map failed to load', description: 'Check your internet connection, then reload the page.' },
-		regionLabel: 'Air quality and hotspot map',
-		firesTitle: 'Hotspots around Jambi, {n} hours',
+		regionLabel: 'Air quality, hotspot and wind map',
+		firesTitle: 'Hotspots in Indonesia, {n} hours',
 		firesUnconfigured: 'Hotspot data is not set up on the server.',
 		detections: { one: 'detection', other: 'detections' },
 		confidence: { high: 'High confidence', nominal: 'Medium confidence', low: 'Low confidence' },
@@ -371,12 +372,20 @@ export const en: Dictionary = {
 		scaleLow: '0, poor',
 		scaleHigh: '100, excellent',
 		hotspots: 'Fire hotspots',
+		wind: 'Wind',
+		windCentre: 'Map centre: {speed} km/h, blowing {toward}',
+		windCalm: 'Map centre: calm',
+		windLegend: 'Lines move with the wind 10 m above ground. Darker means stronger.',
+		windValid: 'Model forecast for {time}.',
+		windFailed: 'Wind data failed to load.',
+		compass: ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'],
 		checkCenter: 'Check AQI at the map centre',
 		clickHint: 'Or click any point on the map.',
 		about: 'About this data',
 		aboutText:
-			'Hotspots are heat anomalies seen by satellite and are not always fires. Cloud or thick smoke can hide a fire. Map colours are a model estimate per 500 m, not measurements.',
+			'Hotspots are heat anomalies seen by satellite and are not always fires. Cloud or thick smoke can hide a fire. Map colours are a model estimate per 500 m, not measurements. Wind is a weather model forecast (ECMWF, ICON, GFS) on points about 165 km apart, so local winds such as sea breezes do not show.',
 		hotspotSource: 'Fire hotspots:',
+		windSource: 'Wind:',
 		card: {
 			title: 'Fire hotspot',
 			satellite: 'Satellite',

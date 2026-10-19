@@ -39,7 +39,12 @@ export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 					<a href="https://firms.modaps.eosdis.nasa.gov/" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
 						NASA FIRMS
 					</a>{' '}
-					(VIIRS satellites): heat anomalies that are not necessarily fires.
+					(VIIRS satellites): heat anomalies that are not necessarily fires. Wind on the map is a weather model forecast
+					from{' '}
+					<a href="https://open-meteo.com/" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
+						Open-Meteo
+					</a>{' '}
+					(CC BY 4.0).
 				</p>
 				<p className="max-w-prose">
 					Each city uses a single reference point: the city centre for a city (<em lang="id">kota</em>), and the regency

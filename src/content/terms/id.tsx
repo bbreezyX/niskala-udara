@@ -16,7 +16,8 @@ export const TERMS_ID: LegalSection[] = [
 		title: 'Sumber data',
 		body: (
 			<>
-				Data berasal dari Google Maps Platform Air Quality API dan ditampilkan tanpa diubah. Data merupakan perkiraan per jam,
+				Data kualitas udara berasal dari Google Maps Platform Air Quality API dan ditampilkan tanpa diubah. Hotspot berasal
+				dari NASA FIRMS, dan angin di peta dari Open-Meteo (CC BY 4.0). Data merupakan perkiraan per jam,
 				dapat tertunda, tidak lengkap, atau berbeda dengan kondisi di lapangan.
 			</>
 		)

@@ -5,7 +5,8 @@ import { AirQualityError } from './google-air-quality';
 const BASE_URL = 'https://firms.modaps.eosdis.nasa.gov/api/area/csv';
 /** VIIRS (375 m) from all three satellites; MODIS (1 km) adds little over these. */
 export const FIRMS_SOURCES = ['VIIRS_SNPP_NRT', 'VIIRS_NOAA20_NRT', 'VIIRS_NOAA21_NRT'] as const;
-const TIMEOUT_MS = 10_000;
+/** Nationwide, one source can take 9–10 s in fire season; still under the browser's 15 s limit. */
+const TIMEOUT_MS = 13_000;
 /** NASA data may be cached; FIRMS updates every few hours, so 10 minutes costs nothing in freshness. */
 export const CACHE_TTL_MS = 10 * 60_000;
 

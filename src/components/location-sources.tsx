@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { Link } from './link';
 import { ArrowLeft, LocateFixed, MapPinOff } from 'lucide-react';
-import { CITIES, nearestRegion, placeName, REGIONS } from '@/lib/config/cities';
-import { MAP_BOUNDS, MAP_TIME_ZONE } from '@/lib/config/map';
+import { CITIES, nearestRegion, placeName, REGIONS, timeZoneAt } from '@/lib/config/cities';
+import { MAP_BOUNDS } from '@/lib/config/map';
 import { parseCoordinates, roundCoordinates } from '@/lib/coordinates';
 import { cityFeed, LocationFeed, type WatchLocation } from '@/lib/client/location-feed';
 import { rememberRegion } from '@/lib/client/region-memory';
@@ -25,7 +25,7 @@ function useOwnFeed(location: WatchLocation | null, locale: Locale) {
 
 function SourceShell({ back, children }: { back: { href: string; label: string }; children: React.ReactNode }) {
 	return (
-		<div className="mx-auto grid max-w-7xl gap-4 px-4 pt-6 sm:px-6 md:pt-8">
+		<div className="page-frame grid gap-4 pt-6 md:pt-8">
 			<Button asChild variant="ghost" size="lg" className="-ml-2.5 h-10 justify-self-start text-muted-foreground">
 				<Link href={back.href}>
 					<ArrowLeft data-icon="inline-start" />
@@ -174,8 +174,8 @@ export function PointDetail({ configured }: { configured: boolean }) {
 			name: t.point.name,
 			note: `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`,
 			coordinates,
-			// The map is limited to Sumatra, which is entirely WIB.
-			timeZone: onMap ? MAP_TIME_ZONE : Intl.DateTimeFormat().resolvedOptions().timeZone,
+			// The map covers Indonesia, so its points get WIB, WITA or WIT.
+			timeZone: onMap ? timeZoneAt(coordinates) : Intl.DateTimeFormat().resolvedOptions().timeZone,
 			region: null
 		};
 	}, [coordinates, t]);

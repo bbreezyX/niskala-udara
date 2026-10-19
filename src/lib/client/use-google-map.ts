@@ -5,6 +5,7 @@ import { MAP_BOUNDS, MAP_CENTER, MAP_ZOOM } from '@/lib/config/map';
 import type { Locale } from '@/lib/i18n/config';
 import { loadGoogleMaps, MapsLoadError, onMapsAuthFailure } from './google-maps';
 import { syncOverlays, type HotspotLayer } from './hotspot-layer';
+import { createWindOverlay, type WindField } from './wind-layer';
 
 // Google Maps objects are imperative handles; they live here only while the map is usable.
 export type MapState =
@@ -85,4 +86,18 @@ export function useMapOverlays(state: MapState, hotspots: HotspotLayer | null, s
 		const layers = [showHeatmap ? state.heatmap : null, showFires ? hotspotType : null];
 		syncOverlays(state.map.overlayMapTypes, layers.filter((layer) => layer !== null));
 	}, [state, hotspotType, showHeatmap, showFires]);
+}
+
+/** Dark ink reads over both the light base map and the heatmap colours. */
+const WIND_COLOR = '#1c1917';
+
+/** Draws the wind field on the map while `show` is on; a new field replaces the old overlay. */
+export function useWindOverlay(state: MapState, field: WindField | null, show: boolean) {
+	useEffect(() => {
+		if (state.status !== 'ready' || !field || !show) return;
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const overlay = createWindOverlay(field, WIND_COLOR, reducedMotion);
+		overlay.setMap(state.map);
+		return () => overlay.setMap(null);
+	}, [state, field, show]);
 }
