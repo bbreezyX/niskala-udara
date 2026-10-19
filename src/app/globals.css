@@ -206,6 +206,11 @@ body:has([data-error-scene]) :is([data-section-nav], [data-language-switch], #ko
     border-radius: 18px;
     box-shadow: 0 1px 2px rgb(20 25 32 / 0.08), 0 12px 32px -8px rgb(20 25 32 / 0.28);
 }
+/* The map card's rounded corner would clip the last attribution link ("Report a map error"), which
+   Google requires to stay legible. Only the rightmost item in the bottom row gets the room. */
+.gm-style .gm-style-cc ~ .gm-style-cc:last-child {
+    padding-right: 14px;
+}
 /* Google sets overflow: scroll inline; the card fits, so no scrollbar unless the map is tiny. */
 .gm-style .gm-style-iw-d:has(.hotspot-card) {
     overflow: auto !important;

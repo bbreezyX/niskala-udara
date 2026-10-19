@@ -4,6 +4,8 @@ import { toWorld } from './hotspot-layer';
 const TILE = 256;
 /** CSS pixels a particle moves per frame for each m/s, the same at every zoom. */
 const SPEED = 0.25;
+/** Particles step at most this often, so SPEED, FADE and lifetimes mean the same on 60, 120 or 240 Hz screens. */
+const STEP_MS = 15;
 /** One particle per this many square CSS pixels. */
 const DENSITY = 420;
 const MAX_PARTICLES = 3000;
@@ -71,6 +73,7 @@ export function createWindOverlay(field: WindField, color: string, reducedMotion
 		private readonly canvas = document.createElement('canvas');
 		private readonly context = this.canvas.getContext('2d');
 		private frame = 0;
+		private lastStep = 0;
 		private ratio = 1;
 		private width = 0;
 		private height = 0;
@@ -99,9 +102,12 @@ export function createWindOverlay(field: WindField, color: string, reducedMotion
 			if (this.place() && reducedMotion) this.drawArrows();
 		}
 
-		private readonly tick = () => {
+		// The canvas follows the map every frame; the particles advance on a ~60 fps clock.
+		private readonly tick = (time: number) => {
 			this.frame = requestAnimationFrame(this.tick);
-			if (this.place()) this.step();
+			if (!this.place() || time - this.lastStep < STEP_MS) return;
+			this.lastStep = time;
+			this.step();
 		};
 
 		/** Pins the canvas to the map's viewport. False while the map cannot be drawn yet. */

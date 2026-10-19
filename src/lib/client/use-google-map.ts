@@ -21,6 +21,12 @@ function createMap({ Map, ImageMapType }: google.maps.MapsLibrary, element: HTML
 		restriction: { latLngBounds: MAP_BOUNDS, strictBounds: false },
 		mapTypeControl: false,
 		streetViewControl: false,
+		// Plain +/- buttons instead of the camera control, which hides zoom behind a click.
+		cameraControl: false,
+		zoomControl: true,
+		zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM },
+		// A km scale, for judging how far a hotspot sits from a city.
+		scaleControl: true,
 		clickableIcons: false,
 		gestureHandling: 'greedy'
 	});
