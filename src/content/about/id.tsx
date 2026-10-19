@@ -1,18 +1,10 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import { AQI_BANDS, UAQI_GRADIENT } from '@/lib/aqi';
+import { Link } from '@/components/link';
+import type { Dictionary } from '@/lib/i18n/dictionaries/id';
+import { BandsFigure } from './bands-figure';
 
-export const metadata: Metadata = {
-	title: 'Tentang',
-	alternates: { canonical: '/about' },
-	description: 'Apa itu Niskala, cara membaca Universal AQI, sumber data, dan batasannya.'
-};
-
-const RANGES = AQI_BANDS.map((band, i) => ({ ...band, max: (AQI_BANDS[i + 1]?.min ?? 101) - 1 }));
-
-export default function AboutPage() {
+export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }) {
 	return (
-		<article className="mx-auto grid max-w-3xl gap-12 px-4 pt-10 sm:px-6 md:pt-14 [&_h2]:text-xl [&_h2]:font-semibold [&_p]:text-foreground/85">
+		<>
 			<header>
 				<h1 className="font-display text-5xl leading-none tracking-[-0.02em] sm:text-6xl">Tentang Niskala</h1>
 				<p className="mt-4 max-w-prose text-lg">
@@ -30,30 +22,9 @@ export default function AboutPage() {
 					kategori dan rekomendasi kesehatan berasal langsung dari Google.
 				</p>
 
-				<figure className="m-0 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
-					<div className="h-3 rounded-full" style={{ background: UAQI_GRADIENT }} aria-hidden="true" />
-					<div className="mt-1.5 flex justify-between text-xs text-muted-foreground tabular-nums" aria-hidden="true">
-						<span>0</span>
-						<span>50</span>
-						<span>100</span>
-					</div>
-					<dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-						{RANGES.map(({ label, icon: Icon, ink, min, max }) => (
-							<div key={min} className="grid content-start gap-1 rounded-xl bg-muted/60 p-3">
-								<dt className="flex items-center gap-1.5 text-sm font-semibold">
-									<Icon className="size-4 shrink-0" style={{ color: ink }} aria-hidden="true" />
-									{label}
-								</dt>
-								<dd className="text-sm text-muted-foreground tabular-nums">
-									{min}–{max}
-								</dd>
-							</div>
-						))}
-					</dl>
-					<figcaption className="mt-4 text-xs text-muted-foreground">
-						Pita kategori Universal AQI. Warna mengikuti warna yang dikirim Google untuk setiap angka.
-					</figcaption>
-				</figure>
+				<BandsFigure names={bandNames}>
+					Pita kategori Universal AQI. Warna mengikuti warna yang dikirim Google untuk setiap angka.
+				</BandsFigure>
 			</section>
 
 			<section aria-labelledby="bukan-ispu" className="grid gap-4">
@@ -100,6 +71,6 @@ export default function AboutPage() {
 					.
 				</p>
 			</section>
-		</article>
+		</>
 	);
 }

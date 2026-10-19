@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowDownAZ, Check, ChevronDown, Circle, List, RotateCcw, SlidersHorizontal, type LucideIcon } from 'lucide-react';
 import { AQI_BANDS } from '@/lib/aqi';
+import { fill, plural } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useDictionary, useLocale } from './locale-provider';
 
 export type SortKey = 'default' | 'best' | 'worst' | 'name';
 
@@ -26,17 +28,11 @@ export const DEFAULT_FILTER: ListFilter = { bands: ALL_BANDS, sort: 'default' };
  * Best and worst borrow the face and fill of the top and bottom AQI bands, matching the solid band buttons above;
  * the neutral orders use the app's blue. White text passes AA on all three (5.0, 5.8, 6.4).
  */
-const SORT_OPTIONS: { value: SortKey; label: string; description: string; icon: LucideIcon; fill: string }[] = [
-	{ value: 'default', label: 'Bawaan', description: 'Urutan bawaan, seperti daftar wilayah.', icon: List, fill: '#0b57d0' },
-	{
-		value: 'best',
-		label: 'Terbaik',
-		description: 'AQI tertinggi dulu: udara terbaik di atas.',
-		icon: AQI_BANDS.at(-1)!.icon,
-		fill: AQI_BANDS.at(-1)!.fill
-	},
-	{ value: 'worst', label: 'Terburuk', description: 'AQI terendah dulu: udara terburuk di atas.', icon: AQI_BANDS[0].icon, fill: AQI_BANDS[0].fill },
-	{ value: 'name', label: 'A–Z', description: 'Nama kota dari A sampai Z.', icon: ArrowDownAZ, fill: '#0b57d0' }
+const SORT_OPTIONS: { value: SortKey; icon: LucideIcon; fill: string }[] = [
+	{ value: 'default', icon: List, fill: '#0b57d0' },
+	{ value: 'best', icon: AQI_BANDS.at(-1)!.icon, fill: AQI_BANDS.at(-1)!.fill },
+	{ value: 'worst', icon: AQI_BANDS[0].icon, fill: AQI_BANDS[0].fill },
+	{ value: 'name', icon: ArrowDownAZ, fill: '#0b57d0' }
 ];
 
 /** Stiffer than the navbar's spring: the hop is short, and the thumb must land as the label turns white. */
@@ -57,9 +53,11 @@ interface Props {
 
 /**
  * The AQI scale is the control: each band is a toggle that shows how many locations sit in it now.
- * Edits are a draft until "Tampilkan N lokasi", which states the result before it is applied.
+ * Edits are a draft until the apply button, which states the result ("Show N locations") before it is applied.
  */
 export function SortFilter({ value, onApply, bandCounts, pendingCount, compact = false }: Props & { compact?: boolean }) {
+	const t = useDictionary();
+	const locale = useLocale();
 	const [open, setOpen] = useState(false);
 	const [bands, setBands] = useState<number[]>(value.bands);
 	const [sort, setSort] = useState<SortKey>(value.sort);
@@ -85,21 +83,21 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 			<PopoverTrigger asChild>
 				{compact ? (
 					// Icon only on phones; the dot keeps an active sort or filter visible without the label.
-					<Button variant="outline" size="icon" className="relative size-11 rounded-full bg-card" aria-label="Urutkan & filter">
+					<Button variant="outline" size="icon" className="relative size-11 rounded-full bg-card" aria-label={t.filter.trigger}>
 						<SlidersHorizontal aria-hidden="true" />
 						{isFiltered(value) && (
 							<span className="absolute top-2 right-2 size-2 rounded-full bg-primary ring-2 ring-card">
-								<span className="sr-only">(aktif)</span>
+								<span className="sr-only">{t.filter.active}</span>
 							</span>
 						)}
 					</Button>
 				) : (
 					<Button variant="outline" size="lg" className="h-10 rounded-full bg-card px-4">
 						<SlidersHorizontal data-icon="inline-start" />
-						Urutkan &amp; filter
+						{t.filter.trigger}
 						{isFiltered(value) && (
 							<span className="size-2 rounded-full bg-primary">
-								<span className="sr-only">(aktif)</span>
+								<span className="sr-only">{t.filter.active}</span>
 							</span>
 						)}
 						<ChevronDown data-icon="inline-end" className="text-muted-foreground" />
@@ -114,11 +112,11 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 			>
 				<div className="grid gap-5 p-5">
 					<div>
-						<p className="font-display text-2xl leading-tight">Tampilkan lokasi dengan udara…</p>
-						<p className="mt-1 text-sm text-muted-foreground">Ketuk satu atau beberapa kategori.</p>
+						<p className="font-display text-2xl leading-tight">{t.filter.title}</p>
+						<p className="mt-1 text-sm text-muted-foreground">{t.filter.hint}</p>
 					</div>
 
-					<div role="group" aria-label="Kategori AQI" className="flex gap-1">
+					<div role="group" aria-label={t.filter.bandsLabel} className="flex gap-1">
 						{AQI_BANDS.map((band, i) => {
 							const on = bands.includes(i);
 							const max = (AQI_BANDS[i + 1]?.min ?? 101) - 1;
@@ -128,7 +126,12 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 									key={band.min}
 									type="button"
 									aria-pressed={on}
-									aria-label={`${band.label}, AQI ${band.min} sampai ${max}, ${bandCounts[i] ?? 0} lokasi`}
+									aria-label={fill(t.filter.bandOption, {
+										band: t.aqi.bands[band.key],
+										min: String(band.min),
+										max: String(max),
+										count: plural(t.common.locations, bandCounts[i] ?? 0, locale)
+									})}
 									onClick={() => toggle(i)}
 									className={cn(
 										'grid min-h-24 flex-1 content-between gap-2 rounded-md border-2 p-2 text-left text-xs transition-[background-color,color,border-color] outline-none first:rounded-l-2xl last:rounded-r-2xl focus-visible:ring-3 focus-visible:ring-ring/50 sm:p-2.5',
@@ -141,7 +144,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 										<span className="text-base leading-none font-semibold tabular-nums">{bandCounts[i] ?? 0}</span>
 									</span>
 									<span className="grid gap-0.5">
-										<span className="leading-tight font-semibold">{band.label}</span>
+										<span className="leading-tight font-semibold">{t.aqi.bands[band.key]}</span>
 										<span className="text-[11px] whitespace-nowrap tabular-nums opacity-85 sm:text-xs">
 											{band.min}–{max}
 										</span>
@@ -153,7 +156,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 
 					<div className="grid gap-2">
 						<p id="sort-label" className="text-sm font-semibold">
-							Urutkan
+							{t.filter.sort}
 						</p>
 						<ToggleGroup
 							type="single"
@@ -172,7 +175,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 								animate={{ x: `${SORT_OPTIONS.findIndex((option) => option.value === sort) * 100}%`, backgroundColor: active.fill }}
 								transition={{ x: THUMB, backgroundColor: { duration: 0.12 } }}
 							/>
-							{SORT_OPTIONS.map(({ value: key, label, icon: Icon }) => (
+							{SORT_OPTIONS.map(({ value: key, icon: Icon }) => (
 								<ToggleGroupItem
 									key={key}
 									value={key}
@@ -180,17 +183,17 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 									className="relative h-9 flex-1 gap-1.5 rounded-full! text-muted-foreground transition-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-transparent data-[state=on]:font-semibold data-[state=on]:text-white"
 								>
 									<Icon className="max-sm:hidden" aria-hidden="true" />
-									{label}
+									{t.filter.sorts[key].label}
 								</ToggleGroupItem>
 							))}
 						</ToggleGroup>
 						<p id="sort-description" className="text-xs text-muted-foreground">
-							{active.description}
+							{t.filter.sorts[active.value].description}
 						</p>
 					</div>
 
 					{pendingCount > 0 && (
-						<p className="text-xs text-muted-foreground">{pendingCount} lokasi yang datanya belum termuat tetap ditampilkan.</p>
+						<p className="text-xs text-muted-foreground">{plural(t.filter.pending, pendingCount, locale)}</p>
 					)}
 				</div>
 
@@ -205,10 +208,10 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 						}}
 					>
 						<RotateCcw data-icon="inline-start" />
-						Atur ulang
+						{t.filter.reset}
 					</Button>
 					<div className="flex items-center gap-3">
-						{nothingPicked && <span className="text-xs text-muted-foreground">Pilih minimal satu</span>}
+						{nothingPicked && <span className="text-xs text-muted-foreground">{t.filter.pickOne}</span>}
 						<Button
 							size="lg"
 							className="h-10 rounded-full px-5"
@@ -218,7 +221,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount, compact =
 								setOpen(false);
 							}}
 						>
-							Tampilkan {matching} lokasi
+							{plural(t.filter.apply, matching, locale)}
 						</Button>
 					</div>
 				</div>

@@ -1,8 +1,9 @@
 'use client';
 
 import { LocateFixed, MapPin } from 'lucide-react';
-import { CITIES, REGIONS } from '@/lib/config/cities';
+import { CITIES, placeName, REGIONS } from '@/lib/config/cities';
 import { CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { useDictionary, useLocale } from './locale-provider';
 
 /** Substring match on the name and reference point: fuzzy matching surfaces unrelated places. */
 export function filterCities(_: string, query: string, keywords: string[] = []) {
@@ -18,22 +19,24 @@ const GROUP = '**:[[cmdk-group-heading]]:px-3';
 
 /** Search results for the navbar search: the device location first, then every city grouped by region. */
 export function CityResults({ onGo }: { onGo: (href: string) => void }) {
+	const { search } = useDictionary();
+	const locale = useLocale();
 	return (
 		<>
-			<CommandEmpty>Kota tidak ditemukan. Hanya kota pantauan yang tersedia.</CommandEmpty>
-			<CommandGroup heading="Lokasi" className={GROUP}>
-				<CommandItem value="saya" keywords={['Lokasi saya', 'perangkat', 'sekitar']} onSelect={() => onGo('/location/me')} className={ROW}>
+			<CommandEmpty>{search.empty}</CommandEmpty>
+			<CommandGroup heading={search.locationGroup} className={GROUP}>
+				<CommandItem value="saya" keywords={[search.myLocation, ...search.myLocationKeywords]} onSelect={() => onGo('/location/me')} className={ROW}>
 					<LocateFixed className="text-primary" />
-					<span className="truncate font-medium">Lokasi saya</span>
+					<span className="truncate font-medium">{search.myLocation}</span>
 				</CommandItem>
 			</CommandGroup>
 			{REGIONS.map((region) => (
-				<CommandGroup key={region.id} heading={region.name} className={GROUP}>
+				<CommandGroup key={region.id} heading={placeName(region, locale)} className={GROUP}>
 					{CITIES.filter((city) => city.region === region.id).map((city) => (
 						<CommandItem
 							key={city.id}
 							value={city.id}
-							keywords={[city.name, city.point]}
+							keywords={[city.name, city.point, region.name, region.nameEn]}
 							onSelect={() => onGo(`/location/${city.id}`)}
 							className={ROW}
 						>

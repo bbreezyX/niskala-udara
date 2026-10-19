@@ -1,40 +1,44 @@
-import Link from 'next/link';
+import { Link } from './link';
+import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 import { BrandMark } from './brand-mark';
 
-const COLUMNS = [
-	{
-		title: 'Halaman',
-		links: [
-			{ href: '/', label: 'Pantauan' },
-			{ href: '/map', label: 'Peta' },
-			{ href: '/history', label: 'Riwayat' }
-		]
-	},
-	{
-		title: 'Informasi',
-		links: [
-			{ href: '/about', label: 'Tentang' },
-			{ href: '/privacy', label: 'Privasi' },
-			{ href: '/terms', label: 'Ketentuan Penggunaan' }
-		]
-	}
-] as const;
+function columns(t: Dictionary) {
+	return [
+		{
+			title: t.footer.pages,
+			links: [
+				{ href: '/', label: t.nav.home },
+				{ href: '/map', label: t.nav.map },
+				{ href: '/history', label: t.nav.history }
+			]
+		},
+		{
+			title: t.footer.information,
+			links: [
+				{ href: '/about', label: t.footer.about },
+				{ href: '/privacy', label: t.footer.privacy },
+				{ href: '/terms', label: t.footer.terms }
+			]
+		}
+	];
+}
 
 /**
  * Mirrors the dashboard hero: a sky panel with the brand in a bottom-left notch, so the page opens
  * and closes with the same shape. The line explains the name: "niskala" means intangible, unseen.
  */
-export function SiteFooter() {
+export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 	return (
 		<footer className="mx-auto mt-16 w-full max-w-7xl px-4 pb-6 sm:px-6">
 			<div className="relative rounded-[20px] bg-sky sm:rounded-[28px]">
 				<div className="grid gap-10 px-6 pt-10 pb-20 sm:px-10 md:grid-cols-[minmax(0,1fr)_auto] md:gap-16 md:pt-14 md:pb-20">
 					<p className="max-w-[16ch] font-display text-4xl leading-[1.02] tracking-[-0.01em] text-secondary-foreground sm:text-5xl lg:text-6xl">
-						Udara itu <em>niskala</em>. Kami membuatnya terbaca.
+						{t.footer.taglineLead} <em lang="id">niskala</em>
+						{t.footer.taglineRest}
 					</p>
 
 					<div className="grid grid-cols-2 content-start gap-x-10 gap-y-8 text-sm">
-						{COLUMNS.map((column) => (
+						{columns(t).map((column) => (
 							<nav key={column.title} aria-label={column.title}>
 								<h2 className="mb-3 text-xs font-semibold text-secondary-foreground/70">{column.title}</h2>
 								<ul className="grid gap-1">
@@ -52,11 +56,11 @@ export function SiteFooter() {
 							</nav>
 						))}
 						<div className="col-span-2">
-							<h2 className="mb-3 text-xs font-semibold text-secondary-foreground/70">Sumber data</h2>
+							<h2 className="mb-3 text-xs font-semibold text-secondary-foreground/70">{t.footer.dataSources}</h2>
 							<p className="leading-relaxed text-secondary-foreground">
-								Kualitas udara: Google Air Quality API
+								{t.footer.airQualitySource}
 								<br />
-								Hotspot:{' '}
+								{t.footer.hotspotSource}{' '}
 								<a
 									href="https://firms.modaps.eosdis.nasa.gov/"
 									rel="noopener noreferrer"

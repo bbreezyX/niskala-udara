@@ -3,8 +3,9 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { cityNote, type City, type RegionId } from '@/lib/config/cities';
 import type { ClientErrorCode } from '@/lib/format';
+import type { Locale } from '@/lib/i18n/config';
 import type { AirQualityData, Coordinates, RegionLine } from '@/lib/types';
-import { fromApi, pending, postJson, toRemote, type Remote, type Result } from './api';
+import { fromApi, pending, postJson, toRemote, withLanguage, type Remote, type Result } from './api';
 
 export interface WatchLocation {
 	key: string;
@@ -16,11 +17,11 @@ export interface WatchLocation {
 	region: RegionId | null;
 }
 
-export function cityLocation(city: City): WatchLocation {
+export function cityLocation(city: City, language: Locale): WatchLocation {
 	return {
 		key: `city:${city.id}`,
 		name: city.name,
-		note: cityNote(city),
+		note: cityNote(city, language),
 		coordinates: { latitude: city.latitude, longitude: city.longitude },
 		timeZone: city.timeZone,
 		region: city.region
@@ -49,12 +50,14 @@ export type PartResult =
  */
 export class LocationFeed {
 	readonly location: WatchLocation;
+	readonly language: Locale;
 	#state: FeedState = { current: { status: 'idle' }, forecast: { status: 'idle' }, fetchedAt: null };
 	#listeners = new Set<() => void>();
 	#controller: AbortController | null = null;
 
-	constructor(location: WatchLocation) {
+	constructor(location: WatchLocation, language: Locale) {
 		this.location = location;
+		this.language = language;
 	}
 
 	get state(): FeedState {
@@ -96,10 +99,10 @@ export class LocationFeed {
 		const controller = this.#begin();
 		const body = this.location.coordinates;
 		await Promise.all([
-			postJson<AirQualityData>('/api/air-quality', body, controller.signal).then(
+			postJson<AirQualityData>(withLanguage('/api/air-quality', this.language), body, controller.signal).then(
 				(result) => result && this.#receive(controller, { part: 'current', result })
 			),
-			postJson<AirQualityData[]>('/api/air-quality/forecast', body, controller.signal).then(
+			postJson<AirQualityData[]>(withLanguage('/api/air-quality/forecast', this.language), body, controller.signal).then(
 				(result) => result && this.#receive(controller, { part: 'forecast', result })
 			)
 		]);
@@ -147,12 +150,14 @@ const cityFeeds = new Map<string, LocationFeed>();
  * One feed per city for the whole browser session, shared by the dashboard and the detail page,
  * so moving between them does not ask Google again. Held in memory only, never persisted.
  */
-export function cityFeed(city: City): LocationFeed {
-	let feed = cityFeeds.get(city.id);
+export function cityFeed(city: City, language: Locale): LocationFeed {
+	// Keyed by language too: Google's text in the cached data is in the language it was asked for.
+	const key = `${language}:${city.id}`;
+	let feed = cityFeeds.get(key);
 	if (!feed) {
-		feed = new LocationFeed(cityLocation(city));
+		feed = new LocationFeed(cityLocation(city, language), language);
 		// Server renders get a throwaway feed: it never loads there, and sharing it across requests would be wrong.
-		if (typeof window !== 'undefined') cityFeeds.set(city.id, feed);
+		if (typeof window !== 'undefined') cityFeeds.set(key, feed);
 	}
 	return feed;
 }
@@ -165,7 +170,7 @@ const regionControllers = new Map<RegionId, AbortController>();
  * Loads a whole region with one streamed request (GET /api/air-quality/region/[region]) and hands each
  * line to its feed as it arrives, so cards fill in one by one. A newer load of the same region aborts this one.
  */
-export async function loadRegion(region: RegionId, feeds: readonly LocationFeed[]) {
+export async function loadRegion(region: RegionId, feeds: readonly LocationFeed[], language: Locale) {
 	regionControllers.get(region)?.abort();
 	const controller = new AbortController();
 	regionControllers.set(region, controller);
@@ -189,7 +194,7 @@ export async function loadRegion(region: RegionId, feeds: readonly LocationFeed[
 	};
 
 	try {
-		const response = await fetch(`/api/air-quality/region/${region}`, { signal: controller.signal });
+		const response = await fetch(withLanguage(`/api/air-quality/region/${region}`, language), { signal: controller.signal });
 		if (!response.ok || !response.body) {
 			const json = (await response.json().catch(() => null)) as { error?: { code?: ClientErrorCode } } | null;
 			failRest(json?.error?.code ?? 'upstream_error');

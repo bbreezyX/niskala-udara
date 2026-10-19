@@ -4,17 +4,20 @@ import { connection } from 'next/server';
 import { CityDetail } from '@/components/location-sources';
 import { CITIES } from '@/lib/config/cities';
 import { airQualityKey } from '@/lib/server/env';
+import { fill, toLocale } from '@/lib/i18n/config';
+import { getDictionary, localeAlternates } from '@/lib/i18n/server';
 
-type Params = { params: Promise<{ id: string }> };
+type Params = { params: Promise<{ lang: string; id: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-	const { id } = await params;
+	const { lang, id } = await params;
+	const locale = toLocale(lang);
 	const city = CITIES.find((c) => c.id === id);
 	return city
 		? {
 				title: city.name,
-				description: `Kualitas udara terkini, tren 24 jam, prakiraan, dan kadar polutan di ${city.name}.`,
-				alternates: { canonical: `/location/${city.id}` }
+				description: fill(getDictionary(locale).pages.city.description, { name: city.name }),
+				alternates: localeAlternates(`/location/${city.id}`, locale)
 			}
 		: {};
 }

@@ -1,25 +1,27 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Command as CommandPrimitive } from 'cmdk';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Search, X } from 'lucide-react';
+import { LIVE_LOCALES, splitLocale } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils';
 import { CommandList } from '@/components/ui/command';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { BrandMark } from './brand-mark';
 import { CityResults, filterCities } from './city-search';
-import { LanguageSwitch, type Locale } from './language-switch';
+import { LanguageSwitch } from './language-switch';
+import { Link } from './link';
+import { useDictionary, useLocale, useLocalePath } from './locale-provider';
 
-// The switch has no translations behind it yet, so production never shows a control that does nothing.
-const SHOW_LANGUAGE_SWITCH = process.env.NODE_ENV === 'development';
+// Only shown once a second language is live, so production never offers a version that is not ready.
+const SHOW_LANGUAGE_SWITCH = LIVE_LOCALES.length > 1;
 
 const NAV = [
-	{ href: '/', label: 'Pantauan' },
-	{ href: '/map', label: 'Peta' },
-	{ href: '/history', label: 'Riwayat' }
+	{ href: '/', key: 'home' },
+	{ href: '/map', key: 'map' },
+	{ href: '/history', key: 'history' }
 ] as const;
 
 /** One spring for every capsule change, so resizing, the indicator, and the name fold move as one object. */
@@ -56,12 +58,15 @@ function subscribeScroll(callback: () => void) {
  * away), the active section indicator slides on a spring, and search opens inside the capsule.
  */
 export function AppHeader() {
-	const pathname = usePathname();
+	// Section matching works on the path without its locale prefix, so /en/map and /map light up the same tab.
+	const pathname = splitLocale(usePathname()).path;
 	const router = useRouter();
+	const locale = useLocale();
+	const t = useDictionary();
+	const localize = useLocalePath();
 	const scrolled = useSyncExternalStore(subscribeScroll, () => window.scrollY > 8, () => false);
 	const [searching, setSearching] = useState(false);
 	const [query, setQuery] = useState('');
-	const [locale, setLocale] = useState<Locale>('id');
 	const capsule = useRef<HTMLDivElement>(null);
 	const header = useRef<HTMLElement>(null);
 	const navRef = useRef<HTMLDivElement>(null);
@@ -118,25 +123,25 @@ export function AppHeader() {
 
 	function go(href: string) {
 		openSearch(false);
-		router.push(href);
+		router.push(localize(href));
 	}
 
 	return (
 		<header ref={header} className="pointer-events-none sticky top-0 z-40 flex justify-center px-4 pt-3">
-			<CommandPrimitive filter={filterCities} loop label="Cari kota" className="contents">
+			<CommandPrimitive filter={filterCities} loop label={t.search.label} className="contents">
 				<Popover open={searching} onOpenChange={openSearch}>
 					{/* Anchored to the full-width header, not the resizing capsule, so results never shimmer sideways mid-morph. */}
 					<PopoverAnchor virtualRef={header} />
 					<div
 						ref={capsule}
 						className={cn(
-							'pointer-events-auto flex items-center rounded-full border bg-card/90 p-1.5 backdrop-blur-md transition-shadow duration-300',
+							'pointer-events-auto flex items-center rounded-full border bg-card/90 p-1.5 backdrop-blur-md transition-shadow duration-300 [view-transition-name:site-header]',
 							scrolled || searching ? 'shadow-lg shadow-foreground/10' : 'shadow-sm'
 						)}
 					>
 						<Link
 							href="/"
-							aria-label="Niskala, beranda"
+							aria-label={t.nav.brandHome}
 							onClick={(event) => onNavClick(event, '/')}
 							className={cn('flex shrink-0 items-center rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50', PRESS)}
 						>
@@ -170,7 +175,7 @@ export function AppHeader() {
 						>
 							<motion.nav
 								ref={navRef}
-								aria-label="Navigasi utama"
+								aria-label={t.nav.label}
 								inert={searching}
 								initial={false}
 								animate={{ opacity: searching ? 0 : 1 }}
@@ -178,7 +183,7 @@ export function AppHeader() {
 								className="w-max px-1.5 max-[379px]:px-1"
 							>
 								<ul className="flex items-center rounded-full bg-muted p-1 max-[379px]:p-0.5">
-									{NAV.map(({ href, label }) => {
+									{NAV.map(({ href, key }) => {
 										const active = isActive(href, target);
 										return (
 											<li key={href}>
@@ -198,7 +203,7 @@ export function AppHeader() {
 															className="absolute inset-0 rounded-full bg-foreground"
 														/>
 													)}
-													<span className="relative">{label}</span>
+													<span className="relative">{t.nav[key]}</span>
 												</Link>
 											</li>
 										);
@@ -222,8 +227,8 @@ export function AppHeader() {
 										ref={inputRef}
 										value={query}
 										onValueChange={setQuery}
-										placeholder="Cari kota atau kabupaten…"
-										aria-label="Cari kota pantauan"
+										placeholder={t.search.placeholder}
+										aria-label={t.search.inputLabel}
 										className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
 									/>
 								</div>
@@ -233,9 +238,9 @@ export function AppHeader() {
 						<button
 							type="button"
 							onClick={() => openSearch(!searching)}
-							aria-label={searching ? 'Tutup pencarian' : 'Cari kota (Ctrl K)'}
+							aria-label={searching ? t.search.close : t.search.open}
 							aria-expanded={searching}
-							title={searching ? undefined : 'Cari kota (Ctrl K)'}
+							title={searching ? undefined : t.search.open}
 							className="grid size-9 shrink-0 place-items-center rounded-full bg-muted max-[379px]:size-8 text-muted-foreground outline-none transition-[color,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.92]"
 						>
 							{searching ? <X className="size-4.5" aria-hidden="true" /> : <Search className="size-4.5" aria-hidden="true" />}
@@ -244,7 +249,7 @@ export function AppHeader() {
 						{/* Below 360px the capsule has no room left; small screens need the footer for this once it ships. */}
 						{SHOW_LANGUAGE_SWITCH && (
 							<div className="ml-1.5 shrink-0 max-[379px]:ml-1 max-[359px]:hidden">
-								<LanguageSwitch value={locale} onChange={setLocale} />
+								<LanguageSwitch value={locale} path={pathname} />
 							</div>
 						)}
 					</div>

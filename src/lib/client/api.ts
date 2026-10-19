@@ -1,5 +1,7 @@
 import type { ClientErrorCode } from '@/lib/format';
+import type { Locale } from '@/lib/i18n/config';
 import type { ApiResponse } from '@/lib/types';
+import { whenActivated } from './activation';
 
 /** Slightly longer than the server's 10 s upstream timeout, as a last resort. */
 const CLIENT_TIMEOUT_MS = 15_000;
@@ -11,6 +13,11 @@ export type Remote<T> =
 	| { status: 'loading' }
 	| { status: 'success'; data: T; refreshing: boolean }
 	| { status: 'error'; code: ClientErrorCode };
+
+/** An air-quality endpoint asked for Google's text in `language`. */
+export function withLanguage(path: string, language: Locale): string {
+	return `${path}?lang=${language}`;
+}
 
 /** POSTs JSON to an internal endpoint. See `requestJson`. */
 export function postJson<T>(path: string, body: unknown, signal: AbortSignal): Promise<Result<T> | null> {
@@ -30,6 +37,8 @@ export function getJson<T>(path: string, signal: AbortSignal): Promise<Result<T>
  * so a superseded request can never overwrite newer state.
  */
 async function requestJson<T>(path: string, init: RequestInit, signal: AbortSignal): Promise<Result<T> | null> {
+	await whenActivated();
+	if (signal.aborted) return null;
 	const controller = new AbortController();
 	const forwardAbort = () => controller.abort();
 	signal.addEventListener('abort', forwardAbort, { once: true });

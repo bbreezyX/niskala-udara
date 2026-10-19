@@ -9,6 +9,7 @@ import {
 	type PollutantReading,
 	type UniversalAqi
 } from '@/lib/types';
+import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/config';
 
 const BASE_URL = 'https://airquality.googleapis.com/v1/';
 export const UPSTREAM_TIMEOUT_MS = 10_000;
@@ -142,7 +143,8 @@ async function callGoogle(
 	method: GoogleMethod,
 	body: Json,
 	apiKey: string,
-	fetchFn: typeof fetch
+	fetchFn: typeof fetch,
+	language: Locale
 ): Promise<unknown> {
 	let response: Response;
 	try {
@@ -153,7 +155,8 @@ async function callGoogle(
 				// Header auth keeps the key out of URLs and access logs.
 				'x-goog-api-key': apiKey
 			},
-			body: JSON.stringify({ ...body, universalAqi: true, languageCode: 'id' }),
+			// The language only changes Google's own text (category names, health recommendations), never the numbers.
+			body: JSON.stringify({ ...body, universalAqi: true, languageCode: language }),
 			signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
 		});
 	} catch (error) {
@@ -202,13 +205,15 @@ function normalizeHours(raw: unknown, field: 'hoursInfo' | 'hourlyForecasts'): A
 export async function fetchCurrentConditions(
 	coordinates: Coordinates,
 	apiKey: string,
-	fetchFn: typeof fetch = fetch
+	fetchFn: typeof fetch = fetch,
+	language: Locale = DEFAULT_LOCALE
 ): Promise<AirQualityData> {
 	const body = await callGoogle(
 		'currentConditions:lookup',
 		{ ...location(coordinates), extraComputations: ['POLLUTANT_CONCENTRATION', 'HEALTH_RECOMMENDATIONS'] },
 		apiKey,
-		fetchFn
+		fetchFn,
+		language
 	);
 	return normalizeResponse(body);
 }
@@ -218,7 +223,8 @@ export async function fetchHistory(
 	coordinates: Coordinates,
 	hours: number,
 	apiKey: string,
-	fetchFn: typeof fetch = fetch
+	fetchFn: typeof fetch = fetch,
+	language: Locale = DEFAULT_LOCALE
 ): Promise<AirQualityData[]> {
 	const body = await callGoogle(
 		'history:lookup',
@@ -229,7 +235,8 @@ export async function fetchHistory(
 			extraComputations: ['POLLUTANT_CONCENTRATION', 'HEALTH_RECOMMENDATIONS']
 		},
 		apiKey,
-		fetchFn
+		fetchFn,
+		language
 	);
 	return normalizeHours(body, 'hoursInfo');
 }
@@ -241,6 +248,7 @@ export async function fetchForecast(
 	coordinates: Coordinates,
 	apiKey: string,
 	fetchFn: typeof fetch = fetch,
+	language: Locale = DEFAULT_LOCALE,
 	now = new Date()
 ): Promise<AirQualityData[]> {
 	const start = new Date(now);
@@ -257,7 +265,8 @@ export async function fetchForecast(
 			pageSize: FORECAST_HOURS
 		},
 		apiKey,
-		fetchFn
+		fetchFn,
+		language
 	);
 	return normalizeHours(body, 'hourlyForecasts');
 }

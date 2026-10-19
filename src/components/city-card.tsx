@@ -1,12 +1,12 @@
 'use client';
 
 import { Suspense, use, useEffect } from 'react';
-import Link from 'next/link';
 import { Clock, MapPin, RotateCw } from 'lucide-react';
 import { fromApi, toRemote, type Remote } from '@/lib/client/api';
 import { isBusy, useFeed, type LocationFeed } from '@/lib/client/location-feed';
 import { aqiBand } from '@/lib/aqi';
-import { ERROR_MESSAGES, formatHour, timeZoneLabel } from '@/lib/format';
+import { formatHour, timeZoneLabel } from '@/lib/format';
+import { fill } from '@/lib/i18n/config';
 import type { AirQualityData, ApiResponse, PollutantCode, StreamedCity } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,10 +15,12 @@ import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
 import { PollutantTiles } from './pollutant-tiles';
 import { TrendChart } from './trend-chart';
+import { Link } from './link';
+import { useDictionary, useLocale } from './locale-provider';
 
 const SUMMARY_POLLUTANTS: PollutantCode[] = ['pm25', 'pm10', 'no2', 'o3'];
 
-/** Small section labels share one style, so the pollutant names and "Prakiraan" read as one set. */
+/** Small section labels share one style, so the pollutant names and the forecast label read as one set. */
 const LABEL = 'text-xs font-semibold text-muted-foreground';
 
 function Place({ note }: { note: string }) {
@@ -32,6 +34,7 @@ function Place({ note }: { note: string }) {
 
 /** Shown while a card's current conditions load, and as the fallback while the page streams them. */
 export function CityCardSkeleton({ feed }: { feed: LocationFeed }) {
+	const t = useDictionary();
 	const { location } = feed;
 	const titleId = `city-${location.key}`;
 	return (
@@ -50,7 +53,7 @@ export function CityCardSkeleton({ feed }: { feed: LocationFeed }) {
 				<Skeleton className="h-[74px] rounded-xl" />
 				<Skeleton className="h-28 rounded-xl" />
 			</CardContent>
-			<p className="sr-only">Memuat data {location.name}</p>
+			<p className="sr-only">{fill(t.common.loadingPlace, { name: location.name })}</p>
 		</Card>
 	);
 }
@@ -76,13 +79,15 @@ function useStreamed<T>(
 }
 
 export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: string; streamed?: StreamedCity }) {
+	const locale = useLocale();
+	const t = useDictionary();
 	const state = useFeed(feed);
 	const current = useStreamed(feed, 'current', state.current, streamed?.current);
 	const { location } = feed;
 	const titleId = `city-${location.key}`;
 
 	if (current.status === 'error') {
-		const message = ERROR_MESSAGES[current.code];
+		const message = t.errors[current.code];
 		return (
 			<Card className="h-full rounded-2xl" aria-labelledby={titleId}>
 				<CardHeader>
@@ -97,7 +102,7 @@ export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: s
 						<p className="text-sm text-muted-foreground">{message.description}</p>
 						<Button variant="outline" size="lg" className="mt-2" onClick={() => feed.load()}>
 							<RotateCw data-icon="inline-start" />
-							Coba lagi
+							{t.common.retry}
 						</Button>
 					</div>
 				</CardContent>
@@ -138,7 +143,7 @@ export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: s
 			<CardContent className="grid gap-4">
 				<PollutantTiles pollutants={pollutants} codes={SUMMARY_POLLUTANTS} />
 				<div className="grid gap-1">
-					<p className={LABEL}>Prakiraan 24 jam</p>
+					<p className={LABEL}>{t.card.forecast24}</p>
 					{/* The forecast is slower than current conditions, so it fills in on its own. */}
 					<Suspense fallback={<Skeleton className="h-24 rounded-xl" />}>
 						<CardForecast feed={feed} live={state.forecast} streamed={streamed?.forecast} current={data} />
@@ -148,8 +153,8 @@ export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: s
 
 			<CardFooter className="mt-auto gap-1.5 border-t-0 bg-transparent pt-0 text-xs text-muted-foreground">
 				<Clock className="size-3.5" aria-hidden="true" />
-				Data {formatHour(dataTime, location.timeZone)} {timeZoneLabel(location.timeZone, new Date(dataTime))}
-				{busy && <span className="ml-auto">Memperbarui…</span>}
+				{fill(t.card.dataAt, { time: `${formatHour(dataTime, location.timeZone, locale)} ${timeZoneLabel(location.timeZone, new Date(dataTime))}` })}
+				{busy && <span className="ml-auto">{t.common.refreshing}</span>}
 			</CardFooter>
 		</Card>
 	);
@@ -166,11 +171,12 @@ function CardForecast({
 	streamed: Promise<ApiResponse<AirQualityData[]>> | undefined;
 	current: AirQualityData;
 }) {
+	const t = useDictionary();
 	const forecast = useStreamed(feed, 'forecast', live, streamed);
 	const { location } = feed;
 
 	if (forecast.status === 'error') {
-		return <p className="flex h-24 items-center text-sm text-muted-foreground">Prakiraan belum tersedia</p>;
+		return <p className="flex h-24 items-center text-sm text-muted-foreground">{t.card.forecastMissing}</p>;
 	}
 	if (forecast.status !== 'success') return <Skeleton className="h-24 rounded-xl" />;
 
@@ -179,7 +185,7 @@ function CardForecast({
 			variant="compact"
 			color={aqiBand(current.index.aqi).ink}
 			timeZone={location.timeZone}
-			label={`Prakiraan AQI 24 jam untuk ${location.name}`}
+			label={fill(t.card.forecastLabel, { name: location.name })}
 			points={[
 				{ dateTime: current.dataTime, aqi: current.index.aqi },
 				// A cached forecast can start at the hour current conditions already cover.

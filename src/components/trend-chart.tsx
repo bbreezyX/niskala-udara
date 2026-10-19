@@ -4,7 +4,9 @@ import { useId, useMemo } from 'react';
 import { Area, AreaChart, CartesianGrid, Line, ReferenceDot, ReferenceLine, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, type ChartConfig } from '@/components/ui/chart';
 import { formatHour } from '@/lib/format';
+import { fill, INTL_LOCALES } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils';
+import { useDictionary, useLocale } from './locale-provider';
 
 export interface TrendPoint {
 	dateTime: string;
@@ -69,15 +71,17 @@ export function TrendChart({ points, timeZone, label, variant = 'full', color = 
 
 	// Beyond a day the same hour repeats, so prefix the weekday.
 	const multiDay = rows.length > 1 && rows.at(-1)!.t - rows[0].t > 26 * 3_600_000;
-	const weekday = useMemo(() => new Intl.DateTimeFormat('id-ID', { weekday: 'short', timeZone }), [timeZone]);
+	const locale = useLocale();
+	const { chart } = useDictionary();
+	const weekday = useMemo(() => new Intl.DateTimeFormat(INTL_LOCALES[locale], { weekday: 'short', timeZone }), [timeZone, locale]);
 	const tickLabel = (t: number) => {
 		const iso = new Date(t).toISOString();
-		return multiDay ? `${weekday.format(t)} ${formatHour(iso, timeZone)}` : formatHour(iso, timeZone);
+		return multiDay ? `${weekday.format(t)} ${formatHour(iso, timeZone, locale)}` : formatHour(iso, timeZone, locale);
 	};
 
 	const values = points.map((p) => p.aqi);
 	const summary = values.length
-		? `${label}. Terendah ${Math.min(...values)}, tertinggi ${Math.max(...values)}.`
+		? fill(chart.summary, { label, min: String(Math.min(...values)), max: String(Math.max(...values)) })
 		: label;
 
 	return (
@@ -122,7 +126,7 @@ export function TrendChart({ points, timeZone, label, variant = 'full', color = 
 								<div className="rounded-lg border bg-popover px-2.5 py-1.5 text-xs shadow-md">
 									<p className="text-muted-foreground">
 										{tickLabel(row.t)}
-										{row.forecast && ' · prakiraan'}
+										{row.forecast && chart.forecastSuffix}
 									</p>
 									<p className="font-semibold tabular-nums">AQI {row.aqi}</p>
 								</div>
@@ -172,7 +176,7 @@ export function TrendChart({ points, timeZone, label, variant = 'full', color = 
 							x={nowT}
 							stroke="var(--muted-foreground)"
 							strokeDasharray="2 3"
-							label={{ value: 'Sekarang', position: 'top', fontSize: 11, fill: 'var(--muted-foreground)' }}
+							label={{ value: chart.now, position: 'top', fontSize: 11, fill: 'var(--muted-foreground)' }}
 						/>
 					)}
 					{compact && rows[0] && (

@@ -1,11 +1,7 @@
-import type { Metadata } from 'next';
-import { LegalArticle } from '@/components/legal-article';
-
-export const metadata: Metadata = { title: 'Privasi', alternates: { canonical: '/privacy' } };
-
-export default function PrivacyPage() {
+/** Indonesian original. It prevails over the English translation. */
+export function PrivacyId() {
 	return (
-		<LegalArticle title="Kebijakan Privasi" updated="19 Oktober 2026">
+		<>
 			<h2>Data yang diproses</h2>
 			<p>
 				Niskala hanya memproses koordinat lokasi untuk mengambil data kualitas udara. Saat kamu memilih kota, yang
@@ -43,6 +39,6 @@ export default function PrivacyPage() {
 				Izin lokasi hanya diminta setelah kamu menekan tombol, dan dapat dicabut kapan saja melalui pengaturan browser. Tanpa
 				izin tersebut, kamu tetap bisa memilih kota dari daftar.
 			</p>
-		</LegalArticle>
+		</>
 	);
 }

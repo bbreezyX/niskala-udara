@@ -40,8 +40,8 @@ function jsonResponse(body: unknown, status = 200) {
 	return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
 
-function apiRequest(body: unknown, headers: Record<string, string> = {}) {
-	return new Request('http://localhost/api/air-quality', {
+function apiRequest(body: unknown, headers: Record<string, string> = {}, query = '') {
+	return new Request(`http://localhost/api/air-quality${query}`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', ...headers },
 		body: typeof body === 'string' ? body : JSON.stringify(body)
@@ -122,6 +122,22 @@ describe('handleAirQualityRequest', () => {
 			languageCode: 'id',
 			extraComputations: ['POLLUTANT_CONCENTRATION', 'HEALTH_RECOMMENDATIONS']
 		});
+	});
+
+	it('asks Google for English text with ?lang=en', async () => {
+		const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(fullResponse));
+		const response = await handleAirQualityRequest(apiRequest(jakarta, {}, '?lang=en'), API_KEY, fetchFn);
+
+		expect(response.status).toBe(200);
+		expect(JSON.parse(String(fetchFn.mock.calls[0][1]?.body)).languageCode).toBe('en');
+	});
+
+	it('rejects an unsupported language without calling Google', async () => {
+		const fetchFn = vi.fn<typeof fetch>();
+		const response = await handleAirQualityRequest(apiRequest(jakarta, {}, '?lang=fr'), API_KEY, fetchFn);
+
+		expect(response.status).toBe(400);
+		expect(fetchFn).not.toHaveBeenCalled();
 	});
 
 	it('reports not_configured without calling Google', async () => {
@@ -254,7 +270,7 @@ describe('forecast', () => {
 		const fetchFn = vi
 			.fn<typeof fetch>()
 			.mockResolvedValue(jsonResponse({ hourlyForecasts: [hour('2026-10-18T10:00:00Z', 66)] }));
-		const data = await fetchForecast(jakarta, API_KEY, fetchFn, new Date('2026-10-18T09:41:12Z'));
+		const data = await fetchForecast(jakarta, API_KEY, fetchFn, 'id', new Date('2026-10-18T09:41:12Z'));
 		expect(data[0].index.aqi).toBe(66);
 
 		const [url, init] = fetchFn.mock.calls[0];

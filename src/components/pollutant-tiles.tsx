@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { Tooltip as TooltipPrimitive } from 'radix-ui';
-import { formatConcentration, POLLUTANT_INFO, POLLUTANT_LABELS, unitLabel, unitName } from '@/lib/format';
+import { formatConcentration, POLLUTANT_LABELS, unitLabel } from '@/lib/format';
 import { POLLUTANT_CODES, type PollutantCode, type PollutantReading } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useDictionary, useLocale } from './locale-provider';
 
 interface Props {
 	pollutants: PollutantReading[];
@@ -35,6 +36,8 @@ export function PollutantTiles({ pollutants, codes = POLLUTANT_CODES, size = 'sm
  * and what the unit is. Tap support is manual because Radix tooltips close on press.
  */
 function PollutantTile({ code, reading, size }: { code: PollutantCode; reading?: PollutantReading; size: 'sm' | 'lg' }) {
+	const locale = useLocale();
+	const { common } = useDictionary();
 	const unit = reading ? unitLabel(reading.units) : '';
 
 	return (
@@ -55,17 +58,17 @@ function PollutantTile({ code, reading, size }: { code: PollutantCode; reading?:
 					{reading ? (
 						<>
 							<span className={cn('font-semibold tabular-nums', size === 'sm' ? 'text-sm' : 'text-xl')}>
-								{formatConcentration(reading.value)}
+								{formatConcentration(reading.value, locale)}
 							</span>
 							{unit && <span className="text-xs text-muted-foreground">{unit}</span>}
 						</>
 					) : size === 'sm' ? (
 						<>
 							<span aria-hidden="true">–</span>
-							<span className="sr-only">Data belum tersedia</span>
+							<span className="sr-only">{common.dataNotAvailable}</span>
 						</>
 					) : (
-						<span className="text-xs text-muted-foreground">Data belum tersedia</span>
+						<span className="text-xs text-muted-foreground">{common.dataNotAvailable}</span>
 					)}
 				</dd>
 			</div>
@@ -76,9 +79,10 @@ function PollutantTile({ code, reading, size }: { code: PollutantCode; reading?:
 /** Wraps one focusable element (the trigger) with the pollutant's explanation. */
 export function PollutantHint({ code, units, children }: { code: PollutantCode; units?: string; children: React.ReactElement }) {
 	const [open, setOpen] = useState(false);
-	const info = POLLUTANT_INFO[code];
+	const { pollutants } = useDictionary();
+	const info = pollutants.info[code];
 	const unit = units ? unitLabel(units) : '';
-	const unitText = units ? unitName(units) : '';
+	const unitText = units ? (pollutants.units[units] ?? '') : '';
 
 	return (
 		<TooltipPrimitive.Root open={open} onOpenChange={setOpen} delayDuration={200}>
@@ -108,7 +112,7 @@ export function PollutantHint({ code, units, children }: { code: PollutantCode; 
 					</p>
 					<p className="text-sm leading-relaxed text-muted-foreground">{info.about}</p>
 					<p className="text-xs leading-relaxed">
-						<span className="font-semibold">Sumber umum: </span>
+						<span className="font-semibold">{pollutants.commonSources}</span>
 						<span className="text-muted-foreground">{info.sources}</span>
 					</p>
 					{unit && unitText && (

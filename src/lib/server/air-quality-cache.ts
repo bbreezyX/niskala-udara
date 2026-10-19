@@ -1,5 +1,6 @@
 import { SERVER_MAX_AGE_MS } from '@/lib/config/cache';
 import { CITIES } from '@/lib/config/cities';
+import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/config';
 import type { AirQualityData, Coordinates } from '@/lib/types';
 import { fetchCurrentConditions, fetchForecast, fetchHistory } from './google-air-quality';
 
@@ -118,18 +119,30 @@ export function snapToGrid(coordinates: Coordinates): Coordinates {
 	};
 }
 
-export function getCurrentConditions(coordinates: Coordinates, apiKey: string, fetchFn: typeof fetch = fetch): Promise<AirQualityData> {
+// Keys include the language: Google's text (categories, recommendations) comes back in the one asked for.
+
+export function getCurrentConditions(
+	coordinates: Coordinates,
+	apiKey: string,
+	fetchFn: typeof fetch = fetch,
+	language: Locale = DEFAULT_LOCALE
+): Promise<AirQualityData> {
 	const point = snapToGrid(coordinates);
-	return cached(`current:${place(point)}`, () => fetchCurrentConditions(point, apiKey, fetchFn));
+	return cached(`current:${language}:${place(point)}`, () => fetchCurrentConditions(point, apiKey, fetchFn, language));
 }
 
 /**
  * The forecast starts at the next full hour; entries expire by ten past it, so its first hour is never stale for long.
  * The 10 s timeout starts when the call leaves the queue, so waiting for a slot never counts against it.
  */
-export function getForecast(coordinates: Coordinates, apiKey: string, fetchFn: typeof fetch = fetch): Promise<AirQualityData[]> {
+export function getForecast(
+	coordinates: Coordinates,
+	apiKey: string,
+	fetchFn: typeof fetch = fetch,
+	language: Locale = DEFAULT_LOCALE
+): Promise<AirQualityData[]> {
 	const point = snapToGrid(coordinates);
-	return cached(`forecast:${place(point)}`, () => withForecastSlot(() => fetchForecast(point, apiKey, fetchFn)));
+	return cached(`forecast:${language}:${place(point)}`, () => withForecastSlot(() => fetchForecast(point, apiKey, fetchFn, language)));
 }
 
 /** History may be cached indefinitely, but it gains a new hour every hour, so it follows the same expiry. */
@@ -137,8 +150,9 @@ export function getHistory(
 	coordinates: Coordinates,
 	hours: number,
 	apiKey: string,
-	fetchFn: typeof fetch = fetch
+	fetchFn: typeof fetch = fetch,
+	language: Locale = DEFAULT_LOCALE
 ): Promise<AirQualityData[]> {
 	const point = snapToGrid(coordinates);
-	return cached(`history:${hours}:${place(point)}`, () => fetchHistory(point, hours, apiKey, fetchFn));
+	return cached(`history:${language}:${hours}:${place(point)}`, () => fetchHistory(point, hours, apiKey, fetchFn, language));
 }

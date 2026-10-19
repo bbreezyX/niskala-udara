@@ -1,5 +1,8 @@
+'use client';
+
 import { aqiBand, tint } from '@/lib/aqi';
 import { cn } from '@/lib/utils';
+import { useDictionary } from './locale-provider';
 
 interface Props {
 	aqi: number;
@@ -10,6 +13,7 @@ interface Props {
 
 /** Google's category text on a tint of Google's color, with an icon for the UAQI band. */
 export function AqiBadge({ aqi, category, color, className }: Props) {
+	const { aqi: names } = useDictionary();
 	const band = aqiBand(aqi);
 	const Icon = band.icon;
 
@@ -22,7 +26,7 @@ export function AqiBadge({ aqi, category, color, className }: Props) {
 			style={{ background: tint(color) }}
 		>
 			<Icon className="size-4 shrink-0" style={{ color: band.ink }} aria-hidden="true" />
-			<span className="truncate">{category ?? band.label}</span>
+			<span className="truncate">{category ?? names.bands[band.key]}</span>
 		</span>
 	);
 }

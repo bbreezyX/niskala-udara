@@ -1,66 +1,71 @@
+import { fill, type Locale } from '@/lib/i18n/config';
+
 /**
  * Locations shown in the app. Each one is a single reference point, not an average:
  * the city center for a kota, the regency seat (ibu kota kabupaten) for a kabupaten.
  * Add or edit entries here; `timeZone` must be an IANA zone so data times show WIB/WITA/WIT.
  */
-/** Island groups for the region picker, in display order. */
+/** Island groups for the region picker, in display order. `nameEn` is the English page's name. */
 export const ISLANDS = [
-	{ id: 'sumatra', name: 'Sumatra' },
-	{ id: 'jawa', name: 'Jawa' },
-	{ id: 'bali-nusa-tenggara', name: 'Bali & Nusa Tenggara' },
-	{ id: 'kalimantan', name: 'Kalimantan' },
-	{ id: 'sulawesi', name: 'Sulawesi' },
-	{ id: 'maluku-papua', name: 'Maluku & Papua' }
+	{ id: 'sumatra', name: 'Sumatra', nameEn: 'Sumatra' },
+	{ id: 'jawa', name: 'Jawa', nameEn: 'Java' },
+	{ id: 'bali-nusa-tenggara', name: 'Bali & Nusa Tenggara', nameEn: 'Bali & Nusa Tenggara' },
+	{ id: 'kalimantan', name: 'Kalimantan', nameEn: 'Kalimantan' },
+	{ id: 'sulawesi', name: 'Sulawesi', nameEn: 'Sulawesi' },
+	{ id: 'maluku-papua', name: 'Maluku & Papua', nameEn: 'Maluku & Papua' }
 ] as const;
 
 export type IslandId = (typeof ISLANDS)[number]['id'];
 
-/** Provinces, in geographic order within each island group. */
+/** Provinces, in geographic order within each island group. `nameEn` follows common English usage (Jawa Barat → West Java). */
 export const REGIONS = [
-	{ id: 'aceh', name: 'Aceh', island: 'sumatra' },
-	{ id: 'sumatera-utara', name: 'Sumatera Utara', island: 'sumatra' },
-	{ id: 'sumatera-barat', name: 'Sumatera Barat', island: 'sumatra' },
-	{ id: 'riau', name: 'Riau', island: 'sumatra' },
-	{ id: 'kepulauan-riau', name: 'Kepulauan Riau', island: 'sumatra' },
-	{ id: 'jambi', name: 'Jambi', island: 'sumatra' },
-	{ id: 'sumatera-selatan', name: 'Sumatera Selatan', island: 'sumatra' },
-	{ id: 'bangka-belitung', name: 'Kepulauan Bangka Belitung', island: 'sumatra' },
-	{ id: 'bengkulu', name: 'Bengkulu', island: 'sumatra' },
-	{ id: 'lampung', name: 'Lampung', island: 'sumatra' },
-	{ id: 'dki-jakarta', name: 'DKI Jakarta', island: 'jawa' },
-	{ id: 'banten', name: 'Banten', island: 'jawa' },
-	{ id: 'jawa-barat', name: 'Jawa Barat', island: 'jawa' },
-	{ id: 'jawa-tengah', name: 'Jawa Tengah', island: 'jawa' },
-	{ id: 'di-yogyakarta', name: 'DI Yogyakarta', island: 'jawa' },
-	{ id: 'jawa-timur', name: 'Jawa Timur', island: 'jawa' },
-	{ id: 'bali', name: 'Bali', island: 'bali-nusa-tenggara' },
-	{ id: 'nusa-tenggara-barat', name: 'Nusa Tenggara Barat', island: 'bali-nusa-tenggara' },
-	{ id: 'nusa-tenggara-timur', name: 'Nusa Tenggara Timur', island: 'bali-nusa-tenggara' },
-	{ id: 'kalimantan-barat', name: 'Kalimantan Barat', island: 'kalimantan' },
-	{ id: 'kalimantan-tengah', name: 'Kalimantan Tengah', island: 'kalimantan' },
-	{ id: 'kalimantan-selatan', name: 'Kalimantan Selatan', island: 'kalimantan' },
-	{ id: 'kalimantan-timur', name: 'Kalimantan Timur', island: 'kalimantan' },
-	{ id: 'kalimantan-utara', name: 'Kalimantan Utara', island: 'kalimantan' },
-	{ id: 'sulawesi-utara', name: 'Sulawesi Utara', island: 'sulawesi' },
-	{ id: 'gorontalo', name: 'Gorontalo', island: 'sulawesi' },
-	{ id: 'sulawesi-tengah', name: 'Sulawesi Tengah', island: 'sulawesi' },
-	{ id: 'sulawesi-barat', name: 'Sulawesi Barat', island: 'sulawesi' },
-	{ id: 'sulawesi-selatan', name: 'Sulawesi Selatan', island: 'sulawesi' },
-	{ id: 'sulawesi-tenggara', name: 'Sulawesi Tenggara', island: 'sulawesi' },
-	{ id: 'maluku', name: 'Maluku', island: 'maluku-papua' },
-	{ id: 'maluku-utara', name: 'Maluku Utara', island: 'maluku-papua' },
-	{ id: 'papua-barat-daya', name: 'Papua Barat Daya', island: 'maluku-papua' },
-	{ id: 'papua-barat', name: 'Papua Barat', island: 'maluku-papua' },
-	{ id: 'papua-tengah', name: 'Papua Tengah', island: 'maluku-papua' },
-	{ id: 'papua-pegunungan', name: 'Papua Pegunungan', island: 'maluku-papua' },
-	{ id: 'papua', name: 'Papua', island: 'maluku-papua' },
-	{ id: 'papua-selatan', name: 'Papua Selatan', island: 'maluku-papua' }
-] as const satisfies readonly { id: string; name: string; island: IslandId }[];
+	{ id: 'aceh', name: 'Aceh', nameEn: 'Aceh', island: 'sumatra' },
+	{ id: 'sumatera-utara', name: 'Sumatera Utara', nameEn: 'North Sumatra', island: 'sumatra' },
+	{ id: 'sumatera-barat', name: 'Sumatera Barat', nameEn: 'West Sumatra', island: 'sumatra' },
+	{ id: 'riau', name: 'Riau', nameEn: 'Riau', island: 'sumatra' },
+	{ id: 'kepulauan-riau', name: 'Kepulauan Riau', nameEn: 'Riau Islands', island: 'sumatra' },
+	{ id: 'jambi', name: 'Jambi', nameEn: 'Jambi', island: 'sumatra' },
+	{ id: 'sumatera-selatan', name: 'Sumatera Selatan', nameEn: 'South Sumatra', island: 'sumatra' },
+	{ id: 'bangka-belitung', name: 'Kepulauan Bangka Belitung', nameEn: 'Bangka Belitung Islands', island: 'sumatra' },
+	{ id: 'bengkulu', name: 'Bengkulu', nameEn: 'Bengkulu', island: 'sumatra' },
+	{ id: 'lampung', name: 'Lampung', nameEn: 'Lampung', island: 'sumatra' },
+	{ id: 'dki-jakarta', name: 'DKI Jakarta', nameEn: 'Jakarta', island: 'jawa' },
+	{ id: 'banten', name: 'Banten', nameEn: 'Banten', island: 'jawa' },
+	{ id: 'jawa-barat', name: 'Jawa Barat', nameEn: 'West Java', island: 'jawa' },
+	{ id: 'jawa-tengah', name: 'Jawa Tengah', nameEn: 'Central Java', island: 'jawa' },
+	{ id: 'di-yogyakarta', name: 'DI Yogyakarta', nameEn: 'Yogyakarta', island: 'jawa' },
+	{ id: 'jawa-timur', name: 'Jawa Timur', nameEn: 'East Java', island: 'jawa' },
+	{ id: 'bali', name: 'Bali', nameEn: 'Bali', island: 'bali-nusa-tenggara' },
+	{ id: 'nusa-tenggara-barat', name: 'Nusa Tenggara Barat', nameEn: 'West Nusa Tenggara', island: 'bali-nusa-tenggara' },
+	{ id: 'nusa-tenggara-timur', name: 'Nusa Tenggara Timur', nameEn: 'East Nusa Tenggara', island: 'bali-nusa-tenggara' },
+	{ id: 'kalimantan-barat', name: 'Kalimantan Barat', nameEn: 'West Kalimantan', island: 'kalimantan' },
+	{ id: 'kalimantan-tengah', name: 'Kalimantan Tengah', nameEn: 'Central Kalimantan', island: 'kalimantan' },
+	{ id: 'kalimantan-selatan', name: 'Kalimantan Selatan', nameEn: 'South Kalimantan', island: 'kalimantan' },
+	{ id: 'kalimantan-timur', name: 'Kalimantan Timur', nameEn: 'East Kalimantan', island: 'kalimantan' },
+	{ id: 'kalimantan-utara', name: 'Kalimantan Utara', nameEn: 'North Kalimantan', island: 'kalimantan' },
+	{ id: 'sulawesi-utara', name: 'Sulawesi Utara', nameEn: 'North Sulawesi', island: 'sulawesi' },
+	{ id: 'gorontalo', name: 'Gorontalo', nameEn: 'Gorontalo', island: 'sulawesi' },
+	{ id: 'sulawesi-tengah', name: 'Sulawesi Tengah', nameEn: 'Central Sulawesi', island: 'sulawesi' },
+	{ id: 'sulawesi-barat', name: 'Sulawesi Barat', nameEn: 'West Sulawesi', island: 'sulawesi' },
+	{ id: 'sulawesi-selatan', name: 'Sulawesi Selatan', nameEn: 'South Sulawesi', island: 'sulawesi' },
+	{ id: 'sulawesi-tenggara', name: 'Sulawesi Tenggara', nameEn: 'Southeast Sulawesi', island: 'sulawesi' },
+	{ id: 'maluku', name: 'Maluku', nameEn: 'Maluku', island: 'maluku-papua' },
+	{ id: 'maluku-utara', name: 'Maluku Utara', nameEn: 'North Maluku', island: 'maluku-papua' },
+	{ id: 'papua-barat-daya', name: 'Papua Barat Daya', nameEn: 'Southwest Papua', island: 'maluku-papua' },
+	{ id: 'papua-barat', name: 'Papua Barat', nameEn: 'West Papua', island: 'maluku-papua' },
+	{ id: 'papua-tengah', name: 'Papua Tengah', nameEn: 'Central Papua', island: 'maluku-papua' },
+	{ id: 'papua-pegunungan', name: 'Papua Pegunungan', nameEn: 'Highland Papua', island: 'maluku-papua' },
+	{ id: 'papua', name: 'Papua', nameEn: 'Papua', island: 'maluku-papua' },
+	{ id: 'papua-selatan', name: 'Papua Selatan', nameEn: 'South Papua', island: 'maluku-papua' }
+] as const satisfies readonly { id: string; name: string; nameEn: string; island: IslandId }[];
 
 export type RegionId = (typeof REGIONS)[number]['id'];
 
 /** Shown when the URL names no region. */
 export const DEFAULT_REGION: RegionId = 'jambi';
+
+/** `point` value for a reading at the city centre; any other value is a named place (the regency seat). */
+export const CITY_CENTRE = 'pusat kota';
 
 export interface City {
 	id: string;
@@ -228,9 +233,22 @@ export const CITIES: readonly City[] = [
 	{ id: 'merauke', name: 'Merauke', region: 'papua-selatan', kind: 'kabupaten', point: 'Merauke', latitude: -8.4903, longitude: 140.3956, timeZone: 'Asia/Jayapura' }
 ];
 
-/** e.g. "Kabupaten · titik di Muara Bulian" or "Kota · titik di pusat kota". */
-export function cityNote(city: City): string {
-	return `${city.kind === 'kota' ? 'Kota' : 'Kabupaten'} · titik di ${city.point}`;
+const NOTE: Record<Locale, { kota: string; kabupaten: string; measuredAt: string }> = {
+	id: { kota: 'Kota', kabupaten: 'Kabupaten', measuredAt: '{kind}, diukur di {point}' },
+	en: { kota: 'City', kabupaten: 'Regency', measuredAt: '{kind}, measured at {point}' }
+};
+
+/** e.g. "Kabupaten, diukur di Muara Bulian" / "Regency, measured at Muara Bulian", or just the kind at the city centre. */
+export function cityNote(city: City, locale: Locale): string {
+	const note = NOTE[locale];
+	const kind = note[city.kind];
+	if (city.point === CITY_CENTRE) return kind;
+	return fill(note.measuredAt, { kind, point: city.point });
+}
+
+/** A province or island group's name in the page language. */
+export function placeName(place: { name: string; nameEn: string }, locale: Locale): string {
+	return locale === 'en' ? place.nameEn : place.name;
 }
 
 /** The region a `?region=` value names, or the default for anything else. */

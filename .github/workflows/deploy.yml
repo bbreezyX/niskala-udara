@@ -10,7 +10,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Deploys are blocked unless react-doctor scores a perfect 100.
+  doctor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Require react-doctor score 100
+        run: |
+          score=$(npx react-doctor . -y --score | tail -n 1)
+          echo "react-doctor score: $score"
+          if [ "$score" != "100" ]; then
+            npx react-doctor . -y --verbose || true
+            echo "::error::react-doctor score is $score; fix every issue until it reaches 100 before deploying."
+            exit 1
+          fi
+
   deploy:
+    needs: doctor
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

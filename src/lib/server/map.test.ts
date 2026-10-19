@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearHotspotCache, fetchHotspots, parseFirmsCsv } from './firms';
-import { handleFiresRequest, handleTileRequest } from './handle-map';
+import { clearTileCache, handleFiresRequest, handleTileRequest, TILE_TTL_MS } from './handle-map';
 
 const MAP_KEY = 'firms-test-key';
 const API_KEY = 'google-test-key';
@@ -12,6 +12,7 @@ const request = (url = 'http://localhost/api/fires', headers: Record<string, str
 
 beforeEach(() => {
 	clearHotspotCache();
+	clearTileCache();
 	vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -119,16 +120,47 @@ describe('handleTileRequest', () => {
 	// Zoom 8 tile containing Kota Jambi.
 	const jambi = { z: '8', x: '201', y: '129' };
 
-	it('proxies a tile over Sumatra with header auth and no caching', async () => {
+	it('proxies a tile over Sumatra with header auth and a private, time-limited cache', async () => {
 		const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(png());
 		const response = await handleTileRequest(request(), jambi, API_KEY, fetchFn);
 		expect(response.status).toBe(200);
 		expect(response.headers.get('content-type')).toBe('image/png');
-		expect(response.headers.get('cache-control')).toBe('no-store');
+		expect(response.headers.get('cache-control')).toMatch(/^private, max-age=(1799|1800)$/);
 
 		const [url, init] = fetchFn.mock.calls[0];
 		expect(url).toBe('https://airquality.googleapis.com/v1/mapTypes/UAQI_RED_GREEN/heatmapTiles/8/201/129');
 		expect(new Headers(init?.headers).get('x-goog-api-key')).toBe(API_KEY);
+	});
+
+	it('shares one upstream fetch per tile, including concurrent requests, until the TTL ends', async () => {
+		vi.useFakeTimers();
+		try {
+			const fetchFn = vi.fn<typeof fetch>().mockImplementation(async () => png());
+			const [a, b] = await Promise.all([1, 2].map(() => handleTileRequest(request(), jambi, API_KEY, fetchFn)));
+			expect(new Uint8Array(await a.arrayBuffer())).toEqual(new Uint8Array(await b.arrayBuffer()));
+			expect(fetchFn).toHaveBeenCalledTimes(1);
+
+			vi.advanceTimersByTime(TILE_TTL_MS - 60_000);
+			const later = await handleTileRequest(request(), jambi, API_KEY, fetchFn);
+			expect(fetchFn).toHaveBeenCalledTimes(1);
+			// The browser copy expires with the server copy, so content is never kept past the TTL.
+			expect(later.headers.get('cache-control')).toBe('private, max-age=60');
+
+			vi.advanceTimersByTime(60_000);
+			await handleTileRequest(request(), jambi, API_KEY, fetchFn);
+			expect(fetchFn).toHaveBeenCalledTimes(2);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('does not cache upstream failures', async () => {
+		const fetchFn = vi
+			.fn<typeof fetch>()
+			.mockResolvedValueOnce(new Response('{}', { status: 500, headers: { 'content-type': 'application/json' } }))
+			.mockResolvedValue(png());
+		expect((await handleTileRequest(request(), jambi, API_KEY, fetchFn)).status).toBe(502);
+		expect((await handleTileRequest(request(), jambi, API_KEY, fetchFn)).status).toBe(200);
 	});
 
 	it.each([

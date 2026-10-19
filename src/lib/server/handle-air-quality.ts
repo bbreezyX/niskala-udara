@@ -1,4 +1,5 @@
 import { parseCoordinates, parseHistoryRequest } from '@/lib/coordinates';
+import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/config';
 import type { ApiErrorCode } from '@/lib/types';
 import { getCurrentConditions, getForecast, getHistory } from './air-quality-cache';
 import { AirQualityError } from './google-air-quality';
@@ -16,7 +17,7 @@ type Handler = (request: Request, apiKey: string | undefined, fetchFn?: typeof f
  */
 function createHandler<Input>(
 	parse: (payload: unknown) => Input | null,
-	run: (input: Input, apiKey: string, fetchFn: typeof fetch) => Promise<unknown>
+	run: (input: Input, apiKey: string, fetchFn: typeof fetch, language: Locale) => Promise<unknown>
 ): Handler {
 	return async (request, apiKey, fetchFn = fetch) => {
 		const startedAt = performance.now();
@@ -43,13 +44,17 @@ function createHandler<Input>(
 		const input = parse(payload);
 		if (!input) return fail('invalid_request');
 
+		// ?lang= picks the language of Google's text; the body stays exactly the coordinates.
+		const lang = new URL(request.url).searchParams.get('lang') ?? DEFAULT_LOCALE;
+		if (!isLocale(lang)) return fail('invalid_request');
+
 		if (!apiKey) {
 			log('not_configured', 'GOOGLE_AIR_QUALITY_API_KEY is not set', startedAt);
 			return fail('not_configured');
 		}
 
 		try {
-			return respond({ data: await run(input, apiKey, fetchFn) });
+			return respond({ data: await run(input, apiKey, fetchFn, lang) });
 		} catch (error) {
 			if (error instanceof AirQualityError) {
 				log(error.code, error.message, startedAt);
@@ -65,8 +70,8 @@ function createHandler<Input>(
 export const handleAirQualityRequest = createHandler(parseCoordinates, getCurrentConditions);
 
 /** POST /api/air-quality/history: the last 24 or 72 hours. */
-export const handleHistoryRequest = createHandler(parseHistoryRequest, ({ coordinates, hours }, apiKey, fetchFn) =>
-	getHistory(coordinates, hours, apiKey, fetchFn)
+export const handleHistoryRequest = createHandler(parseHistoryRequest, ({ coordinates, hours }, apiKey, fetchFn, language) =>
+	getHistory(coordinates, hours, apiKey, fetchFn, language)
 );
 
 /** POST /api/air-quality/forecast: the next 24 hours. */

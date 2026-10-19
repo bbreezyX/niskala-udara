@@ -8,7 +8,10 @@ import { UAQI_GRADIENT } from '@/lib/aqi';
 import { roundCoordinates } from '@/lib/coordinates';
 import { getJson, toRemote, type Remote } from '@/lib/client/api';
 import { loadGoogleMaps, MapsLoadError, onMapsAuthFailure } from '@/lib/client/google-maps';
-import { formatDataTime, formatHour, timeZoneLabel } from '@/lib/format';
+import { HotspotLayer, syncOverlays, type HotspotStyle } from '@/lib/client/hotspot-layer';
+import { formatAgo, formatDataTime, formatHour, numberFormat, timeZoneLabel } from '@/lib/format';
+import { fill, plural, type Locale } from '@/lib/i18n/config';
+import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 import type { FireData, Hotspot } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,39 +20,65 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { StateMessage } from './info-blocks';
+import { useDictionary, useLocale, useLocalePath } from './locale-provider';
 
 const CONFIDENCE = {
-	high: { label: 'Keyakinan tinggi', color: '#b91c1c' },
-	nominal: { label: 'Keyakinan sedang', color: '#ea580c' },
-	low: { label: 'Keyakinan rendah', color: '#f59e0b' }
+	high: { color: '#b91c1c' },
+	nominal: { color: '#ea580c' },
+	low: { color: '#f59e0b' }
 } as const;
 
 const LEVELS = Object.entries(CONFIDENCE) as [Hotspot['confidence'], (typeof CONFIDENCE)[Hotspot['confidence']]][];
 
+const RANK = { low: 1, nominal: 2, high: 3 } as const;
+
+const hotspotStyle = ({ confidence }: Hotspot): HotspotStyle => ({
+	color: CONFIDENCE[confidence].color,
+	radius: confidence === 'high' ? 6 : 5,
+	rank: RANK[confidence]
+});
+
 type MapStatus = 'unconfigured' | 'loading' | 'ready' | 'network' | 'auth';
 
-/** Built with textContent: FIRMS values never become HTML. */
-function hotspotContent(hotspot: Hotspot): HTMLElement {
-	const root = document.createElement('div');
-	root.style.cssText = 'display:grid;gap:2px;font-family:var(--font-sans);font-size:13px;color:#0f172a';
-	const title = document.createElement('p');
-	title.style.cssText = 'margin:0 0 4px;font-size:14px;font-weight:600';
-	title.textContent = 'Hotspot (anomali panas)';
-	root.append(title);
+function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string): HTMLElementTagNameMap[K] {
+	const node = document.createElement(tag);
+	node.className = className;
+	if (text !== undefined) node.textContent = text;
+	return node;
+}
+
+/**
+ * Hotspot details for the InfoWindow, styled by `.hotspot-card` in globals.css.
+ * Built with textContent: FIRMS values never become HTML.
+ */
+function hotspotContent(hotspot: Hotspot, locale: Locale, t: Dictionary['map'], onCheck: () => void): HTMLElement {
+	const level = CONFIDENCE[hotspot.confidence];
+	const root = element('div', 'hotspot-card');
+
+	const chip = element('p', 'hotspot-card__level', t.confidence[hotspot.confidence]);
+	chip.style.setProperty('--level', level.color);
+
+	// Recency leads: a fire seen an hour ago matters more than one from yesterday.
+	const time = element('time', 'hotspot-card__time');
+	time.dateTime = hotspot.acquiredAt;
+	time.append(
+		element('span', 'hotspot-card__ago', formatAgo(hotspot.acquiredAt, locale)),
+		element('span', 'hotspot-card__date', formatDataTime(hotspot.acquiredAt, MAP_TIME_ZONE, locale))
+	);
+
+	const facts = element('dl', 'hotspot-card__facts');
 	const rows: [string, string][] = [
-		['Terdeteksi', formatDataTime(hotspot.acquiredAt, MAP_TIME_ZONE)],
-		['Satelit', `${hotspot.satellite} (VIIRS)`],
-		['Keyakinan', CONFIDENCE[hotspot.confidence].label.replace('Keyakinan ', '')],
-		['Daya radiatif', hotspot.frp === null ? '–' : `${hotspot.frp.toLocaleString('id-ID')} MW`]
+		[t.card.satellite, hotspot.satellite],
+		[t.card.intensity, hotspot.frp === null ? '–' : `${numberFormat(locale, 1).format(hotspot.frp)} MW`]
 	];
-	for (const [label, value] of rows) {
-		const row = document.createElement('p');
-		row.style.margin = '0';
-		const strong = document.createElement('strong');
-		strong.textContent = `${label}: `;
-		row.append(strong, value);
-		root.append(row);
-	}
+	for (const [label, value] of rows) facts.append(element('dt', '', label), element('dd', '', value));
+
+	// A click on a hotspot opens this card instead of the point page, so the card offers it.
+	const action = element('button', 'hotspot-card__action', t.card.check);
+	action.type = 'button';
+	action.addEventListener('click', onCheck);
+
+	root.append(chip, time, facts, action);
 	return root;
 }
 
@@ -65,13 +94,18 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	const [showFires, setShowFires] = useState(true);
 	const [fires, setFires] = useState<Remote<FireData>>({ status: 'idle' });
 	const router = useRouter();
+	const localize = useLocalePath();
+	const locale = useLocale();
+	const t = useDictionary();
 
 	// Google Maps objects are imperative handles, not UI state.
 	const maps = useRef<{
 		map: google.maps.Map;
 		heatmap: google.maps.ImageMapType;
-		fireLayer: google.maps.Data;
 	} | null>(null);
+	// Built once per FIRMS response; activeHotspots is null while the layer is hidden, so clicks ignore it.
+	const hotspotLayer = useRef<{ data: FireData; layer: HotspotLayer; mapType: google.maps.MapType } | null>(null);
+	const activeHotspots = useRef<HotspotLayer | null>(null);
 	const firesController = useRef<AbortController | null>(null);
 
 	const loadFires = useCallback(() => {
@@ -89,9 +123,9 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	const selectPoint = useCallback(
 		(latitude: number, longitude: number) => {
 			const { latitude: lat, longitude: lng } = roundCoordinates({ latitude, longitude });
-			router.push(`/location/point#${lat},${lng}`);
+			router.push(localize(`/location/point#${lat},${lng}`));
 		},
-		[router]
+		[router, localize]
 	);
 
 	useEffect(() => {
@@ -107,7 +141,7 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 
 		(async () => {
 			try {
-				await loadGoogleMaps(mapsKey);
+				await loadGoogleMaps(mapsKey, locale);
 			} catch (error) {
 				if (!cancelled) setMapStatus(error instanceof MapsLoadError ? error.reason : 'network');
 				return;
@@ -115,7 +149,7 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 			if (cancelled) return;
 			onMapsAuthFailure(() => setMapStatus('auth'));
 
-			const { Map, ImageMapType, Data, InfoWindow } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
+			const { Map, ImageMapType, InfoWindow } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
 			if (cancelled) return;
 			const map = new Map(element, {
 				center: MAP_CENTER,
@@ -141,36 +175,46 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 				}
 			});
 
-			const fireLayer = new Data();
-			fireLayer.setStyle((feature) => {
-				const confidence = feature.getProperty('confidence') as Hotspot['confidence'];
-				return {
-					icon: {
-						path: google.maps.SymbolPath.CIRCLE,
-						scale: confidence === 'high' ? 6 : 5,
-						fillColor: CONFIDENCE[confidence].color,
-						fillOpacity: 0.9,
-						strokeColor: '#ffffff',
-						strokeWeight: 1.5
-					},
-					zIndex: confidence === 'high' ? 3 : confidence === 'nominal' ? 2 : 1
-				};
-			});
+			// Hotspots are pixels on canvas tiles, so the map click finds them by distance.
+			// Coarse pointers get a larger reach, closer to a 44 px touch target.
+			const tolerance = window.matchMedia('(pointer: coarse)').matches ? 12 : 4;
+			const hotspotAt = (latLng: google.maps.LatLng) =>
+				activeHotspots.current?.hit(latLng.lat(), latLng.lng(), map.getZoom() ?? MAP_ZOOM.initial, tolerance) ?? null;
 
-			const infoWindow = new InfoWindow();
+			const infoWindow = new InfoWindow({
+				headerContent: Object.assign(document.createElement('h3'), { className: 'hotspot-card__title', textContent: t.map.card.title }),
+				maxWidth: 280,
+				// Lift the tail off the dot so the circle stays visible.
+				pixelOffset: new google.maps.Size(0, -6)
+			});
+			let pointer = false;
 			listeners.push(
-				fireLayer.addListener('click', (event: google.maps.Data.MouseEvent) => {
-					infoWindow.setContent(hotspotContent(event.feature.getProperty('hotspot') as Hotspot));
-					infoWindow.setPosition(event.latLng);
-					infoWindow.open({ map });
-				}),
 				map.addListener('click', (event: google.maps.MapMouseEvent) => {
+					if (!event.latLng) return;
+					const hotspot = hotspotAt(event.latLng);
+					if (hotspot) {
+						infoWindow.setContent(
+							hotspotContent(hotspot, locale, t.map, () => {
+								infoWindow.close();
+								selectPoint(hotspot.latitude, hotspot.longitude);
+							})
+						);
+						infoWindow.setPosition({ lat: hotspot.latitude, lng: hotspot.longitude });
+						infoWindow.open({ map });
+						return;
+					}
 					infoWindow.close();
-					if (event.latLng) selectPoint(event.latLng.lat(), event.latLng.lng());
+					selectPoint(event.latLng.lat(), event.latLng.lng());
+				}),
+				map.addListener('mousemove', (event: google.maps.MapMouseEvent) => {
+					const over = Boolean(event.latLng && hotspotAt(event.latLng));
+					if (over === pointer) return;
+					pointer = over;
+					map.setOptions({ draggableCursor: over ? 'pointer' : null });
 				})
 			);
 
-			maps.current = { map, heatmap, fireLayer };
+			maps.current = { map, heatmap };
 			setMapStatus('ready');
 		})();
 
@@ -178,33 +222,25 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 			cancelled = true;
 			listeners.forEach((listener) => listener.remove());
 			maps.current = null;
+			hotspotLayer.current = null;
+			activeHotspots.current = null;
 		};
-	}, [mapsKey, selectPoint]);
+	}, [mapsKey, selectPoint, locale, t]);
 
 	useEffect(() => {
 		const current = maps.current;
 		if (mapStatus !== 'ready' || !current) return;
-		const overlays = current.map.overlayMapTypes;
-		const index = overlays.getArray().indexOf(current.heatmap);
-		if (showHeatmap && index < 0) overlays.push(current.heatmap);
-		if (!showHeatmap && index >= 0) overlays.removeAt(index);
-	}, [mapStatus, showHeatmap]);
-
-	useEffect(() => {
-		const current = maps.current;
-		if (mapStatus !== 'ready' || !current) return;
-		const layer = current.fireLayer;
-		layer.forEach((feature) => layer.remove(feature));
-		if (fires.status === 'success') {
-			for (const hotspot of fires.data.hotspots) {
-				layer.add({
-					geometry: new google.maps.Data.Point({ lat: hotspot.latitude, lng: hotspot.longitude }),
-					properties: { confidence: hotspot.confidence, hotspot }
-				});
-			}
+		const data = fires.status === 'success' ? fires.data : null;
+		// Toggling a switch reuses the drawn layer; only new data rebuilds it.
+		if (hotspotLayer.current?.data !== data) {
+			const layer = data ? new HotspotLayer(data.hotspots, hotspotStyle) : null;
+			hotspotLayer.current = data && layer ? { data, layer, mapType: layer.toMapType(MAP_ZOOM.max) } : null;
 		}
-		layer.setMap(showFires ? current.map : null);
-	}, [mapStatus, fires, showFires]);
+		const fireLayer = showFires ? hotspotLayer.current : null;
+		activeHotspots.current = fireLayer?.layer ?? null;
+		const layers = [showHeatmap ? current.heatmap : null, fireLayer?.mapType ?? null];
+		syncOverlays(current.map.overlayMapTypes, layers.filter((layer) => layer !== null));
+	}, [mapStatus, fires, showHeatmap, showFires]);
 
 	const hotspots = fires.status === 'success' ? fires.data.hotspots : [];
 	const counts = { high: 0, nominal: 0, low: 0 };
@@ -220,24 +256,24 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 						<StateMessage
 							tone="error"
 							className="border-0"
-							title="Peta belum dikonfigurasi"
-							description="Key Google Maps untuk browser belum dipasang di server, jadi peta belum bisa ditampilkan."
+							title={t.map.unconfigured.title}
+							description={t.map.unconfigured.description}
 						/>
 					)}
 					{mapStatus === 'auth' && (
 						<StateMessage
 							tone="error"
 							className="border-0"
-							title="Google Maps menolak key"
-							description="Pastikan Maps JavaScript API aktif dan domain ini diizinkan di pembatasan key."
+							title={t.map.auth.title}
+							description={t.map.auth.description}
 						/>
 					)}
 					{mapStatus === 'network' && (
-						<StateMessage tone="error" className="border-0" title="Peta gagal dimuat" description="Periksa koneksi internetmu, lalu muat ulang halaman." />
+						<StateMessage tone="error" className="border-0" title={t.map.network.title} description={t.map.network.description} />
 					)}
 					<div className={failed ? 'hidden' : 'relative h-[min(70vh,680px)] min-h-90'}>
 						{/* Google Maps owns this element's children, so React renders nothing inside it. */}
-						<div ref={mapElement} role="region" aria-label="Peta kualitas udara dan hotspot" className="absolute inset-0" />
+						<div ref={mapElement} role="region" aria-label={t.map.regionLabel} className="absolute inset-0" />
 						{mapStatus === 'loading' && <Skeleton className="absolute inset-0 rounded-none" />}
 					</div>
 				</Card>
@@ -246,15 +282,15 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 				<Card className="gap-0 rounded-[20px] py-0">
 					<section className="grid gap-3 p-5" aria-live="polite" aria-labelledby="fires-title">
 						<h2 id="fires-title" className="text-sm font-semibold text-muted-foreground">
-							Hotspot sekitar Jambi, {FIRE_WINDOW_HOURS} jam
+							{fill(t.map.firesTitle, { n: String(FIRE_WINDOW_HOURS) })}
 						</h2>
 						{!firesConfigured ? (
-							<p className="text-sm text-muted-foreground">Data hotspot belum dikonfigurasi di server.</p>
+							<p className="text-sm text-muted-foreground">{t.map.firesUnconfigured}</p>
 						) : fires.status === 'success' ? (
 							<>
 								<p className="-mt-1 flex items-baseline gap-2">
 									<span className="font-display text-5xl leading-none tabular-nums">{hotspots.length}</span>
-									<span className="text-muted-foreground">deteksi</span>
+									<span className="text-muted-foreground">{plural(t.map.detections, hotspots.length, locale)}</span>
 								</p>
 								{hotspots.length > 0 && (
 									<div className="flex h-2 gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
@@ -267,25 +303,25 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 									{LEVELS.map(([key, level]) => (
 										<li key={key} className="flex items-center gap-2">
 											<span className="size-2.5 shrink-0 rounded-full" style={{ background: level.color }} aria-hidden="true" />
-											{level.label}
+											{t.map.confidence[key]}
 											<span className="ml-auto font-semibold tabular-nums">{counts[key]}</span>
 										</li>
 									))}
 								</ul>
 								<p className="text-xs text-muted-foreground">
-									{latest && <>Terakhir terdeteksi {formatDataTime(latest, MAP_TIME_ZONE)}. </>}
-									Diperbarui {formatHour(fires.data.fetchedAt, MAP_TIME_ZONE)} {timeZoneLabel(MAP_TIME_ZONE)}.
+									{latest && fill(t.map.lastDetected, { time: formatDataTime(latest, MAP_TIME_ZONE, locale) })}
+									{fill(t.map.updated, { time: `${formatHour(fires.data.fetchedAt, MAP_TIME_ZONE, locale)} ${timeZoneLabel(MAP_TIME_ZONE)}` })}
 								</p>
 								{fires.data.missingSources.length > 0 && (
-									<p className="text-xs text-muted-foreground">Sebagian satelit belum tersedia, jumlah bisa lebih rendah.</p>
+									<p className="text-xs text-muted-foreground">{t.map.missingSources}</p>
 								)}
 							</>
 						) : fires.status === 'error' ? (
 							<>
-								<p className="text-sm font-semibold text-destructive">Data hotspot gagal dimuat.</p>
+								<p className="text-sm font-semibold text-destructive">{t.map.firesFailed}</p>
 								<Button variant="outline" size="lg" className="justify-self-start" onClick={loadFires}>
 									<RotateCw data-icon="inline-start" />
-									Coba lagi
+									{t.common.retry}
 								</Button>
 							</>
 						) : (
@@ -300,23 +336,23 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 					<Separator />
 					<section className="grid gap-1 p-5" aria-labelledby="layers-title">
 						<h2 id="layers-title" className="sr-only">
-							Lapisan peta
+							{t.map.layers}
 						</h2>
 						<div className="flex min-h-11 items-center justify-between gap-3">
 							<Label htmlFor="layer-heatmap" className="font-semibold">
-								Kualitas udara
+								{t.map.airQuality}
 							</Label>
 							<Switch id="layer-heatmap" checked={showHeatmap} onCheckedChange={setShowHeatmap} disabled={mapStatus !== 'ready'} />
 						</div>
 						{/* The heatmap uses Google's continuous UAQI colors, so the legend does too. */}
 						<div className="h-2 rounded-full" style={{ background: UAQI_GRADIENT }} aria-hidden="true" />
 						<div className="flex justify-between text-xs text-muted-foreground">
-							<span>0, buruk</span>
-							<span>100, sangat baik</span>
+							<span>{t.map.scaleLow}</span>
+							<span>{t.map.scaleHigh}</span>
 						</div>
 						<div className="mt-2 flex min-h-11 items-center justify-between gap-3">
 							<Label htmlFor="layer-fires" className="font-semibold">
-								Titik hotspot
+								{t.map.hotspots}
 							</Label>
 							<Switch
 								id="layer-fires"
@@ -339,22 +375,19 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 							}}
 						>
 							<Crosshair data-icon="inline-start" />
-							Cek AQI di tengah peta
+							{t.map.checkCenter}
 						</Button>
-						<p className="text-center text-xs text-muted-foreground">Atau klik titik mana pun di peta.</p>
+						<p className="text-center text-xs text-muted-foreground">{t.map.clickHint}</p>
 					</section>
 
 					<Separator />
 					<div className="grid gap-3 p-5 text-xs text-muted-foreground">
 						<details className="group">
 							<summary className="flex min-h-8 cursor-pointer list-none items-center justify-between gap-2 rounded-md font-semibold text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
-								Tentang data ini
+								{t.map.about}
 								<ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
 							</summary>
-							<p className="mt-2 leading-relaxed">
-								Hotspot adalah anomali panas dari satelit, belum tentu kebakaran. Awan atau asap tebal bisa menutupi titik api. Warna peta
-								adalah perkiraan model per 500 m, bukan hasil alat ukur.
-							</p>
+							<p className="mt-2 leading-relaxed">{t.map.aboutText}</p>
 						</details>
 						{/* Attribution stays visible, outside the disclosure. */}
 						<p className="grid gap-0.5">
@@ -362,7 +395,7 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 								Source: Includes air quality data from Google
 							</span>
 							<span>
-								Hotspot:{' '}
+								{t.map.hotspotSource}{' '}
 								<a href="https://firms.modaps.eosdis.nasa.gov/" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
 									NASA FIRMS
 								</a>{' '}

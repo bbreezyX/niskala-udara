@@ -1,5 +1,6 @@
 import { EDGE_CACHE_CONTROL } from '@/lib/config/cache';
 import { citiesInRegion, REGIONS, type RegionId } from '@/lib/config/cities';
+import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/config';
 import type { ApiResponse, RegionLine, StreamedCity } from '@/lib/types';
 import { getCurrentConditions, getForecast } from './air-quality-cache';
 import { AirQualityError } from './google-air-quality';
@@ -22,15 +23,20 @@ function settle<T>(lookup: Promise<T>): Promise<ApiResponse<T>> {
  * Starts current conditions and the forecast for every city in a region, all at once and through the
  * shared cache. Returns immediately; each promise settles on its own, so callers can stream them.
  */
-export function loadRegion(region: RegionId, apiKey: string, fetchFn: typeof fetch = fetch): Record<string, StreamedCity> {
+export function loadRegion(
+	region: RegionId,
+	apiKey: string,
+	fetchFn: typeof fetch = fetch,
+	language: Locale = DEFAULT_LOCALE
+): Record<string, StreamedCity> {
 	return Object.fromEntries(
 		citiesInRegion(region).map((city) => {
 			const coordinates = { latitude: city.latitude, longitude: city.longitude };
 			return [
 				city.id,
 				{
-					current: settle(getCurrentConditions(coordinates, apiKey, fetchFn)),
-					forecast: settle(getForecast(coordinates, apiKey, fetchFn))
+					current: settle(getCurrentConditions(coordinates, apiKey, fetchFn, language)),
+					forecast: settle(getForecast(coordinates, apiKey, fetchFn, language))
 				}
 			];
 		})
@@ -52,12 +58,15 @@ export function handleRegionRequest(
 	if (isCrossSite(request)) return fail('invalid_request', 403);
 	const region = REGIONS.find((r) => r.id === param)?.id;
 	if (!region) return fail('invalid_request', 404);
+	// ?lang= picks the language of Google's text, as in the POST endpoints.
+	const lang = new URL(request.url).searchParams.get('lang') ?? DEFAULT_LOCALE;
+	if (!isLocale(lang)) return fail('invalid_request');
 	if (!apiKey) {
 		log('air-quality', 'not_configured', 'GOOGLE_AIR_QUALITY_API_KEY is not set', startedAt);
 		return fail('not_configured');
 	}
 
-	const cities = loadRegion(region, apiKey, fetchFn);
+	const cities = loadRegion(region, apiKey, fetchFn, lang);
 	const encoder = new TextEncoder();
 	let cancelled = false;
 	const body = new ReadableStream<Uint8Array>({

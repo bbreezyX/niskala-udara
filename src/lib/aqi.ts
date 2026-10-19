@@ -18,9 +18,12 @@ export const UAQI_STOPS: readonly [number, string][] = [
 
 export const UAQI_GRADIENT = `linear-gradient(90deg, ${UAQI_STOPS.map(([at, color]) => `${color} ${at}%`).join(', ')})`;
 
+export type AqiBandKey = 'poor' | 'low' | 'moderate' | 'good' | 'excellent';
+
 export interface AqiBand {
 	min: number;
-	label: string;
+	/** Names the band in the dictionaries (`aqi.bands`). */
+	key: AqiBandKey;
 	icon: LucideIcon;
 	/** Dark enough for text and thin lines on white (WCAG AA). */
 	ink: string;
@@ -31,11 +34,11 @@ export interface AqiBand {
 
 /** Google's UAQI bands: Poor 0–19, Low 20–39, Moderate 40–59, Good 60–79, Excellent 80–100. */
 export const AQI_BANDS: readonly AqiBand[] = [
-	{ min: 0, label: 'Buruk', icon: Angry, ink: '#991b1b', fill: '#c5221f', onFill: '#ffffff' },
-	{ min: 20, label: 'Rendah', icon: Frown, ink: '#c2410c', fill: '#fa7b17', onFill: '#1f1f1f' },
-	{ min: 40, label: 'Sedang', icon: Meh, ink: '#a16207', fill: '#fdd663', onFill: '#3c2c00' },
-	{ min: 60, label: 'Baik', icon: Smile, ink: '#4d7c0f', fill: '#a8da6b', onFill: '#1f3a00' },
-	{ min: 80, label: 'Sangat baik', icon: Laugh, ink: '#15803d', fill: '#188038', onFill: '#ffffff' }
+	{ min: 0, key: 'poor', icon: Angry, ink: '#991b1b', fill: '#c5221f', onFill: '#ffffff' },
+	{ min: 20, key: 'low', icon: Frown, ink: '#c2410c', fill: '#fa7b17', onFill: '#1f1f1f' },
+	{ min: 40, key: 'moderate', icon: Meh, ink: '#a16207', fill: '#fdd663', onFill: '#3c2c00' },
+	{ min: 60, key: 'good', icon: Smile, ink: '#4d7c0f', fill: '#a8da6b', onFill: '#1f3a00' },
+	{ min: 80, key: 'excellent', icon: Laugh, ink: '#15803d', fill: '#188038', onFill: '#ffffff' }
 ];
 
 export function aqiBand(aqi: number): AqiBand {

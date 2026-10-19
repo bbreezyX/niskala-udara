@@ -1,10 +1,12 @@
 'use client';
 
-import { formatConcentration, POLLUTANT_LABELS, unitLabel } from '@/lib/format';
+import { formatConcentration, numberFormat, POLLUTANT_LABELS, unitLabel } from '@/lib/format';
+import { fill, type Locale } from '@/lib/i18n/config';
 import { POLLUTANT_CODES, type PollutantCode, type PollutantReading } from '@/lib/types';
 import { whoRatio } from '@/lib/who';
 import { cn } from '@/lib/utils';
 import { PollutantHint } from './pollutant-tiles';
+import { useDictionary, useLocale } from './locale-provider';
 
 interface Props {
 	pollutants: PollutantReading[];
@@ -12,10 +14,8 @@ interface Props {
 	dominant: string | null;
 }
 
-const ratioFormat = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
-
-function formatRatio(ratio: number) {
-	return `${ratio >= 10 ? Math.round(ratio) : ratioFormat.format(ratio)}×`;
+function formatRatio(ratio: number, locale: Locale) {
+	return `${ratio >= 10 ? Math.round(ratio) : numberFormat(locale, 1).format(ratio)}×`;
 }
 
 /**
@@ -23,6 +23,7 @@ function formatRatio(ratio: number) {
  * pollutant is featured, the rest follow from furthest over the guideline to furthest under.
  */
 export function PollutantBreakdown({ pollutants, dominant }: Props) {
+	const t = useDictionary();
 	const rows = POLLUTANT_CODES.map((code) => {
 		const reading = pollutants.find((p) => p.code === code);
 		return { code, reading, ratio: reading ? whoRatio(reading) : null };
@@ -40,19 +41,21 @@ export function PollutantBreakdown({ pollutants, dominant }: Props) {
 				))}
 			</dl>
 			<p className="text-xs text-muted-foreground">
-				Garis tegak = pedoman WHO 2021 (rata-rata 24 jam; O₃ 8 jam). Angka di sini per jam, jadi perbandingannya indikatif.
+				{t.pollutants.whoNote}
 			</p>
 		</div>
 	);
 }
 
 function Featured({ code, reading, ratio }: { code: PollutantCode; reading: PollutantReading; ratio: number | null }) {
+	const locale = useLocale();
+	const t = useDictionary();
 	const over = ratio !== null && ratio > 1;
 	return (
 		<div className={cn('rounded-xl p-4', over ? 'bg-destructive/10 text-destructive' : 'bg-muted')}>
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
 				<p>
-					Polutan utama ·{' '}
+					{t.pollutants.main} ·{' '}
 					<PollutantHint code={code} units={reading.units}>
 						<span className="cursor-help font-semibold underline decoration-current/40 decoration-dotted underline-offset-[3px] outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
 							{POLLUTANT_LABELS[code]}
@@ -60,17 +63,19 @@ function Featured({ code, reading, ratio }: { code: PollutantCode; reading: Poll
 					</PollutantHint>
 				</p>
 				{ratio !== null && (
-					<p className="font-semibold tabular-nums">{over ? `${formatRatio(ratio)} pedoman WHO` : 'Di bawah pedoman WHO'}</p>
+					<p className="font-semibold tabular-nums">{over ? fill(t.pollutants.timesWho, { ratio: formatRatio(ratio, locale) }) : t.pollutants.belowWho}</p>
 				)}
 			</div>
 			<p className="mt-1 text-3xl font-semibold tabular-nums">
-				{formatConcentration(reading.value)} <span className="text-sm font-normal">{unitLabel(reading.units)}</span>
+				{formatConcentration(reading.value, locale)} <span className="text-sm font-normal">{unitLabel(reading.units)}</span>
 			</p>
 		</div>
 	);
 }
 
 function Row({ code, reading, ratio }: { code: PollutantCode; reading?: PollutantReading; ratio: number | null }) {
+	const locale = useLocale();
+	const t = useDictionary();
 	const over = ratio !== null && ratio > 1;
 	return (
 		<div className="grid grid-cols-[3.5rem_1fr_9.5rem] items-center gap-3 border-t py-2.5 text-sm">
@@ -94,17 +99,17 @@ function Row({ code, reading, ratio }: { code: PollutantCode; reading?: Pollutan
 			<dd className={cn('text-right tabular-nums', over && 'text-destructive')}>
 				{reading ? (
 					<>
-						<span className="font-semibold">{formatConcentration(reading.value)}</span>{' '}
+						<span className="font-semibold">{formatConcentration(reading.value, locale)}</span>{' '}
 						<span className="text-xs text-muted-foreground">{unitLabel(reading.units)}</span>
 						{ratio !== null && (
 							<span className="ml-2 text-xs">
-								{formatRatio(ratio)}
-								<span className="sr-only"> pedoman WHO</span>
+								{formatRatio(ratio, locale)}
+								<span className="sr-only">{t.pollutants.whoSuffix}</span>
 							</span>
 						)}
 					</>
 				) : (
-					<span className="text-xs text-muted-foreground">Belum tersedia</span>
+					<span className="text-xs text-muted-foreground">{t.common.notAvailable}</span>
 				)}
 			</dd>
 		</div>

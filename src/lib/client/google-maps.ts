@@ -1,7 +1,11 @@
 /**
- * Loads the Maps JavaScript API once, using Google's async loading pattern.
+ * Loads the Maps JavaScript API once, using Google's async loading pattern, with labels in the page language.
+ * A prerendered page waits until it is shown, since each map load is billed.
  * Rejects on network failure and on key rejection (Google's `gm_authFailure` hook).
  */
+import type { Locale } from '@/lib/i18n/config';
+import { whenActivated } from './activation';
+
 let loading: Promise<void> | null = null;
 
 declare global {
@@ -17,9 +21,9 @@ export class MapsLoadError extends Error {
 	}
 }
 
-export function loadGoogleMaps(apiKey: string): Promise<void> {
+export function loadGoogleMaps(apiKey: string, language: Locale): Promise<void> {
 	if (loading) return loading;
-	loading = new Promise<void>((resolve, reject) => {
+	loading = whenActivated().then(() => new Promise<void>((resolve, reject) => {
 		window.__niskalaMapsReady = () => resolve();
 		window.gm_authFailure = () => reject(new MapsLoadError('auth'));
 
@@ -27,7 +31,7 @@ export function loadGoogleMaps(apiKey: string): Promise<void> {
 			key: apiKey,
 			v: 'weekly',
 			loading: 'async',
-			language: 'id',
+			language,
 			region: 'ID',
 			callback: '__niskalaMapsReady'
 		});
@@ -40,7 +44,7 @@ export function loadGoogleMaps(apiKey: string): Promise<void> {
 			reject(new MapsLoadError('network'));
 		};
 		document.head.append(script);
-	});
+	}));
 	return loading;
 }
 

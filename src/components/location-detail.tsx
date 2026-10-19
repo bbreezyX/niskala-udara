@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, ChevronRight, Clock, MapPin, RotateCw } from 'lucide-react';
-import { postJson, toRemote, type Remote } from '@/lib/client/api';
+import { ArrowLeft, ChevronRight, MapPin, RotateCw } from 'lucide-react';
+import { postJson, toRemote, withLanguage, type Remote } from '@/lib/client/api';
 import { isBusy, needsLoad, useFeed, useFeeds, type LocationFeed } from '@/lib/client/location-feed';
 import { aqiBand } from '@/lib/aqi';
-import { ERROR_MESSAGES, formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
+import { fill, INTL_LOCALES, plural } from '@/lib/i18n/config';
+import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel } from '@/lib/format';
 import type { AirQualityData } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,8 @@ import { AqiGauge } from './aqi-gauge';
 import { Attribution, Recommendation, StateMessage } from './info-blocks';
 import { PollutantBreakdown } from './pollutant-breakdown';
 import { TrendChart, type TrendPoint } from './trend-chart';
+import { Link } from './link';
+import { useDictionary, useLocale } from './locale-provider';
 
 export interface RelatedPlace {
 	href: string;
@@ -30,8 +32,8 @@ interface Props {
 	feed: LocationFeed;
 	configured: boolean;
 	back: { href: string; label: string };
-	/** Small label above the name, e.g. the region. */
-	eyebrow?: string;
+	/** Shown under the name in place of the location's note, e.g. the province. */
+	region?: string;
 	related?: RelatedPlace[];
 }
 
@@ -39,7 +41,8 @@ interface Props {
  * Ordered by the questions a reader brings: how is the air now, when is it best to go out, what should I do,
  * what is causing it, and how has it moved.
  */
-export function LocationDetail({ feed, configured, back, eyebrow, related }: Props) {
+export function LocationDetail({ feed, configured, back, region, related }: Props) {
+	const t = useDictionary();
 	const state = useFeed(feed);
 	const { location } = feed;
 	const [history, setHistory] = useState<Remote<AirQualityData[]>>({ status: 'idle' });
@@ -54,7 +57,7 @@ export function LocationDetail({ feed, configured, back, eyebrow, related }: Pro
 		if (!configured) return;
 		const controller = new AbortController();
 		setHistory({ status: 'loading' });
-		postJson<AirQualityData[]>('/api/air-quality/history', { ...feed.location.coordinates, hours: 24 }, controller.signal).then((result) => {
+		postJson<AirQualityData[]>(withLanguage('/api/air-quality/history', feed.language), { ...feed.location.coordinates, hours: 24 }, controller.signal).then((result) => {
 			if (result) setHistory(toRemote(result));
 		});
 		return () => controller.abort();
@@ -90,63 +93,82 @@ export function LocationDetail({ feed, configured, back, eyebrow, related }: Pro
 				</Link>
 			</Button>
 
-			{/* The answer first: the dial beside the place it describes. */}
+			{/*
+			  The answer first: the dial beside the place and its verdict, so the row is full at every
+			  phone width. Below 360px the name gets the full width above, so a long word never clips.
+			*/}
 			<Card className="mt-2 gap-0 rounded-[20px] py-0">
-				<header className="flex flex-wrap items-center gap-x-6 gap-y-4 p-5 sm:p-6">
-					{current ? (
-						<AqiGauge size="md" aqi={current.index.aqi} display={current.index.aqiDisplay} />
-					) : (
-						<Skeleton className="size-32 shrink-0 rounded-full sm:size-36" />
-					)}
-					<div className="min-w-0 flex-1 basis-56">
-						{eyebrow && <p className="text-sm font-semibold text-primary">{eyebrow}</p>}
-						<h1 className="font-display text-4xl leading-[1.05] tracking-[-0.02em] sm:text-5xl">{location.name}</h1>
-						<p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+				<header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 p-5 [grid-template-areas:'title_title'_'gauge_verdict'_'note_note'] min-[360px]:[grid-template-areas:'gauge_title'_'gauge_verdict'_'note_note'] sm:gap-x-6 sm:p-6 sm:[grid-template-areas:'gauge_title'_'gauge_verdict'_'gauge_note']">
+					<div className="[grid-area:gauge]">
+						{current ? (
+							<AqiGauge size="md" aqi={current.index.aqi} display={current.index.aqiDisplay} />
+						) : (
+							<Skeleton className="size-24 shrink-0 rounded-full min-[400px]:size-28 sm:size-36" />
+						)}
+					</div>
+					<div className="min-w-0 [grid-area:title] min-[360px]:self-end">
+						<h1 className="font-display text-[1.75rem] leading-[1.05] tracking-[-0.02em] text-balance [overflow-wrap:anywhere] min-[400px]:text-[2rem] sm:text-5xl">
+							{location.name}
+						</h1>
+						<p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
 							<MapPin className="size-4 shrink-0" aria-hidden="true" />
-							{location.note}
+							{region ?? location.note}
 						</p>
+					</div>
+					<div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 [grid-area:verdict] min-[360px]:self-start">
 						{current && (
-							<div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-								<AqiBadge aqi={current.index.aqi} category={current.index.category} color={current.index.color} className="px-3 py-1.5 text-sm" />
+							<>
+								{/* Wraps instead of truncating when the column is narrow; rounded-2xl is still a pill on one line. */}
+								<AqiBadge
+									aqi={current.index.aqi}
+									category={current.index.category}
+									color={current.index.color}
+									className="rounded-2xl px-3 py-1.5 text-sm max-[399px]:px-2.5 max-[399px]:text-[13px] [&>span:last-child]:whitespace-normal"
+								/>
 								{current.index.dominantPollutant && (
 									<p className="text-sm text-muted-foreground">
-										Polutan dominan{' '}
+										{t.common.dominantPollutant}{' '}
 										<strong className="font-semibold text-foreground">{pollutantLabel(current.index.dominantPollutant)}</strong>
 									</p>
 								)}
-							</div>
+							</>
 						)}
-						{/* UAQI runs the opposite way from ISPU, so the direction is stated next to the dial. */}
-						<p className="mt-2 text-xs text-muted-foreground">
-							Skala 0–100, makin tinggi makin baik.{' '}
-							<Link href="/about" className="font-medium text-primary underline-offset-4 hover:underline">
-								Cara membaca AQI
-							</Link>
-						</p>
 					</div>
-					<div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:flex-col sm:items-end">
-						{current && (
-							<p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-								<Clock className="size-4" aria-hidden="true" />
-								Data <time dateTime={current.dataTime}>{formatDataTime(current.dataTime, location.timeZone)}</time>
-							</p>
-						)}
-						<Button variant="outline" size="lg" className="h-10 rounded-full bg-card px-4" onClick={refresh} disabled={busy || !configured}>
-							<RotateCw data-icon="inline-start" className={cn(busy && 'animate-spin')} />
-							{busy ? 'Memperbarui…' : 'Perbarui'}
-						</Button>
-					</div>
+					{/* UAQI runs the opposite way from ISPU, so the direction is stated next to the dial. */}
+					<p className="text-xs leading-relaxed text-muted-foreground [grid-area:note] sm:self-start">
+						{t.common.scale}{' '}
+						<Link href="/about" className="font-medium whitespace-nowrap text-primary underline-offset-4 hover:underline">
+							{t.common.howToRead}
+						</Link>
+					</p>
 				</header>
+				{/* Freshness and the way to renew it share one row, so neither floats on its own. */}
+				<div className="flex items-center justify-between gap-3 border-t px-5 py-3 sm:px-6">
+					<div className="grid min-w-0 gap-0.5">
+						<span className="text-xs text-muted-foreground">{t.location.lastData}</span>
+						{current ? (
+							<time dateTime={current.dataTime} className="text-sm font-medium tabular-nums">
+								{formatDataTime(current.dataTime, location.timeZone, feed.language)}
+							</time>
+						) : (
+							<Skeleton className="h-5 w-32" />
+						)}
+					</div>
+					<Button variant="outline" size="lg" className="h-10 shrink-0 rounded-full bg-card px-4" onClick={refresh} disabled={busy || !configured}>
+						<RotateCw data-icon="inline-start" className={cn(busy && 'animate-spin')} />
+						{busy ? t.common.refreshing : t.common.refresh}
+					</Button>
+				</div>
 			</Card>
 
 			<div className="mt-5" aria-busy={busy}>
 				{!configured ? (
-					<StateMessage tone="error" title={ERROR_MESSAGES.not_configured.title} description={ERROR_MESSAGES.not_configured.description} />
+					<StateMessage tone="error" title={t.errors.not_configured.title} description={t.errors.not_configured.description} />
 				) : state.current.status === 'error' ? (
-					<StateMessage tone="error" title={ERROR_MESSAGES[state.current.code].title} description={ERROR_MESSAGES[state.current.code].description}>
+					<StateMessage tone="error" title={t.errors[state.current.code].title} description={t.errors[state.current.code].description}>
 						<Button size="lg" onClick={refresh}>
 							<RotateCw data-icon="inline-start" />
-							Coba lagi
+							{t.common.retry}
 						</Button>
 					</StateMessage>
 				) : current ? (
@@ -167,8 +189,8 @@ export function LocationDetail({ feed, configured, back, eyebrow, related }: Pro
 
 						<Card className="@container rounded-[20px] lg:col-span-5">
 							<CardHeader>
-								<CardTitle className="text-lg font-semibold">Kadar polutan</CardTitle>
-								<CardDescription>Pada jam data terakhir, dibanding pedoman WHO</CardDescription>
+								<CardTitle className="text-lg font-semibold">{t.pollutants.levels}</CardTitle>
+								<CardDescription>{t.pollutants.levelsLatest}</CardDescription>
 							</CardHeader>
 							<CardContent>
 								<PollutantBreakdown pollutants={current.pollutants} dominant={current.index.dominantPollutant} />
@@ -178,24 +200,24 @@ export function LocationDetail({ feed, configured, back, eyebrow, related }: Pro
 						<Card className="rounded-[20px] lg:col-span-12">
 							<CardHeader className="flex flex-wrap items-baseline justify-between gap-2">
 								<div>
-									<CardTitle className="text-lg font-semibold">Tren 48 jam</CardTitle>
-									<CardDescription>24 jam terakhir dan prakiraan 24 jam ke depan, waktu {timeZoneLabel(location.timeZone)}</CardDescription>
+									<CardTitle className="text-lg font-semibold">{t.location.trendTitle}</CardTitle>
+									<CardDescription>{fill(t.location.trendDescription, { zone: timeZoneLabel(location.timeZone) })}</CardDescription>
 								</div>
 								<p className="flex items-center gap-1.5 text-xs text-muted-foreground">
 									<span className="w-4 border-t-2 border-primary" aria-hidden="true" />
-									Tercatat
+									{t.location.recorded}
 									<span className="ml-2 w-4 border-t-2 border-dashed border-primary/70" aria-hidden="true" />
-									Prakiraan
+									{t.common.forecast}
 								</p>
 							</CardHeader>
 							<CardContent className="grid gap-4">
 								<TrendStats past={past} historyLoading={history.status === 'loading'} timeZone={location.timeZone} />
 								{trend.length > 0 ? (
-									<TrendChart tall points={trend} timeZone={location.timeZone} label={`Tren AQI ${location.name}, 24 jam terakhir dan prakiraan 24 jam`} />
+									<TrendChart tall points={trend} timeZone={location.timeZone} label={fill(t.location.trendLabel, { name: location.name })} />
 								) : history.status === 'loading' || state.forecast.status === 'loading' ? (
 									<Skeleton className="h-72 rounded-xl sm:h-80" />
 								) : (
-									<p className="py-10 text-center text-sm text-muted-foreground">Tren belum tersedia untuk lokasi ini.</p>
+									<p className="py-10 text-center text-sm text-muted-foreground">{t.location.trendMissing}</p>
 								)}
 							</CardContent>
 						</Card>
@@ -206,10 +228,10 @@ export function LocationDetail({ feed, configured, back, eyebrow, related }: Pro
 						<Skeleton className="h-80 rounded-[20px]" />
 					</div>
 				)}
-				{!current && state.current.status === 'loading' && <p className="sr-only">Memuat data {location.name}</p>}
+				{!current && state.current.status === 'loading' && <p className="sr-only">{fill(t.common.loadingPlace, { name: location.name })}</p>}
 			</div>
 
-			{related && related.length > 1 && <RelatedList places={related} region={eyebrow} />}
+			{related && related.length > 1 && <RelatedList places={related} region={region} />}
 
 			{current && (
 				<div className="mt-8">
@@ -227,14 +249,16 @@ export function LocationDetail({ feed, configured, back, eyebrow, related }: Pro
 function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; loading: boolean; timeZone: string }) {
 	const next = hours.slice(0, 24);
 	const [active, setActive] = useState<number | null>(null);
-	const weekday = new Intl.DateTimeFormat('id-ID', { weekday: 'short', timeZone });
+	const locale = useLocale();
+	const t = useDictionary();
+	const weekday = new Intl.DateTimeFormat(INTL_LOCALES[locale], { weekday: 'short', timeZone });
 	const count = next.length;
 	const best = next.reduce((top, h, i) => (h.index.aqi > next[top].index.aqi ? i : top), 0);
 	const shown = active ?? best;
-	const hourOf = (h: AirQualityData) => formatHour(h.dataTime, timeZone);
+	const hourOf = (h: AirQualityData) => formatHour(h.dataTime, timeZone, locale);
 	const describe = (i: number) => {
 		const h = next[i];
-		return `${weekday.format(new Date(h.dataTime))} ${hourOf(h)}, AQI ${h.index.aqi}, ${aqiBand(h.index.aqi).label}`;
+		return `${weekday.format(new Date(h.dataTime))} ${hourOf(h)}, AQI ${h.index.aqi}, ${t.aqi.bands[aqiBand(h.index.aqi).key]}`;
 	};
 	const bands = [...new Set(next.map((h) => aqiBand(h.index.aqi)))].toSorted((a, b) => a.min - b.min);
 
@@ -260,14 +284,14 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 		<Card className="rounded-[20px] lg:col-span-12">
 			<CardHeader className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
 				<CardTitle id="planner-title" className="text-lg font-semibold">
-					24 jam ke depan
+					{t.location.next24}
 				</CardTitle>
 				{count > 0 && (
-					<ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground" aria-label="Kategori">
+					<ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground" aria-label={t.aqi.categories}>
 						{bands.map((band) => (
 							<li key={band.min} className="flex items-center gap-1.5">
 								<span className="size-2.5 rounded-[3px]" style={{ background: band.fill }} aria-hidden="true" />
-								{band.label}
+								{t.aqi.bands[band.key]}
 							</li>
 						))}
 					</ul>
@@ -279,7 +303,7 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 						<div className="relative h-10" aria-hidden="true">
 							<div className={cn('absolute bottom-2.5 whitespace-nowrap', align)} style={{ left: `${center}%` }}>
 								<span className="inline-block rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background tabular-nums">
-									{active === null ? `Terbaik ${hourOf(next[best])}, AQI ${next[best].index.aqi}` : describe(active)}
+									{active === null ? fill(t.location.bestPin, { hour: hourOf(next[best]), aqi: String(next[best].index.aqi) }) : describe(active)}
 								</span>
 							</div>
 							<span className="absolute bottom-0 h-2.5 w-0.5 -translate-x-1/2 bg-foreground" style={{ left: `${center}%` }} />
@@ -291,7 +315,7 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 							aria-valuemin={0}
 							aria-valuemax={count - 1}
 							aria-valuenow={shown}
-							aria-valuetext={active === null ? `Terbaik ${describe(best)}` : describe(active)}
+							aria-valuetext={active === null ? fill(t.location.bestSpoken, { detail: describe(best) }) : describe(active)}
 							onPointerDown={pick}
 							onPointerMove={(event) => (event.pointerType === 'mouse' || event.buttons > 0) && pick(event)}
 							onPointerLeave={(event) => event.pointerType === 'mouse' && setActive(null)}
@@ -326,12 +350,12 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 								);
 							})}
 						</div>
-						<p className="text-xs text-muted-foreground">Arahkan, ketuk, atau geser pita untuk melihat AQI tiap jam.</p>
+						<p className="text-xs text-muted-foreground">{t.location.plannerHint}</p>
 					</>
 				) : loading ? (
 					<Skeleton className="h-20 rounded-xl" />
 				) : (
-					<p className="text-sm text-muted-foreground">Prakiraan per jam belum tersedia untuk lokasi ini.</p>
+					<p className="text-sm text-muted-foreground">{t.location.plannerMissing}</p>
 				)}
 			</CardContent>
 		</Card>
@@ -340,24 +364,26 @@ function HourPlanner({ hours, loading, timeZone }: { hours: AirQualityData[]; lo
 
 /** The chart's past day in numbers, above the chart they describe. The best hour ahead lives in the planner. */
 function TrendStats({ past, historyLoading, timeZone }: { past: AirQualityData[]; historyLoading: boolean; timeZone: string }) {
+	const locale = useLocale();
+	const t = useDictionary();
 	const values = past.map((h) => h.index.aqi);
-	const when = (iso: string) => `${formatDay(iso, timeZone)}, ${formatHour(iso, timeZone)}`;
+	const when = (iso: string) => `${formatDay(iso, timeZone, locale)}, ${formatHour(iso, timeZone, locale)}`;
 
 	const stats = [
 		{
-			label: 'Terendah 24 jam',
+			label: t.location.low24,
 			value: values.length ? Math.min(...values) : null,
 			note: values.length ? when(past[values.indexOf(Math.min(...values))].dataTime) : null
 		},
 		{
-			label: 'Tertinggi 24 jam',
+			label: t.location.high24,
 			value: values.length ? Math.max(...values) : null,
 			note: values.length ? when(past[values.indexOf(Math.max(...values))].dataTime) : null
 		},
 		{
-			label: 'Rata-rata 24 jam',
+			label: t.location.average24,
 			value: values.length ? Math.round(values.reduce((sum, v) => sum + v, 0) / values.length) : null,
-			note: values.length ? `dari ${values.length} jam data` : null
+			note: values.length ? plural(t.location.fromHours, values.length, locale) : null
 		}
 	];
 
@@ -378,7 +404,7 @@ function TrendStats({ past, historyLoading, timeZone }: { past: AirQualityData[]
 						) : historyLoading ? (
 							<Skeleton className="h-10 rounded-md" />
 						) : (
-							<span className="text-sm text-muted-foreground">Belum tersedia</span>
+							<span className="text-sm text-muted-foreground">{t.common.notAvailable}</span>
 						)}
 					</dd>
 				</div>
@@ -392,6 +418,7 @@ function TrendStats({ past, historyLoading, timeZone }: { past: AirQualityData[]
  * data the session already holds (from Pantauan); places without one sit at the end, unranked.
  */
 function RelatedList({ places, region }: { places: RelatedPlace[]; region?: string }) {
+	const t = useDictionary();
 	const feeds = useMemo(() => places.map((place) => place.feed), [places]);
 	const states = useFeeds(feeds);
 	const rows = places
@@ -406,9 +433,9 @@ function RelatedList({ places, region }: { places: RelatedPlace[]; region?: stri
 		<nav aria-labelledby="related-title" className="mt-10">
 			<div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
 				<h2 id="related-title" className="font-display text-3xl leading-tight tracking-[-0.01em]">
-					Lokasi lain di {region ?? 'wilayah ini'}
+					{fill(t.location.relatedTitle, { region: region ?? t.location.thisArea })}
 				</h2>
-				<p className="text-sm text-muted-foreground">Urut dari udara terbaik</p>
+				<p className="text-sm text-muted-foreground">{t.location.relatedOrder}</p>
 			</div>
 			<ol className="overflow-hidden rounded-[20px] border bg-card">
 				{rows.map(({ place, aqi }) => {
@@ -417,7 +444,7 @@ function RelatedList({ places, region }: { places: RelatedPlace[]; region?: stri
 						<>
 							<span className="min-w-0 truncate font-semibold">
 								{place.name}
-								{place.current && <span className="ml-2 text-xs font-normal text-muted-foreground">halaman ini</span>}
+								{place.current && <span className="ml-2 text-xs font-normal text-muted-foreground">{t.location.thisPage}</span>}
 							</span>
 							<span aria-hidden="true" className="relative h-1.5 rounded-full bg-muted max-sm:hidden">
 								{band && <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.max(aqi!, 2)}%`, background: band.fill }} />}
@@ -427,10 +454,10 @@ function RelatedList({ places, region }: { places: RelatedPlace[]; region?: stri
 									<strong className="font-semibold" style={{ color: band.ink }}>
 										{aqi}
 									</strong>{' '}
-									<span className="text-xs text-muted-foreground">{band.label}</span>
+									<span className="text-xs text-muted-foreground">{t.aqi.bands[band.key]}</span>
 								</span>
 							) : (
-								<span className="text-right text-xs text-muted-foreground">Belum dimuat</span>
+								<span className="text-right text-xs text-muted-foreground">{t.location.notLoaded}</span>
 							)}
 							{place.current ? <span /> : <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />}
 						</>
@@ -455,7 +482,7 @@ function RelatedList({ places, region }: { places: RelatedPlace[]; region?: stri
 					);
 				})}
 			</ol>
-			{missing && <p className="mt-2 text-xs text-muted-foreground">Angka tampil untuk lokasi yang sudah dimuat di Pantauan, tanpa permintaan data baru.</p>}
+			{missing && <p className="mt-2 text-xs text-muted-foreground">{t.location.relatedNote}</p>}
 		</nav>
 	);
 }
