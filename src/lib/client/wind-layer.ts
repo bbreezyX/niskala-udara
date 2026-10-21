@@ -72,6 +72,9 @@ export function createWindOverlay(field: WindField, color: string, reducedMotion
 	class WindOverlay extends google.maps.OverlayView {
 		private readonly canvas = document.createElement('canvas');
 		private readonly context = this.canvas.getContext('2d');
+		private readonly redraw = () => this.draw();
+		private readonly resizeObserver = new ResizeObserver(this.redraw);
+		private viewport: Element | null = null;
 		private frame = 0;
 		private lastStep = 0;
 		private ratio = 1;
@@ -86,14 +89,20 @@ export function createWindOverlay(field: WindField, color: string, reducedMotion
 
 		onAdd() {
 			this.canvas.style.position = 'absolute';
+			this.canvas.style.left = '0';
+			this.canvas.style.top = '0';
 			this.canvas.style.pointerEvents = 'none';
 			this.canvas.setAttribute('aria-hidden', 'true');
 			this.getPanes()?.overlayLayer.append(this.canvas);
+			this.canvas.ownerDocument.addEventListener('fullscreenchange', this.redraw);
 			if (!reducedMotion) this.frame = requestAnimationFrame(this.tick);
 		}
 
 		onRemove() {
 			cancelAnimationFrame(this.frame);
+			this.canvas.ownerDocument.removeEventListener('fullscreenchange', this.redraw);
+			this.resizeObserver.disconnect();
+			this.viewport = null;
 			this.canvas.remove();
 		}
 
@@ -119,7 +128,17 @@ export function createWindOverlay(field: WindField, color: string, reducedMotion
 			const zoom = map.getZoom();
 			const topLeft = projection.fromContainerPixelToLatLng(new google.maps.Point(0, 0));
 			const div = map.getDiv();
-			if (zoom === undefined || !topLeft || div.clientWidth === 0) return false;
+			// Maps makes an inner element fullscreen; the outer div keeps its embedded size.
+			const fullscreen = div.ownerDocument.fullscreenElement;
+			const viewport = fullscreen && div.contains(fullscreen) ? fullscreen : div;
+			if (viewport !== this.viewport) {
+				this.resizeObserver.disconnect();
+				this.resizeObserver.observe(viewport);
+				this.viewport = viewport;
+			}
+			const width = viewport.clientWidth;
+			const height = viewport.clientHeight;
+			if (zoom === undefined || !topLeft || width === 0 || height === 0) return false;
 
 			// The overlay pane moves while dragging; translating to the viewport's corner undoes that.
 			const corner = projection.fromLatLngToDivPixel(topLeft);
@@ -127,10 +146,10 @@ export function createWindOverlay(field: WindField, color: string, reducedMotion
 
 			const ratio = Math.min(window.devicePixelRatio || 1, 2);
 			let last = this.origin;
-			if (div.clientWidth !== this.width || div.clientHeight !== this.height || ratio !== this.ratio) {
+			if (width !== this.width || height !== this.height || ratio !== this.ratio) {
 				// Resizing a canvas clears it.
-				this.width = div.clientWidth;
-				this.height = div.clientHeight;
+				this.width = width;
+				this.height = height;
 				this.ratio = ratio;
 				this.canvas.width = this.width * ratio;
 				this.canvas.height = this.height * ratio;
