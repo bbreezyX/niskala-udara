@@ -7,6 +7,8 @@ export interface HotspotStyle {
 	color: string;
 	/** Circle radius in CSS pixels. */
 	radius: number;
+	/** Fill opacity, 0–1. The outline stays opaque so faded dots still stand out over the heatmap. */
+	opacity: number;
 	/** Higher draws on top and wins hit tests. */
 	rank: number;
 }
@@ -99,7 +101,7 @@ export class HotspotLayer {
 				for (const point of visible) {
 					context.beginPath();
 					context.arc(point.x * scale - left, point.y * scale - top, point.radius, 0, Math.PI * 2);
-					context.globalAlpha = 0.9;
+					context.globalAlpha = point.opacity;
 					context.fillStyle = point.color;
 					context.fill();
 					context.globalAlpha = 1;

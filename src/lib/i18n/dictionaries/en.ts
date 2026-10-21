@@ -422,6 +422,14 @@ export const en: Dictionary = {
 		firesUnconfigured: 'Hotspot data is not set up on the server.',
 		detections: { one: 'detection', other: 'detections' },
 		confidence: { high: 'High Confidence', nominal: 'Medium Confidence', low: 'Low Confidence' },
+		legend: {
+			intensity: 'Heat Intensity',
+			sizes: { small: 'Small, < {max} MW', medium: 'Medium, {min}–{max} MW', large: 'Large, ≥ {min} MW' },
+			age: 'Detection Age',
+			ageRange: '{min}–{max} hours',
+			showLow: 'Show Low Confidence ({n})',
+			lowNote: 'Usually sun glint or a weak heat signal.'
+		},
 		lastDetected: 'Last detected {time}. ',
 		updated: 'Updated {time}.',
 		missingSources: 'Some satellites are not available yet, so the count may be lower.',

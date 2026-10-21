@@ -16,7 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StateMessage } from './info-blocks';
 import { useDictionary, useLocale, useLocalePath } from './locale-provider';
-import { hotspotStyle, useHotspotClicks } from './map-hotspots';
+import { hotspotStyle, shownHotspots, useHotspotClicks } from './map-hotspots';
 import { FiresSummary, LayerControls, MapAbout, type CentreWind } from './map-panel';
 import { useStationLayer } from './map-stations';
 
@@ -77,6 +77,7 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	const mapElement = useRef<HTMLDivElement>(null);
 	const [showHeatmap, setShowHeatmap] = useState(true);
 	const [showFires, setShowFires] = useState(true);
+	const [showLowConfidence, setShowLowConfidence] = useState(false);
 	const [showWind, setShowWind] = useState(true);
 	const [showStations, setShowStations] = useState(true);
 	const [fires, loadFires] = useRemoteJson<FireData>('/api/fires', firesConfigured);
@@ -99,8 +100,15 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	const mapState = useGoogleMap(mapElement, mapsKey, locale);
 	const map = mapState.status === 'ready' ? mapState.map : null;
 	const fireData = fires.status === 'success' ? fires.data : null;
-	// Built once per FIRMS response, then drawn as tiles and hit-tested by clicks.
-	const hotspots = useMemo(() => (fireData ? new HotspotLayer(fireData.hotspots, hotspotStyle) : null), [fireData]);
+	// Built once per FIRMS response or filter change, then drawn as tiles and hit-tested by clicks.
+	// Ages count from the fetch, the time the panel shows as updated, so dots and legend agree.
+	const hotspots = useMemo(
+		() =>
+			fireData
+				? new HotspotLayer(shownHotspots(fireData.hotspots, showLowConfidence), hotspotStyle(Date.parse(fireData.fetchedAt)))
+				: null,
+		[fireData, showLowConfidence]
+	);
 	useMapOverlays(mapState, hotspots, showHeatmap, showFires);
 	useHotspotClicks(map, showFires ? hotspots : null, selectPoint);
 	const windData = wind.status === 'success' ? wind.data : null;
@@ -123,7 +131,13 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 			</Card>
 
 			<Card className="gap-0 rounded-[20px] py-0">
-				<FiresSummary configured={firesConfigured} fires={fires} onRetry={loadFires} />
+				<FiresSummary
+					configured={firesConfigured}
+					fires={fires}
+					onRetry={loadFires}
+					showLowConfidence={showLowConfidence}
+					onShowLowConfidence={setShowLowConfidence}
+				/>
 
 				<Separator />
 				<LayerControls

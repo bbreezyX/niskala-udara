@@ -423,6 +423,14 @@ export const id = {
 		firesUnconfigured: 'Data hotspot belum dikonfigurasi di server.',
 		detections: { one: 'deteksi', other: 'deteksi' },
 		confidence: { high: 'Keyakinan Tinggi', nominal: 'Keyakinan Sedang', low: 'Keyakinan Rendah' },
+		legend: {
+			intensity: 'Intensitas Panas',
+			sizes: { small: 'Kecil, < {max} MW', medium: 'Sedang, {min}–{max} MW', large: 'Besar, ≥ {min} MW' },
+			age: 'Umur Deteksi',
+			ageRange: '{min}–{max} jam',
+			showLow: 'Tampilkan Keyakinan Rendah ({n})',
+			lowNote: 'Biasanya pantulan sinar matahari atau sinyal panas lemah.'
+		},
 		lastDetected: 'Terakhir terdeteksi {time}. ',
 		updated: 'Diperbarui {time}.',
 		missingSources: 'Sebagian satelit belum tersedia, jumlah bisa lebih rendah.',

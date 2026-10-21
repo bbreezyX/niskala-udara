@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent } from 'react';
 import { timeZoneAt } from '@/lib/config/cities';
-import { MAP_ZOOM } from '@/lib/config/map';
+import { FIRE_WINDOW_HOURS, MAP_ZOOM } from '@/lib/config/map';
 import type { HotspotLayer, HotspotStyle } from '@/lib/client/hotspot-layer';
 import { formatAgo, formatDataTime, numberFormat } from '@/lib/format';
 import type { Locale } from '@/lib/i18n/config';
@@ -10,21 +10,46 @@ import type { Dictionary } from '@/lib/i18n/dictionaries/id';
 import type { Hotspot } from '@/lib/types';
 import { useDictionary, useLocale } from './locale-provider';
 
-export const CONFIDENCE = {
-	high: { color: '#b91c1c' },
-	nominal: { color: '#ea580c' },
-	low: { color: '#f59e0b' }
-} as const;
+/** One colour for every hotspot: size carries intensity and opacity carries age, leaving colour to the heatmap. */
+export const HOTSPOT_COLOR = '#b91c1c';
 
-export const LEVELS = Object.entries(CONFIDENCE) as [Hotspot['confidence'], (typeof CONFIDENCE)[Hotspot['confidence']]][];
+/** Fire radiative power classes in MW, smallest first. A missing FRP draws at the smallest size. */
+export const INTENSITY = [
+	{ key: 'small', below: 10, radius: 4 },
+	{ key: 'medium', below: 50, radius: 6 },
+	{ key: 'large', below: Infinity, radius: 9 }
+] as const;
 
-const RANK = { low: 1, nominal: 2, high: 3 } as const;
+/** Hours since detection, newest first. Satellites pass about twice a day, so these classes keep passes apart. */
+export const AGE = [
+	{ below: 6, opacity: 0.9 },
+	{ below: 12, opacity: 0.65 },
+	{ below: FIRE_WINDOW_HOURS, opacity: 0.4 }
+] as const;
 
-export const hotspotStyle = ({ confidence }: Hotspot): HotspotStyle => ({
-	color: CONFIDENCE[confidence].color,
-	radius: confidence === 'high' ? 6 : 5,
-	rank: RANK[confidence]
-});
+/** The first class whose upper bound is above `value`; anything past the last bound falls in the last class. */
+function classIndex(classes: readonly { below: number }[], value: number): number {
+	const index = classes.findIndex((item) => value < item.below);
+	return index < 0 ? classes.length - 1 : index;
+}
+
+export const intensityClass = (frp: number | null) => classIndex(INTENSITY, frp ?? 0);
+
+/** Low-confidence detections are mostly sun glint or weak heat signals, so they stay hidden unless asked for. */
+export const shownHotspots = (hotspots: readonly Hotspot[], showLow: boolean) =>
+	showLow ? hotspots : hotspots.filter((hotspot) => hotspot.confidence !== 'low');
+
+/**
+ * Ages count from `now`. Fresher dots draw on top; within one age, smaller dots draw over
+ * larger ones so a small fire never hides under a big one.
+ */
+export const hotspotStyle =
+	(now: number) =>
+	(hotspot: Hotspot): HotspotStyle => {
+		const { radius } = INTENSITY[intensityClass(hotspot.frp)];
+		const age = classIndex(AGE, (now - Date.parse(hotspot.acquiredAt)) / 3_600_000);
+		return { color: HOTSPOT_COLOR, radius, opacity: AGE[age].opacity, rank: (AGE.length - age) * 100 - radius };
+	};
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string): HTMLElementTagNameMap[K] {
 	const node = document.createElement(tag);
@@ -38,11 +63,10 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: strin
  * Built with textContent: FIRMS values never become HTML.
  */
 function hotspotContent(hotspot: Hotspot, locale: Locale, t: Dictionary['map'], onCheck: () => void): HTMLElement {
-	const level = CONFIDENCE[hotspot.confidence];
 	const root = element('div', 'hotspot-card');
 
 	const chip = element('p', 'hotspot-card__level', t.confidence[hotspot.confidence]);
-	chip.style.setProperty('--level', level.color);
+	chip.style.setProperty('--level', HOTSPOT_COLOR);
 
 	// Recency leads: a fire seen an hour ago matters more than one from yesterday.
 	const time = element('time', 'hotspot-card__time');

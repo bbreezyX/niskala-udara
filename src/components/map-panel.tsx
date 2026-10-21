@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { useDictionary, useLocale } from './locale-provider';
-import { LEVELS } from './map-hotspots';
+import { AGE, HOTSPOT_COLOR, INTENSITY, intensityClass, shownHotspots } from './map-hotspots';
 
 /** Only called for data fetched in the browser, so it never runs during server rendering. */
 function viewerTimeZone(): string {
@@ -30,23 +30,33 @@ export interface CentreWind {
 /** Below this (m/s) the air is calm and has no meaningful direction. */
 const CALM = 0.5;
 
-/** The hotspot count leads: it is what changes day to day. Its legend doubles as the breakdown. */
-export function FiresSummary({ configured, fires, onRetry }: { configured: boolean; fires: Remote<FireData>; onRetry: () => void }) {
+interface FiresProps {
+	configured: boolean;
+	fires: Remote<FireData>;
+	onRetry: () => void;
+	showLowConfidence: boolean;
+	onShowLowConfidence: (checked: boolean) => void;
+}
+
+/** The hotspot count leads: it is what changes day to day. The size legend doubles as the breakdown. */
+export function FiresSummary(props: FiresProps) {
 	const t = useDictionary();
 	return (
 		<section className="grid gap-3 p-5" aria-live="polite" aria-labelledby="fires-title">
 			<h2 id="fires-title" className="panel-title">
 				{fill(t.map.firesTitle, { n: String(FIRE_WINDOW_HOURS) })}
 			</h2>
-			<FiresBody configured={configured} fires={fires} onRetry={onRetry} />
+			<FiresBody {...props} />
 		</section>
 	);
 }
 
-function FiresBody({ configured, fires, onRetry }: { configured: boolean; fires: Remote<FireData>; onRetry: () => void }) {
+function FiresBody({ configured, fires, onRetry, showLowConfidence, onShowLowConfidence }: FiresProps) {
 	const t = useDictionary();
 	if (!configured) return <p className="body-copy text-muted-foreground">{t.map.firesUnconfigured}</p>;
-	if (fires.status === 'success') return <FireCounts data={fires.data} />;
+	if (fires.status === 'success') {
+		return <FireCounts data={fires.data} showLowConfidence={showLowConfidence} onShowLowConfidence={onShowLowConfidence} />;
+	}
 	if (fires.status === 'error') {
 		return (
 			<>
@@ -67,15 +77,36 @@ function FiresBody({ configured, fires, onRetry }: { configured: boolean; fires:
 	);
 }
 
-function FireCounts({ data }: { data: FireData }) {
+interface FireCountsProps {
+	data: FireData;
+	showLowConfidence: boolean;
+	onShowLowConfidence: (checked: boolean) => void;
+}
+
+/** Legend dots use the map's own sizes and opacities, so the key matches what is drawn. */
+function Dot({ radius, opacity }: { radius: number; opacity: number }) {
+	return (
+		<span
+			className="block shrink-0 rounded-full"
+			style={{ width: radius * 2, height: radius * 2, background: HOTSPOT_COLOR, opacity }}
+			aria-hidden="true"
+		/>
+	);
+}
+
+function FireCounts({ data, showLowConfidence, onShowLowConfidence }: FireCountsProps) {
 	const t = useDictionary();
 	const locale = useLocale();
-	const { hotspots } = data;
-	const counts = { high: 0, nominal: 0, low: 0 };
-	for (const hotspot of hotspots) counts[hotspot.confidence]++;
+	// The count and breakdown follow the filter, so they match the dots on the map.
+	const hotspots = shownHotspots(data.hotspots, showLowConfidence);
+	const lowCount = data.hotspots.filter((hotspot) => hotspot.confidence === 'low').length;
+	const counts = INTENSITY.map(() => 0);
+	for (const hotspot of hotspots) counts[intensityClass(hotspot.frp)]++;
 	const latest = hotspots[0]?.acquiredAt ?? null;
 	// Hotspots span three time zones; the summary uses the reader's own, labelled.
 	const zone = viewerTimeZone();
+	const largest = INTENSITY[INTENSITY.length - 1].radius;
+	const sizeDot = INTENSITY[1].radius;
 
 	return (
 		<>
@@ -83,22 +114,46 @@ function FireCounts({ data }: { data: FireData }) {
 				<span className="font-sans text-5xl leading-none font-semibold tabular-nums">{hotspots.length}</span>
 				<span className="text-muted-foreground">{plural(t.map.detections, hotspots.length, locale)}</span>
 			</p>
-			{hotspots.length > 0 && (
-				<div className="flex h-2 gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
-					{LEVELS.map(([key, level]) => (
-						<span key={key} style={{ flexGrow: counts[key], background: level.color }} />
+			<div className="grid gap-1.5">
+				<h3 className="text-sm font-semibold">{t.map.legend.intensity}</h3>
+				<ul className="grid gap-1.5 text-sm">
+					{INTENSITY.map((item, i) => (
+						<li key={item.key} className="flex items-center gap-2">
+							{/* A fixed column keeps the labels aligned however large the dot. */}
+							<span className="flex shrink-0 justify-center" style={{ width: largest * 2 }}>
+								<Dot radius={item.radius} opacity={AGE[0].opacity} />
+							</span>
+							{fill(t.map.legend.sizes[item.key], { min: String(INTENSITY[i - 1]?.below ?? 0), max: String(item.below) })}
+							<span className="ml-auto font-semibold tabular-nums">{counts[i]}</span>
+						</li>
 					))}
+				</ul>
+			</div>
+			<div className="grid gap-1.5">
+				<h3 className="text-sm font-semibold">{t.map.legend.age}</h3>
+				<ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm tabular-nums">
+					{AGE.map((item, i) => (
+						<li key={item.below} className="flex items-center gap-2">
+							<Dot radius={sizeDot} opacity={item.opacity} />
+							{fill(t.map.legend.ageRange, { min: String(AGE[i - 1]?.below ?? 0), max: String(item.below) })}
+						</li>
+					))}
+				</ul>
+			</div>
+			<div className="grid gap-0.5">
+				<div className="flex min-h-11 items-center justify-between gap-3">
+					<Label htmlFor="fires-low-confidence">{fill(t.map.legend.showLow, { n: String(lowCount) })}</Label>
+					<Switch
+						id="fires-low-confidence"
+						checked={showLowConfidence}
+						onCheckedChange={onShowLowConfidence}
+						aria-describedby="fires-low-confidence-note"
+					/>
 				</div>
-			)}
-			<ul className="grid gap-1.5 text-sm">
-				{LEVELS.map(([key, level]) => (
-					<li key={key} className="flex items-center gap-2">
-						<span className="size-2.5 shrink-0 rounded-full" style={{ background: level.color }} aria-hidden="true" />
-						{t.map.confidence[key]}
-						<span className="ml-auto font-semibold tabular-nums">{counts[key]}</span>
-					</li>
-				))}
-			</ul>
+				<p id="fires-low-confidence-note" className="meta-copy text-muted-foreground">
+					{t.map.legend.lowNote}
+				</p>
+			</div>
 			<p className="meta-copy text-muted-foreground">
 				{latest && fill(t.map.lastDetected, { time: formatDataTime(latest, zone, locale) })}
 				{fill(t.map.updated, { time: `${formatHour(data.fetchedAt, zone, locale)} ${timeZoneLabel(zone)}` })}

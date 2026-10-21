@@ -11,7 +11,7 @@ const hotspot = (latitude: number, longitude: number, confidence: Hotspot['confi
 	frp: null
 });
 
-const style = ({ confidence }: Hotspot) => ({ color: '#000', radius: 5, rank: confidence === 'high' ? 3 : 1 });
+const style = ({ confidence }: Hotspot) => ({ color: '#000', radius: 5, opacity: 1, rank: confidence === 'high' ? 3 : 1 });
 
 describe('toWorld', () => {
 	it('matches Web Mercator world coordinates', () => {
