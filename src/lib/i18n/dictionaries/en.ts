@@ -415,7 +415,7 @@ export const en: Dictionary = {
 			title: 'Fire hotspot',
 			satellite: 'Satellite',
 			intensity: 'Heat intensity',
-			check: 'View air quality at this point'
+			check: 'View air quality'
 		}
 	}
 };

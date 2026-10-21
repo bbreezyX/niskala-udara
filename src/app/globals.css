@@ -337,14 +337,21 @@ body:has([data-error-scene]) :is([data-section-nav], [data-language-switch], #ko
     font-variant-numeric: tabular-nums;
 }
 .hotspot-card__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 2.75rem;
-    padding: 0.625rem 0.75rem;
+    padding: 0.625rem 1rem;
     border: 0;
     border-radius: 999px;
     background: var(--accent);
     color: var(--primary);
-    font: inherit;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
     font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    text-wrap: balance;
     transition: background-color 150ms;
 }
 .hotspot-card__action:hover {

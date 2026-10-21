@@ -416,7 +416,7 @@ export const id = {
 			title: 'Titik hotspot',
 			satellite: 'Satelit',
 			intensity: 'Intensitas panas',
-			check: 'Lihat kualitas udara di titik ini'
+			check: 'Lihat kualitas udara'
 		}
 	}
 };
