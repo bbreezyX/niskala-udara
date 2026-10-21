@@ -28,6 +28,23 @@ export const en: Dictionary = {
 		myLocationKeywords: ['device', 'nearby', 'me', 'current']
 	},
 	languageSwitch: { switchTo: 'Switch to {name}' },
+	install: {
+		shortcut: 'Install',
+		action: 'Install Niskala',
+		installing: 'Installing…',
+		title: 'Install Niskala',
+		description: 'Add Niskala to the home screen to open it in an app window.',
+		close: 'Close Installation Guide',
+		androidTitle: 'Android · Chrome',
+		androidStep1: 'Open the three-dot menu (⋮) in Chrome.',
+		androidStep2: 'Select Install and create shortcut, then Install. The menu may also say Install app or Add to Home screen.',
+		androidStep3: 'Confirm with Install or Add to save the Niskala icon.',
+		iphoneTitle: 'iPhone and iPad · Safari',
+		iphoneStep1: 'Open the Safari menu, then tap Share.',
+		iphoneStep2: 'Select Add to Home Screen. If available, turn on Open as Web App.',
+		iphoneStep3: 'Tap Add. Open Niskala using the icon on the home screen.',
+		browserHint: 'If the installation menu is missing, open this site directly in Chrome or Safari. An internet connection is still needed to fetch data.'
+	},
 	footer: {
 		taglineLead: 'Air is',
 		taglineAfterName: ', unseen.',

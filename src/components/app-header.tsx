@@ -333,7 +333,7 @@ export function AppHeader() {
 	}
 
 	return (
-		<header ref={header} className="pointer-events-none sticky top-0 z-40 flex justify-center px-4 pt-3">
+		<header ref={header} className="pointer-events-none sticky top-0 z-40 flex justify-center px-[max(1rem,env(safe-area-inset-left,0px),env(safe-area-inset-right,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
 			<CommandPrimitive filter={filterCities} loop label={t.search.label} className="contents">
 				<Popover open={searching} onOpenChange={openSearch}>
 					{/* Anchored to the full-width header, not the resizing capsule, so results never shimmer sideways mid-morph. */}

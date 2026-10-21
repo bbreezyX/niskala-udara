@@ -29,6 +29,23 @@ export const id = {
 		myLocationKeywords: ['perangkat', 'sekitar', 'saya', 'terdekat']
 	},
 	languageSwitch: { switchTo: 'Ganti ke {name}' },
+	install: {
+		shortcut: 'Pasang',
+		action: 'Pasang Niskala',
+		installing: 'Memasang…',
+		title: 'Pasang Niskala',
+		description: 'Tambahkan Niskala ke layar utama untuk membukanya dalam tampilan aplikasi.',
+		close: 'Tutup Panduan Instalasi',
+		androidTitle: 'Android · Chrome',
+		androidStep1: 'Buka menu tiga titik (⋮) di Chrome.',
+		androidStep2: 'Pilih Instal dan Buat Pintasan, lalu Instal. Nama menu bisa juga berupa Instal Aplikasi atau Tambahkan ke Layar Utama.',
+		androidStep3: 'Konfirmasi dengan Instal atau Tambahkan untuk menyimpan ikon Niskala.',
+		iphoneTitle: 'iPhone dan iPad · Safari',
+		iphoneStep1: 'Buka menu Safari, lalu ketuk Bagikan.',
+		iphoneStep2: 'Pilih Tambah ke Layar Utama. Jika tersedia, aktifkan Buka sebagai App Web.',
+		iphoneStep3: 'Ketuk Tambah. Buka Niskala melalui ikon di layar utama.',
+		browserHint: 'Jika menu instalasi tidak muncul, buka situs ini langsung di Chrome atau Safari. Koneksi internet tetap diperlukan untuk mengambil data.'
+	},
 	footer: {
 		// Keep the two sentences separate while allowing the name to use italic type.
 		taglineLead: 'Udara itu',

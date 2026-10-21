@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import localFont from 'next/font/local';
 import { AppHeader } from '@/components/app-header';
+import { InstallApp } from '@/components/install-app';
 import { Providers } from '@/components/providers';
 import { SiteFooter } from '@/components/site-footer';
-import { isLocale, LOCALES, toLocale } from '@/lib/i18n/config';
+import { isLocale, LOCALES, localizePath, toLocale } from '@/lib/i18n/config';
 import { getDictionary } from '@/lib/i18n/server';
 import { siteUrl } from '@/lib/server/env';
 import '../globals.css';
@@ -32,16 +33,23 @@ export function generateStaticParams() {
 export const dynamicParams = false;
 
 export async function generateMetadata({ params }: Omit<Props, 'children'>): Promise<Metadata> {
-	const { meta } = getDictionary(toLocale((await params).lang));
+	const locale = toLocale((await params).lang);
+	const { meta } = getDictionary(locale);
 	return {
 		metadataBase: new URL(siteUrl()),
+		applicationName: 'Niskala',
+		manifest: localizePath('/manifest.webmanifest', locale),
 		title: { default: meta.title, template: '%s · Niskala' },
 		description: meta.description,
-		icons: { icon: '/images/brand/niskala-udara-atmosfer.png' }
+		appleWebApp: { capable: true, title: 'Niskala', statusBarStyle: 'default' },
+		icons: {
+			icon: '/images/brand/niskala-udara-atmosfer.png',
+			apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }]
+		}
 	};
 }
 
-export const viewport: Viewport = { themeColor: '#F8FAFD' };
+export const viewport: Viewport = { themeColor: '#F8FAFD', viewportFit: 'cover' };
 
 export default async function RootLayout({ children, params }: Props) {
 	const { lang } = await params;
@@ -63,6 +71,7 @@ export default async function RootLayout({ children, params }: Props) {
 						{children}
 					</main>
 					<SiteFooter dictionary={dictionary} />
+					<InstallApp />
 				</Providers>
 			</body>
 		</html>
