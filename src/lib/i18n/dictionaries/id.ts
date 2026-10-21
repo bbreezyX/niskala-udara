@@ -422,7 +422,7 @@ export const id = {
 		firesTitle: 'Hotspot di Indonesia, {n} Jam',
 		firesUnconfigured: 'Data hotspot belum dikonfigurasi di server.',
 		detections: { one: 'deteksi', other: 'deteksi' },
-		confidence: { high: 'Keyakinan Tinggi', nominal: 'Keyakinan Sedang', low: 'Keyakinan Rendah' },
+		confidence: { high: 'Keyakinan Tinggi', nominal: 'Keyakinan Normal', low: 'Keyakinan Rendah' },
 		legend: {
 			intensity: 'Intensitas Panas',
 			sizes: { small: 'Kecil, < {max} MW', medium: 'Sedang, {min}–{max} MW', large: 'Besar, ≥ {min} MW' },

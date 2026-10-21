@@ -421,7 +421,7 @@ export const en: Dictionary = {
 		firesTitle: 'Hotspots in Indonesia, {n} Hours',
 		firesUnconfigured: 'Hotspot data is not set up on the server.',
 		detections: { one: 'detection', other: 'detections' },
-		confidence: { high: 'High Confidence', nominal: 'Medium Confidence', low: 'Low Confidence' },
+		confidence: { high: 'High Confidence', nominal: 'Normal Confidence', low: 'Low Confidence' },
 		legend: {
 			intensity: 'Heat Intensity',
 			sizes: { small: 'Small, < {max} MW', medium: 'Medium, {min}–{max} MW', large: 'Large, ≥ {min} MW' },
