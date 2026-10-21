@@ -108,15 +108,15 @@ export function PollutantHint({ code, units, children }: { code: PollutantCode; 
 						<span className="rounded-md bg-secondary px-1.5 py-0.5 text-xs font-semibold text-secondary-foreground">
 							{POLLUTANT_LABELS[code]}
 						</span>
-						<span className="text-sm font-semibold">{info.name}</span>
+						<span className="text-base font-semibold">{info.name}</span>
 					</p>
-					<p className="text-sm leading-relaxed text-muted-foreground">{info.about}</p>
-					<p className="text-xs leading-relaxed">
+					<p className="body-copy text-muted-foreground">{info.about}</p>
+					<p className="body-copy">
 						<span className="font-semibold">{pollutants.commonSources}</span>
 						<span className="text-muted-foreground">{info.sources}</span>
 					</p>
 					{unit && unitText && (
-						<p className="border-t pt-2 text-xs text-muted-foreground">
+						<p className="meta-copy border-t pt-2 text-muted-foreground">
 							<span className="font-semibold text-foreground">{unit}</span> = {unitText}
 						</p>
 					)}

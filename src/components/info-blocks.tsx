@@ -35,11 +35,11 @@ export function Recommendation({
 					<HeartPulse className="size-4 text-primary" aria-hidden="true" />
 					{health.title}
 				</p>
-				<h3 id="health-advice" className="mt-1 text-lg leading-snug font-semibold">
+				<h3 id="health-advice" className="panel-title mt-1">
 					{health.headlines[aqiBandIndex(aqi)]}
 				</h3>
 			</div>
-			<p className={cn('max-w-prose text-base leading-relaxed', !general && 'text-muted-foreground')}>{general ?? health.missing}</p>
+			<p className={cn('body-copy max-w-prose', !general && 'text-muted-foreground')}>{general ?? health.missing}</p>
 			{groups.length > 0 && (
 				<div className="grid gap-2 border-t pt-3">
 					<p id="health-groups" className="text-sm text-muted-foreground">
@@ -63,7 +63,7 @@ export function Recommendation({
 						))}
 					</ToggleGroupPrimitive.Root>
 					<div aria-live="polite">
-						{groupText && <p className="max-w-prose rounded-lg bg-muted px-3 py-2.5 text-base leading-relaxed">{groupText}</p>}
+						{groupText && <p className="body-copy max-w-prose rounded-lg bg-muted px-3 py-2.5">{groupText}</p>}
 					</div>
 				</div>
 			)}
@@ -133,8 +133,8 @@ export function DataUnavailable({ title, description, className }: { title: stri
 		<div className={cn('grid justify-items-center gap-5 rounded-[20px] border bg-card px-6 py-10 text-center sm:py-12', className)}>
 			<EmptyRing icon={null} large />
 			<div className="grid max-w-md gap-2">
-				<h2 className="text-xl font-semibold">{title}</h2>
-				<p className="text-muted-foreground">{description}</p>
+				<h2 className="panel-title">{title}</h2>
+				<p className="body-copy text-muted-foreground">{description}</p>
 			</div>
 		</div>
 	);
@@ -151,8 +151,8 @@ export function StateMessage({ title, description, tone = 'neutral', icon = null
 					{Icon ? <Icon className="size-5" /> : <span className="text-lg font-bold">–</span>}
 				</span>
 				<div className="grid max-w-xs gap-1">
-					<h2 className="font-semibold">{title}</h2>
-					<p className="text-sm text-muted-foreground">{description}</p>
+					<h2 className="panel-title">{title}</h2>
+					<p className="body-copy text-muted-foreground">{description}</p>
 				</div>
 				{children && <div className="flex flex-wrap justify-center gap-x-5 gap-y-1">{children}</div>}
 			</div>
@@ -164,8 +164,8 @@ export function StateMessage({ title, description, tone = 'neutral', icon = null
 			<div role={role} className={cn('grid justify-items-center gap-5 rounded-[20px] border bg-card px-6 py-10 text-center sm:py-12', className)}>
 				<EmptyRing icon={icon} />
 				<div className="grid max-w-md gap-2">
-					<h2 className="text-lg font-semibold">{title}</h2>
-					<p className="text-muted-foreground">{description}</p>
+					<h2 className="panel-title">{title}</h2>
+					<p className="body-copy text-muted-foreground">{description}</p>
 				</div>
 				{/* Actions read as pills here, like the rest of the app's primary buttons. */}
 				{children && (
@@ -187,8 +187,8 @@ export function StateMessage({ title, description, tone = 'neutral', icon = null
 				>
 					<Icon className="size-6" />
 				</EmptyMedia>
-				<EmptyTitle className="text-lg font-semibold">{title}</EmptyTitle>
-				<EmptyDescription className="text-base">{description}</EmptyDescription>
+				<EmptyTitle>{title}</EmptyTitle>
+				<EmptyDescription>{description}</EmptyDescription>
 			</EmptyHeader>
 			{children && <EmptyContent>{children}</EmptyContent>}
 		</Empty>

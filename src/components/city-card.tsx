@@ -23,7 +23,7 @@ import { useDictionary, useLocale } from './locale-provider';
 const SUMMARY_POLLUTANTS: PollutantCode[] = ['pm25', 'pm10', 'no2', 'o3'];
 
 /** Small section labels share one style, so the pollutant names and the forecast label read as one set. */
-const LABEL = 'text-xs font-semibold text-muted-foreground';
+const LABEL = 'meta-copy font-semibold text-muted-foreground';
 
 function Place({ note }: { note: string }) {
 	return (
@@ -102,7 +102,7 @@ export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: s
 				<CardContent>
 					<div role="alert" className="grid justify-items-start gap-1 rounded-xl bg-destructive/5 p-4">
 						<p className="font-semibold text-destructive">{message.title}</p>
-						<p className="text-sm text-muted-foreground">{message.description}</p>
+						<p className="body-copy text-muted-foreground">{message.description}</p>
 						<Button variant="outline" size="lg" className="mt-2" onClick={() => feed.load()}>
 							<RotateCw data-icon="inline-start" />
 							{t.common.retry}
@@ -158,7 +158,7 @@ export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: s
 				</div>
 			</CardContent>
 
-			<CardFooter className="mt-auto gap-1.5 border-t-0 bg-transparent pt-0 text-xs text-muted-foreground">
+			<CardFooter className="meta-copy mt-auto flex-wrap gap-1.5 border-t-0 bg-transparent pt-0 text-muted-foreground">
 				<Clock className="size-3.5" aria-hidden="true" />
 				{fill(t.card.dataAt, { time: `${formatHour(dataTime, location.timeZone, locale)} ${timeZoneLabel(location.timeZone, new Date(dataTime))}` })}
 				{busy && <span className="ml-auto">{t.common.refreshing}</span>}

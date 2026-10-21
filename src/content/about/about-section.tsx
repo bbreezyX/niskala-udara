@@ -2,8 +2,8 @@
 export function AboutHeader({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
 		<header>
-			<h1 className="font-display text-5xl leading-[1.1] tracking-[-0.02em] text-balance sm:text-6xl">{title}</h1>
-			<p className="mt-4 max-w-prose text-lg">{children}</p>
+			<h1 className="page-title text-5xl sm:text-6xl">{title}</h1>
+			<p className="body-copy mt-4 max-w-prose text-pretty sm:text-lg">{children}</p>
 		</header>
 	);
 }
@@ -12,7 +12,7 @@ export function AboutHeader({ title, children }: { title: string; children: Reac
 export function AboutSection({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
 	return (
 		<section aria-labelledby={id} className="grid gap-4">
-			<h2 id={id}>{title}</h2>
+			<h2 id={id} className="section-title">{title}</h2>
 			{children}
 		</section>
 	);

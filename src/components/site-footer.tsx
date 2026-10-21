@@ -35,7 +35,7 @@ export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 					<div className="grid grid-cols-2 content-start gap-x-10 gap-y-8 text-sm">
 						{columns(t).map((column) => (
 							<nav key={column.title} aria-label={column.title}>
-								<h2 className="mb-3 text-sm font-semibold text-secondary-foreground/70">{column.title}</h2>
+								<h2 className="mb-3 text-sm font-semibold text-secondary-foreground">{column.title}</h2>
 								<ul className="grid gap-1">
 									{column.links.map((link) => (
 										<li key={link.href}>
@@ -51,7 +51,7 @@ export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 							</nav>
 						))}
 						<div className="col-span-2">
-							<h2 className="mb-3 text-sm font-semibold text-secondary-foreground/70">{t.footer.dataSources}</h2>
+							<h2 className="mb-3 text-sm font-semibold text-secondary-foreground">{t.footer.dataSources}</h2>
 							<p className="leading-relaxed text-secondary-foreground">
 								{t.footer.airQualitySource}
 								<br />
@@ -79,7 +79,7 @@ export function SiteFooter({ dictionary: t }: { dictionary: Dictionary }) {
 						</div>
 					</div>
 
-					<p className="max-w-[21ch] font-display text-[1.75rem] leading-[1.1] tracking-[-0.01em] text-secondary-foreground sm:text-4xl md:justify-self-end lg:text-[clamp(2.5rem,3.9vw,3rem)]">
+					<p className="max-w-[21ch] font-display text-3xl leading-[1.1] tracking-[-0.02em] text-secondary-foreground sm:text-4xl md:justify-self-end lg:text-5xl">
 						<span className="block">{t.footer.taglineLead} <em lang="id">niskala</em>{t.footer.taglineAfterName}</span>{' '}
 						<span className="block text-balance">{t.footer.taglineClosing}</span>
 					</p>

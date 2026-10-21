@@ -6,9 +6,9 @@ export const PRIVACY_ID: LegalSection[] = [
 		title: 'Data yang diproses',
 		body: (
 			<>
-				Niskala hanya memproses koordinat lokasi untuk mengambil data kualitas udara. Saat kamu memilih kota, yang
-				dikirim adalah koordinat titik referensi kota tersebut. Saat kamu menekan &quot;Gunakan lokasi saya&quot;, browser meminta
-				izinmu terlebih dahulu, lalu koordinat perangkat dibulatkan menjadi sekitar 100 meter sebelum dikirim.
+				Niskala hanya memproses koordinat lokasi untuk mengambil data kualitas udara. Untuk kota yang dipilih, koordinat
+				yang dikirim adalah titik referensi kota tersebut. Setelah tombol &quot;Gunakan lokasi perangkat&quot; dipilih, browser
+				meminta izin akses lokasi. Koordinat perangkat kemudian dibulatkan menjadi sekitar 100 meter sebelum dikirim.
 			</>
 		)
 	},
@@ -29,31 +29,31 @@ export const PRIVACY_ID: LegalSection[] = [
 		title: 'Halaman Peta',
 		body: (
 			<>
-				Peta dimuat langsung dari Google Maps di browsermu, sehingga Google menerima data teknis seperti alamat IP dan dapat
-				memakai cookie sesuai kebijakannya. Titik yang kamu klik di peta dibulatkan menjadi sekitar 100 meter, lalu dikirim
-				lewat server Niskala ke Google untuk mengambil kualitas udara. Data hotspot diambil server dari NASA FIRMS dan data
-				angin dari Open-Meteo, keduanya tanpa data apa pun tentang dirimu.
+				Peta dimuat langsung dari Google Maps di browser, sehingga Google menerima data teknis seperti alamat IP dan dapat
+				menggunakan cookie sesuai kebijakannya. Titik yang dipilih di peta dibulatkan menjadi sekitar 100 meter, lalu dikirim
+				melalui server Niskala ke Google untuk mengambil data kualitas udara. Server mengambil data hotspot dari NASA FIRMS
+				dan data angin dari Open-Meteo tanpa mengirimkan data tentang pengguna ke kedua penyedia tersebut.
 			</>
 		)
 	},
 	{
-		title: 'Yang disimpan di perangkatmu',
+		title: 'Penyimpanan pada perangkat',
 		body: (
 			<>
-				Supaya Pantauan langsung membuka wilayahmu, browser menyimpan wilayah terakhir yang kamu pilih, atau wilayah
-				terdekat setelah kamu memakai &quot;Gunakan lokasi saya&quot;. Yang disimpan hanya nama wilayah (misalnya Riau),
-				bukan koordinat, di penyimpanan lokal browser (localStorage). Data ini tidak dikirim ke server dan bukan cookie.
-				Kamu bisa menghapusnya dengan membersihkan data situs di pengaturan browser.
+				Browser menyimpan wilayah terakhir yang dipilih, atau wilayah terdekat setelah penggunaan tombol
+				&quot;Gunakan lokasi perangkat&quot;, agar Pantauan langsung membuka wilayah tersebut. Penyimpanan lokal browser
+				(localStorage) hanya berisi nama wilayah, misalnya Riau, tanpa koordinat. Data ini tidak dikirim ke server dan
+				bukan cookie. Untuk menghapusnya, bersihkan data situs melalui pengaturan browser.
 			</>
 		)
 	},
 	{
-		title: 'Yang tidak kami lakukan',
+		title: 'Batas pengumpulan data',
 		body: (
 			<>
-				Kami tidak menyimpan koordinat atau hasil pencarianmu, tidak memasang cookie sendiri, tidak memerlukan akun, dan tidak
-				memasang analitik atau iklan. Log server hanya mencatat informasi teknis seperti jenis galat dan durasi permintaan,
-				tanpa koordinat.
+				Niskala tidak menyimpan koordinat atau hasil pencarian, tidak memasang cookie sendiri, tidak memerlukan akun, dan
+				tidak memasang analitik atau iklan. Log server hanya mencatat informasi teknis seperti jenis galat dan durasi
+				permintaan, tanpa koordinat.
 			</>
 		)
 	},
@@ -61,8 +61,8 @@ export const PRIVACY_ID: LegalSection[] = [
 		title: 'Izin lokasi',
 		body: (
 			<>
-				Izin lokasi hanya diminta setelah kamu menekan tombol, dan dapat dicabut kapan saja melalui pengaturan browser. Tanpa
-				izin tersebut, kamu tetap bisa memilih kota dari daftar.
+				Izin lokasi hanya diminta setelah tombol &quot;Gunakan lokasi perangkat&quot; dipilih. Izin dapat dicabut kapan saja
+				melalui pengaturan browser. Pemilihan kota dari daftar tetap tersedia tanpa izin lokasi.
 			</>
 		)
 	}

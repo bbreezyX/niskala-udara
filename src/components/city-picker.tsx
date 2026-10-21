@@ -144,7 +144,7 @@ export function CityPicker({ value, onChange, nearby, onLocate, variant = 'field
 											className="min-h-10 gap-2"
 										>
 											<span className="flex-1">{city.name}</span>
-											<span className="text-xs text-muted-foreground tabular-nums">± {numberFormat(locale, 0).format(km)} km</span>
+											<span className="meta-copy text-muted-foreground tabular-nums">± {numberFormat(locale, 0).format(km)} km</span>
 											<CheckIcon className={cn('text-primary', city.id !== value.id && 'invisible')} aria-hidden="true" />
 										</CommandItem>
 									))

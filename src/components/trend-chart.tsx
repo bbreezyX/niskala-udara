@@ -155,10 +155,10 @@ function TrendPlot({
 					axisLine={false}
 					tickMargin={8}
 					interval={0}
-					fontSize={11}
+					fontSize="0.75rem"
 					padding={compact ? { left: 4, right: 4 } : undefined}
 				/>
-				<YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} hide={compact} width={32} tickLine={false} axisLine={false} fontSize={11} />
+				<YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} hide={compact} width={32} tickLine={false} axisLine={false} fontSize="0.75rem" />
 				<ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={<TrendTooltip tickLabel={tickLabel} />} />
 				{compact ? (
 					<Area
@@ -203,7 +203,7 @@ function TrendPlot({
 						x={nowT}
 						stroke="var(--muted-foreground)"
 						strokeDasharray="2 3"
-						label={{ value: chart.now, position: 'top', fontSize: 11, fill: 'var(--muted-foreground)' }}
+						label={{ value: chart.now, position: 'top', fontSize: '0.75rem', fill: 'var(--muted-foreground)' }}
 					/>
 				)}
 				{first && <ReferenceDot x={first.t} y={first.aqi} r={5} fill={color} stroke="#fff" strokeWidth={2.5} />}
@@ -227,7 +227,7 @@ function TrendTooltip({
 	const row = payload?.[0]?.payload as Row | undefined;
 	if (!active || !row) return null;
 	return (
-		<div className="rounded-lg border bg-popover px-2.5 py-1.5 text-xs shadow-md">
+		<div className="meta-copy rounded-lg border bg-popover px-2.5 py-1.5 shadow-md">
 			<p className="text-muted-foreground">
 				{tickLabel(row.t)}
 				{row.forecast && chart.forecastSuffix}

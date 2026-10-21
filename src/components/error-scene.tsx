@@ -42,10 +42,10 @@ export function ErrorScene({
 				</p>
 				<div className="mt-8 grid justify-items-center gap-6">
 					<div className="grid max-w-xl justify-items-center gap-2">
-						<h1 id="error-title" className="font-display text-4xl leading-[1.1] tracking-[-0.01em] text-balance sm:text-5xl">
+						<h1 id="error-title" className="page-title">
 							{title}
 						</h1>
-						<p className="max-w-md text-pretty text-muted-foreground">{description}</p>
+						<p className="body-copy max-w-md text-pretty text-muted-foreground">{description}</p>
 					</div>
 					<div className="flex flex-wrap justify-center gap-2">{children}</div>
 				</div>

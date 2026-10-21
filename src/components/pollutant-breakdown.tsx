@@ -40,7 +40,7 @@ export function PollutantBreakdown({ pollutants, dominant }: Props) {
 					<Row key={code} code={code} reading={reading} ratio={ratio} />
 				))}
 			</dl>
-			<p className="text-xs text-muted-foreground">
+			<p className="meta-copy text-muted-foreground">
 				{t.pollutants.whoNote}
 			</p>
 		</div>

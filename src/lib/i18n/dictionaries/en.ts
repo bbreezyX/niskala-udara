@@ -3,7 +3,7 @@ import type { Dictionary } from './id';
 // British spelling, matching the en-GB date and number formats.
 export const en: Dictionary = {
 	meta: {
-		title: 'Niskala · Air quality around you',
+		title: 'Niskala · Air quality in Indonesia',
 		description: 'Track current air quality, pollutant levels, forecasts, and health advice for cities across Indonesia.'
 	},
 	skipToContent: 'Skip to content',
@@ -22,7 +22,7 @@ export const en: Dictionary = {
 		close: 'Close search',
 		empty: 'No city found. Only monitored cities are available.',
 		locationGroup: 'Location',
-		myLocation: 'My location',
+		myLocation: 'Device location',
 		myLocationKeywords: ['device', 'nearby', 'me', 'current']
 	},
 	languageSwitch: { switchTo: 'Switch to {name}' },
@@ -44,7 +44,7 @@ export const en: Dictionary = {
 	pages: {
 		map: {
 			title: 'Map',
-			heading: 'Air & hotspot map',
+			heading: 'Air quality and hotspot map',
 			description: 'Air quality map (Universal AQI), 24-hour fire hotspots, and wind direction across Indonesia.'
 		},
 		history: {
@@ -58,7 +58,7 @@ export const en: Dictionary = {
 		},
 		privacy: { title: 'Privacy', heading: 'Privacy Policy' },
 		terms: { title: 'Terms of Use', heading: 'Terms of Use' },
-		locationMe: { title: 'My location' },
+		locationMe: { title: 'Device location' },
 		locationPoint: { title: 'Point on the map' },
 		city: { description: 'Current air quality, 24-hour trend, forecast, and pollutant levels in {name}.' }
 	},
@@ -76,7 +76,7 @@ export const en: Dictionary = {
 		loadingPlace: 'Loading data for {name}',
 		locations: { one: '{n} location', other: '{n} locations' },
 		scale: 'Scale 0–100, higher is better.',
-		scaleIspu: 'AQI 0–100, higher is better. ISPU runs the other way: higher is worse.',
+		scaleIspu: 'AQI 0–100, higher is better. For ISPU, higher is worse.',
 		howToRead: 'How to read the AQI',
 		dominantPollutant: 'Dominant pollutant',
 		backToOverview: 'Back to Overview',
@@ -175,16 +175,16 @@ export const en: Dictionary = {
 	errorPage: {
 		notFound: {
 			title: 'Page not found',
-			description: 'This address is not part of Niskala. Check the link, or start from the Overview to see the air quality in your city.'
+			description: 'This address is not available. Check the link or open Overview to select a location.'
 		},
 		failed: {
-			title: 'This page failed to load',
-			description: 'Niskala’s server ran into a problem while preparing this page. Try again; if it still fails, wait a few minutes.'
+			title: 'Page failed to load',
+			description: 'An error occurred while loading this page. Try again or wait a few minutes.'
 		}
 	},
 	errors: {
 		not_configured: {
-			title: 'Data source not set up',
+			title: 'Data source not configured',
 			description: 'The server has no access key for air quality data yet, so there are no numbers to show.'
 		},
 		not_authorized: {
@@ -217,7 +217,7 @@ export const en: Dictionary = {
 		},
 		network: {
 			title: 'Cannot connect',
-			description: 'Check your internet connection, then try again.'
+			description: 'Check the internet connection, then try again.'
 		}
 	},
 	location: {
@@ -244,15 +244,15 @@ export const en: Dictionary = {
 		relatedNote: 'Readings show for places already loaded in Overview, without new data requests.'
 	},
 	device: {
-		name: 'My location',
-		note: 'Based on your device location, rounded to about 100 m',
-		unsupported: 'This browser does not support device location. Please choose a city.',
-		denied: 'Location permission was denied. You can still choose a city from the list.',
-		notFound: 'Your location could not be found. Try again or choose a city from the list.',
-		errorTitle: 'No location yet',
-		pickCity: 'Choose a city',
-		locating: 'Finding your location…',
-		locatingHint: 'Allow location access in your browser. Coordinates are rounded to about 100 metres before they are sent.'
+		name: 'Device location',
+		note: 'Based on device location, rounded to about 100 m',
+		unsupported: 'This browser does not support device location. Select a city from the list.',
+		denied: 'Location access denied. Select a city from the list to continue.',
+		notFound: 'The device location could not be found. Try again or select a city from the list.',
+		errorTitle: 'Location not available',
+		pickCity: 'Select a city',
+		locating: 'Finding device location…',
+		locatingHint: 'Allow location access in the browser. Coordinates are rounded to about 100 metres before they are sent.'
 	},
 	point: {
 		name: 'Selected point',
@@ -279,9 +279,9 @@ export const en: Dictionary = {
 			evening: 'Good evening',
 			neutral: 'Hello'
 		},
-		heading: 'Air quality around you',
-		lead: 'Choose a region or use your location to see the conditions.',
-		useMyLocation: 'Use my location',
+		heading: 'Air quality overview',
+		lead: 'Select a region or use the device location to view air quality.',
+		useMyLocation: 'Use device location',
 		overviewPrefix: 'Overview, ',
 		dataAt: 'Data {time}',
 		refreshData: 'Refresh',
@@ -305,15 +305,15 @@ export const en: Dictionary = {
 	filter: {
 		trigger: 'Filter',
 		active: '(active)',
-		title: 'Show locations where the air is…',
+		title: 'Filter air quality',
 		hint: 'Tap one or more categories.',
 		bandsLabel: 'AQI categories',
 		bandOption: '{band}, AQI {min} to {max}, {count}',
 		sort: 'Sort',
 		sorts: {
 			default: { label: 'Default', description: 'The default order, as in the region list.' },
-			best: { label: 'Best', description: 'Highest AQI first: the cleanest air on top.' },
-			worst: { label: 'Worst', description: 'Lowest AQI first: the worst air on top.' },
+			best: { label: 'Best', description: 'Sort by highest AQI: the best air quality first.' },
+			worst: { label: 'Worst', description: 'Sort by lowest AQI: the worst air quality first.' },
 			name: { label: 'A–Z', description: 'City names from A to Z.' }
 		},
 		pending: {
@@ -329,10 +329,10 @@ export const en: Dictionary = {
 		placeholder: 'Search a city, regency, or province…',
 		empty: 'No city found.',
 		nearest: 'Nearest',
-		locating: 'Finding your location…',
+		locating: 'Finding device location…',
 		denied: 'Location permission denied in the browser',
-		useMine: 'Use my location',
-		useMineKeywords: ['location', 'nearest', 'near', 'me']
+		useMine: 'Use device location',
+		useMineKeywords: ['location', 'device', 'nearest', 'near', 'me']
 	},
 	regionPicker: {
 		trigger: 'Region: {name}. Change region',
@@ -365,14 +365,14 @@ export const en: Dictionary = {
 	},
 	map: {
 		unconfigured: {
-			title: 'Map not set up',
+			title: 'Map not configured',
 			description: 'The browser key for Google Maps is not set on the server yet, so the map cannot be shown.'
 		},
 		auth: {
 			title: 'Google Maps rejected the key',
 			description: 'Make sure the Maps JavaScript API is enabled and this domain is allowed in the key restrictions.'
 		},
-		network: { title: 'The map failed to load', description: 'Check your internet connection, then reload the page.' },
+		network: { title: 'Map failed to load', description: 'Check the internet connection, then reload the page.' },
 		regionLabel: 'Air quality, hotspot and wind map',
 		firesTitle: 'Hotspots in Indonesia, {n} hours',
 		firesUnconfigured: 'Hotspot data is not set up on the server.',
@@ -390,7 +390,7 @@ export const en: Dictionary = {
 		wind: 'Wind',
 		windCentre: 'Map centre: {speed} km/h, blowing {toward}',
 		windCalm: 'Map centre: calm',
-		windLegend: 'Lines move with the wind 10 m above ground. Darker means stronger.',
+		windLegend: 'Lines show wind direction 10 m above ground. Darker lines indicate stronger winds.',
 		windValid: 'Model forecast for {time}.',
 		windFailed: 'Wind data failed to load.',
 		stations: {
@@ -404,7 +404,7 @@ export const en: Dictionary = {
 			marker: 'Station {name}: ISPU {value}, {category}'
 		},
 		compass: ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'],
-		checkCenter: 'Check AQI at the map centre',
+		checkCenter: 'View AQI at the map centre',
 		clickHint: 'Or click any point on the map.',
 		about: 'About this data',
 		aboutText:
@@ -415,7 +415,7 @@ export const en: Dictionary = {
 			title: 'Fire hotspot',
 			satellite: 'Satellite',
 			intensity: 'Heat intensity',
-			check: 'Check air quality here'
+			check: 'View air quality at this point'
 		}
 	}
 };

@@ -13,7 +13,7 @@ const START = 225;
 const CONIC = `conic-gradient(from ${START}deg, ${UAQI_STOPS.map(([at, color]) => `${color} ${(at / 100) * SWEEP}deg`).join(', ')}, transparent ${SWEEP}deg)`;
 
 const SIZES = {
-	sm: { box: 'size-[72px]', ring: 7, number: 'text-xl', unit: 'text-[10px]' },
+	sm: { box: 'size-[72px]', ring: 7, number: 'text-xl', unit: 'text-xs' },
 	md: { box: 'size-24 min-[400px]:size-28 sm:size-36', ring: 10, number: 'text-4xl sm:text-5xl', unit: 'text-xs' },
 	lg: { box: 'size-48 sm:size-56', ring: 14, number: 'text-6xl sm:text-7xl', unit: 'text-sm' }
 } as const;

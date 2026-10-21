@@ -35,7 +35,7 @@ export function FiresSummary({ configured, fires, onRetry }: { configured: boole
 	const t = useDictionary();
 	return (
 		<section className="grid gap-3 p-5" aria-live="polite" aria-labelledby="fires-title">
-			<h2 id="fires-title" className="text-sm font-semibold text-muted-foreground">
+			<h2 id="fires-title" className="panel-title">
 				{fill(t.map.firesTitle, { n: String(FIRE_WINDOW_HOURS) })}
 			</h2>
 			<FiresBody configured={configured} fires={fires} onRetry={onRetry} />
@@ -45,7 +45,7 @@ export function FiresSummary({ configured, fires, onRetry }: { configured: boole
 
 function FiresBody({ configured, fires, onRetry }: { configured: boolean; fires: Remote<FireData>; onRetry: () => void }) {
 	const t = useDictionary();
-	if (!configured) return <p className="text-sm text-muted-foreground">{t.map.firesUnconfigured}</p>;
+	if (!configured) return <p className="body-copy text-muted-foreground">{t.map.firesUnconfigured}</p>;
 	if (fires.status === 'success') return <FireCounts data={fires.data} />;
 	if (fires.status === 'error') {
 		return (
@@ -99,11 +99,11 @@ function FireCounts({ data }: { data: FireData }) {
 					</li>
 				))}
 			</ul>
-			<p className="text-xs text-muted-foreground">
+			<p className="meta-copy text-muted-foreground">
 				{latest && fill(t.map.lastDetected, { time: formatDataTime(latest, zone, locale) })}
 				{fill(t.map.updated, { time: `${formatHour(data.fetchedAt, zone, locale)} ${timeZoneLabel(zone)}` })}
 			</p>
-			{data.missingSources.length > 0 && <p className="text-xs text-muted-foreground">{t.map.missingSources}</p>}
+			{data.missingSources.length > 0 && <p className="meta-copy text-muted-foreground">{t.map.missingSources}</p>}
 		</>
 	);
 }
@@ -143,7 +143,7 @@ export function LayerControls(props: LayerControlsProps) {
 			</div>
 			{/* The heatmap uses Google's continuous UAQI colors, so the legend does too. */}
 			<div className="h-2 rounded-full" style={{ background: UAQI_GRADIENT }} aria-hidden="true" />
-			<div className="flex justify-between text-xs text-muted-foreground">
+			<div className="meta-copy flex justify-between text-muted-foreground">
 				<span>{t.map.scaleLow}</span>
 				<span>{t.map.scaleHigh}</span>
 			</div>
@@ -205,11 +205,11 @@ function StationsStatus({ stations, onRetryStations }: LayerControlsProps) {
 					</li>
 				))}
 			</ul>
-			<div className="flex justify-between text-xs text-muted-foreground">
+			<div className="meta-copy flex justify-between text-muted-foreground">
 				<span>{t.map.stations.scaleLow}</span>
 				<span>{t.map.stations.scaleHigh}</span>
 			</div>
-			<p className="text-xs text-muted-foreground">
+			<p className="meta-copy text-muted-foreground">
 				{plural(t.map.stations.count, list.length, locale)}
 				{missingProvinces.length > 0 && ` ${t.map.stations.missing}`}
 			</p>
@@ -244,7 +244,7 @@ function WindStatus({ wind, centreWind, onRetryWind }: LayerControlsProps) {
 				: fill(t.map.windCentre, { speed, toward: t.map.compass[Math.round(centreWind.toward / 45) % 8] });
 	}
 	return (
-		<div className="grid gap-0.5 text-xs text-muted-foreground" aria-live="polite">
+		<div className="meta-copy grid gap-1 text-muted-foreground" aria-live="polite">
 			{reading && <p className="text-sm text-foreground">{reading}</p>}
 			<p>{t.map.windLegend}</p>
 			<p>{fill(t.map.windValid, { time: `${formatHour(wind.data.validAt, zone, locale)} ${timeZoneLabel(zone)}` })}</p>
@@ -255,13 +255,13 @@ function WindStatus({ wind, centreWind, onRetryWind }: LayerControlsProps) {
 export function MapAbout() {
 	const t = useDictionary();
 	return (
-		<div className="grid gap-3 p-5 text-xs text-muted-foreground">
+		<div className="meta-copy grid gap-3 p-5 text-muted-foreground">
 			<details className="group">
 				<summary className="flex min-h-8 cursor-pointer list-none items-center justify-between gap-2 rounded-md font-semibold text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
 					{t.map.about}
 					<ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
 				</summary>
-				<p className="mt-2 leading-relaxed">{t.map.aboutText}</p>
+				<p className="body-copy mt-3">{t.map.aboutText}</p>
 			</details>
 			{/* Attribution stays visible, outside the disclosure. */}
 			<p className="grid gap-0.5">

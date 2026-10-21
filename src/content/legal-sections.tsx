@@ -9,8 +9,8 @@ export interface LegalSection {
 export function LegalSections({ sections }: { sections: readonly LegalSection[] }) {
 	return sections.map(({ title, body }) => (
 		<Fragment key={title}>
-			<h2>{title}</h2>
-			<p>{body}</p>
+			<h2 className="panel-title">{title}</h2>
+			<p className="body-copy">{body}</p>
 		</Fragment>
 	));
 }

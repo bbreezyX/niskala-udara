@@ -8,7 +8,7 @@ export function BandsFigure({ names, children }: { names: Dictionary['aqi']['ban
 	return (
 		<figure className="m-0 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
 			<div className="h-3 rounded-full" style={{ background: UAQI_GRADIENT }} aria-hidden="true" />
-			<div className="mt-1.5 flex justify-between text-xs text-muted-foreground tabular-nums" aria-hidden="true">
+			<div className="meta-copy mt-1.5 flex justify-between text-muted-foreground tabular-nums" aria-hidden="true">
 				<span>0</span>
 				<span>50</span>
 				<span>100</span>
@@ -26,7 +26,7 @@ export function BandsFigure({ names, children }: { names: Dictionary['aqi']['ban
 					</div>
 				))}
 			</dl>
-			<figcaption className="mt-4 text-xs text-muted-foreground">{children}</figcaption>
+			<figcaption className="meta-copy mt-4 text-muted-foreground">{children}</figcaption>
 		</figure>
 	);
 }

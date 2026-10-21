@@ -72,7 +72,7 @@ export function LanguageSwitch({ value, path }: { value: Locale; path: string })
 			onFocus={() => prerender(target())}
 			aria-label={`${current.name}. ${label}`}
 			title={label}
-			className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-[13px] font-bold tracking-wide text-foreground outline-none transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.92] max-[379px]:size-8"
+			className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-sm font-semibold text-foreground outline-none transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.92] max-[379px]:size-8"
 		>
 			<AnimatePresence initial={false} mode="popLayout">
 				<m.span

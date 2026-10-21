@@ -22,7 +22,7 @@ export default async function AboutPage({ params }: Props) {
 	const locale = toLocale((await params).lang);
 	const Content = CONTENT[locale];
 	return (
-		<article className="mx-auto grid max-w-3xl gap-12 px-4 pt-10 sm:px-6 md:pt-14 [&_h2]:text-xl [&_h2]:font-semibold [&_p]:text-foreground/85">
+		<article className="body-copy mx-auto grid max-w-3xl gap-12 px-4 pt-10 text-foreground/85 sm:px-6 md:pt-14 [&_p]:max-w-prose">
 			<Content bandNames={getDictionary(locale).aqi.bands} />
 		</article>
 	);

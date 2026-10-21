@@ -27,7 +27,7 @@ export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 			<AboutSection id="bukan-ispu" title="Universal AQI is not ISPU">
 				<p className="max-w-prose">
 					ISPU, the Indonesian government&apos;s official index, gets worse as its number rises. The two indexes run in
-					opposite directions on different scales, so don&apos;t compare their numbers directly. An AQI of 80 here means
+					opposite directions on different scales, so their numbers cannot be compared directly. An AQI of 80 here means
 					excellent air; an ISPU of 80 means moderate air.
 				</p>
 			</AboutSection>
@@ -56,10 +56,10 @@ export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 				<p className="max-w-prose">
 					The data are hourly model estimates, not readings from one instrument at that point, and may be delayed or
 					incomplete. Use them as a general picture, not as medical advice. For health decisions, follow health
-					professionals and official information from your local government.
+					professionals and official information from the relevant local government.
 				</p>
 				<p className="max-w-prose">
-					How we handle location is explained in the{' '}
+					Location processing is explained in the{' '}
 					<Link href="/privacy" className="text-primary underline underline-offset-4">
 						Privacy Policy
 					</Link>

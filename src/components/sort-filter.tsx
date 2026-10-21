@@ -94,7 +94,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount }: Props) 
 			>
 				<div className="grid gap-5 p-5">
 					<div>
-						<p className="font-heading text-lg leading-snug font-semibold">{t.filter.title}</p>
+						<p className="panel-title">{t.filter.title}</p>
 						<p className="mt-1 text-sm text-muted-foreground">{t.filter.hint}</p>
 					</div>
 
@@ -127,7 +127,7 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount }: Props) 
 									</span>
 									<span className="grid gap-0.5">
 										<span className="leading-tight font-semibold">{t.aqi.bands[band.key]}</span>
-										<span className="text-[11px] whitespace-nowrap tabular-nums opacity-85 sm:text-xs">
+										<span className="text-xs whitespace-nowrap tabular-nums">
 											{band.min}–{max}
 										</span>
 									</span>
@@ -169,13 +169,13 @@ export function SortFilter({ value, onApply, bandCounts, pendingCount }: Props) 
 								</ToggleGroupItem>
 							))}
 						</ToggleGroup>
-						<p id="sort-description" className="text-xs text-muted-foreground">
+						<p id="sort-description" className="meta-copy text-muted-foreground">
 							{t.filter.sorts[active.value].description}
 						</p>
 					</div>
 
 					{pendingCount > 0 && (
-						<p className="text-xs text-muted-foreground">{plural(t.filter.pending, pendingCount, locale)}</p>
+						<p className="meta-copy text-muted-foreground">{plural(t.filter.pending, pendingCount, locale)}</p>
 					)}
 				</div>
 

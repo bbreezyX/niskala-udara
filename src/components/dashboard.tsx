@@ -222,10 +222,10 @@ export function Dashboard({ configured, initial }: { configured: boolean; initia
 					</div>
 					<div className="relative flex flex-wrap items-end justify-between gap-6 px-5 pt-10 pb-10 sm:px-10 md:pt-14 lg:pb-28">
 						<div className="min-w-0 flex-1 basis-[28rem]">
-							<h1 id="page-title" className="max-w-[18ch] font-display text-4xl leading-[1.1] tracking-[-0.02em] text-balance sm:text-5xl lg:text-6xl">
+							<h1 id="page-title" className="page-title max-w-[18ch] lg:text-6xl">
 								{t.dashboard.heading}
 							</h1>
-							<p className="mt-3 max-w-[52ch] text-base text-pretty text-muted-foreground sm:text-lg">{t.dashboard.lead}</p>
+							<p className="body-copy mt-3 max-w-[52ch] text-pretty text-muted-foreground sm:text-lg">{t.dashboard.lead}</p>
 						</div>
 						<Button asChild size="lg" className="h-11 rounded-full px-5">
 							<Link href="/location/me">

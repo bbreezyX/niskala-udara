@@ -2,7 +2,7 @@
 // Indonesian has no plural, so both forms match; English picks one by Intl plural rules.
 export const id = {
 	meta: {
-		title: 'Niskala · Kualitas udara di sekitarmu',
+		title: 'Niskala · Pantauan kualitas udara Indonesia',
 		description:
 			'Pantau kualitas udara terkini, kadar polutan, prakiraan, dan rekomendasi kesehatan di kota-kota Indonesia.'
 	},
@@ -22,9 +22,9 @@ export const id = {
 		close: 'Tutup pencarian',
 		empty: 'Kota tidak ditemukan. Hanya kota pantauan yang tersedia.',
 		locationGroup: 'Lokasi',
-		myLocation: 'Lokasi saya',
-		// Extra words that find "Lokasi saya" in search, in this language.
-		myLocationKeywords: ['perangkat', 'sekitar', 'saya']
+		myLocation: 'Lokasi perangkat',
+		// Search aliases also recognise the familiar first-person wording.
+		myLocationKeywords: ['perangkat', 'sekitar', 'saya', 'terdekat']
 	},
 	languageSwitch: { switchTo: 'Ganti ke {name}' },
 	footer: {
@@ -46,7 +46,7 @@ export const id = {
 	pages: {
 		map: {
 			title: 'Peta',
-			heading: 'Peta udara & hotspot',
+			heading: 'Peta kualitas udara dan hotspot',
 			description: 'Peta kualitas udara (Universal AQI), hotspot kebakaran 24 jam, dan arah angin di seluruh Indonesia.'
 		},
 		history: {
@@ -57,7 +57,7 @@ export const id = {
 		about: { title: 'Tentang', description: 'Apa itu Niskala, cara membaca Universal AQI, sumber data, dan batasannya.' },
 		privacy: { title: 'Privasi', heading: 'Kebijakan Privasi' },
 		terms: { title: 'Ketentuan Penggunaan', heading: 'Ketentuan Penggunaan' },
-		locationMe: { title: 'Lokasi saya' },
+		locationMe: { title: 'Lokasi perangkat' },
 		locationPoint: { title: 'Titik di peta' },
 		city: { description: 'Kualitas udara terkini, tren 24 jam, prakiraan, dan kadar polutan di {name}.' }
 	},
@@ -74,8 +74,8 @@ export const id = {
 		dataNotAvailable: 'Data belum tersedia',
 		loadingPlace: 'Memuat data {name}',
 		locations: { one: '{n} lokasi', other: '{n} lokasi' },
-		scale: 'Skala 0–100, makin tinggi makin baik.',
-		scaleIspu: 'AQI 0–100, makin tinggi makin baik. ISPU sebaliknya, makin tinggi makin buruk.',
+		scale: 'Skala 0–100, semakin tinggi semakin baik.',
+		scaleIspu: 'AQI 0–100, semakin tinggi semakin baik. ISPU sebaliknya, semakin tinggi semakin buruk.',
 		howToRead: 'Cara membaca AQI',
 		dominantPollutant: 'Polutan dominan',
 		backToOverview: 'Kembali ke Pantauan',
@@ -176,11 +176,11 @@ export const id = {
 	errorPage: {
 		notFound: {
 			title: 'Halaman tidak ditemukan',
-			description: 'Alamat ini tidak ada di Niskala. Periksa tautannya, atau lanjutkan dari Pantauan untuk melihat kualitas udara di kotamu.'
+			description: 'Alamat ini tidak tersedia. Periksa tautan atau buka Pantauan untuk memilih lokasi.'
 		},
 		failed: {
 			title: 'Halaman gagal dimuat',
-			description: 'Server Niskala mengalami gangguan saat menyiapkan halaman ini. Coba lagi; kalau masih gagal, tunggu beberapa menit.'
+			description: 'Terjadi gangguan saat memuat halaman ini. Coba lagi atau tunggu beberapa menit.'
 		}
 	},
 	errors: {
@@ -218,7 +218,7 @@ export const id = {
 		},
 		network: {
 			title: 'Tidak dapat terhubung',
-			description: 'Periksa koneksi internetmu, lalu coba lagi.'
+			description: 'Periksa koneksi internet, lalu coba lagi.'
 		}
 	},
 	location: {
@@ -245,18 +245,18 @@ export const id = {
 		relatedNote: 'Angka tampil untuk lokasi yang sudah dimuat di Pantauan, tanpa permintaan data baru.'
 	},
 	device: {
-		name: 'Lokasi saya',
+		name: 'Lokasi perangkat',
 		note: 'Berdasarkan lokasi perangkat, dibulatkan sekitar 100 m',
-		unsupported: 'Browser ini tidak mendukung lokasi perangkat. Silakan pilih kota.',
-		denied: 'Izin lokasi ditolak. Kamu tetap bisa memilih kota dari daftar.',
+		unsupported: 'Browser ini tidak mendukung lokasi perangkat. Pilih kota dari daftar.',
+		denied: 'Izin lokasi ditolak. Pilih kota dari daftar untuk melanjutkan.',
 		notFound: 'Lokasi tidak dapat ditemukan. Coba lagi atau pilih kota dari daftar.',
-		errorTitle: 'Lokasi belum didapat',
+		errorTitle: 'Lokasi belum tersedia',
 		pickCity: 'Pilih kota',
-		locating: 'Mencari lokasimu…',
+		locating: 'Menentukan lokasi perangkat…',
 		locatingHint: 'Izinkan akses lokasi di browser. Koordinat dibulatkan sekitar 100 meter sebelum dikirim.'
 	},
 	point: {
-		name: 'Titik dipilih',
+		name: 'Titik pilihan',
 		invalidTitle: 'Titik tidak valid',
 		invalidDescription: 'Pilih titik langsung di peta untuk melihat kualitas udaranya.',
 		openMap: 'Buka peta'
@@ -280,9 +280,9 @@ export const id = {
 			evening: 'Selamat malam',
 			neutral: 'Halo'
 		},
-		heading: 'Kualitas udara di sekitarmu',
-		lead: 'Pilih wilayah atau gunakan lokasimu untuk melihat kondisinya.',
-		useMyLocation: 'Gunakan lokasi saya',
+		heading: 'Pantauan kualitas udara',
+		lead: 'Pilih wilayah atau gunakan lokasi perangkat untuk melihat kualitas udara.',
+		useMyLocation: 'Gunakan lokasi perangkat',
 		overviewPrefix: 'Pantauan, ',
 		dataAt: 'Data {time}',
 		refreshData: 'Perbarui',
@@ -306,15 +306,15 @@ export const id = {
 	filter: {
 		trigger: 'Filter',
 		active: '(aktif)',
-		title: 'Tampilkan lokasi dengan udara…',
+		title: 'Filter kualitas udara',
 		hint: 'Ketuk satu atau beberapa kategori.',
 		bandsLabel: 'Kategori AQI',
 		bandOption: '{band}, AQI {min} sampai {max}, {count}',
 		sort: 'Urutkan',
 		sorts: {
 			default: { label: 'Bawaan', description: 'Urutan bawaan, seperti daftar wilayah.' },
-			best: { label: 'Terbaik', description: 'AQI tertinggi dulu: udara terbaik di atas.' },
-			worst: { label: 'Terburuk', description: 'AQI terendah dulu: udara terburuk di atas.' },
+			best: { label: 'Terbaik', description: 'Urutkan dari AQI tertinggi: kualitas udara terbaik di atas.' },
+			worst: { label: 'Terburuk', description: 'Urutkan dari AQI terendah: kualitas udara terburuk di atas.' },
 			name: { label: 'A–Z', description: 'Nama kota dari A sampai Z.' }
 		},
 		pending: {
@@ -330,10 +330,10 @@ export const id = {
 		placeholder: 'Cari kota, kabupaten, atau provinsi…',
 		empty: 'Kota tidak ditemukan.',
 		nearest: 'Terdekat',
-		locating: 'Mencari lokasimu…',
+		locating: 'Menentukan lokasi perangkat…',
 		denied: 'Izin lokasi ditolak di browser',
-		useMine: 'Gunakan lokasiku',
-		useMineKeywords: ['lokasi', 'terdekat', 'dekat', 'saya']
+		useMine: 'Gunakan lokasi perangkat',
+		useMineKeywords: ['lokasi', 'perangkat', 'terdekat', 'dekat', 'saya']
 	},
 	regionPicker: {
 		trigger: 'Wilayah: {name}. Ganti wilayah',
@@ -373,7 +373,7 @@ export const id = {
 			title: 'Google Maps menolak key',
 			description: 'Pastikan Maps JavaScript API aktif dan domain ini diizinkan di pembatasan key.'
 		},
-		network: { title: 'Peta gagal dimuat', description: 'Periksa koneksi internetmu, lalu muat ulang halaman.' },
+		network: { title: 'Peta gagal dimuat', description: 'Periksa koneksi internet, lalu muat ulang halaman.' },
 		regionLabel: 'Peta kualitas udara, hotspot, dan angin',
 		firesTitle: 'Hotspot di Indonesia, {n} jam',
 		firesUnconfigured: 'Data hotspot belum dikonfigurasi di server.',
@@ -391,7 +391,7 @@ export const id = {
 		wind: 'Angin',
 		windCentre: 'Tengah peta: {speed} km/j, bertiup ke {toward}',
 		windCalm: 'Tengah peta: angin tenang',
-		windLegend: 'Garis bergerak searah angin 10 m di atas tanah. Makin pekat, makin kencang.',
+		windLegend: 'Garis menunjukkan arah angin 10 m di atas tanah. Semakin pekat, semakin kencang.',
 		windValid: 'Prakiraan model untuk pukul {time}.',
 		windFailed: 'Data angin gagal dimuat.',
 		stations: {
@@ -405,7 +405,7 @@ export const id = {
 			marker: 'Stasiun {name}: ISPU {value}, {category}'
 		},
 		compass: ['utara', 'timur laut', 'timur', 'tenggara', 'selatan', 'barat daya', 'barat', 'barat laut'],
-		checkCenter: 'Cek AQI di tengah peta',
+		checkCenter: 'Lihat AQI di tengah peta',
 		clickHint: 'Atau klik titik mana pun di peta.',
 		about: 'Tentang data ini',
 		aboutText:
@@ -416,7 +416,7 @@ export const id = {
 			title: 'Titik hotspot',
 			satellite: 'Satelit',
 			intensity: 'Intensitas panas',
-			check: 'Cek kualitas udara di sini'
+			check: 'Lihat kualitas udara di titik ini'
 		}
 	}
 };

@@ -16,6 +16,49 @@
     }
 }
 
+/* Shared roles keep the two languages and every page on the same type scale. */
+@utility page-title {
+    font-family: var(--font-display);
+    font-size: var(--text-4xl);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    color: var(--foreground);
+    @variant sm {
+        font-size: var(--text-5xl);
+    }
+}
+
+@utility section-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-xl);
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--foreground);
+    @variant sm {
+        font-size: var(--text-2xl);
+    }
+}
+
+@utility panel-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: var(--leading-snug);
+    color: var(--foreground);
+}
+
+@utility body-copy {
+    font-size: var(--text-base);
+    line-height: 1.625;
+}
+
+@utility meta-copy {
+    font-size: var(--text-sm);
+    line-height: 1.5;
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
@@ -109,11 +152,14 @@
   }
   html {
     @apply font-sans;
+    font-kerning: normal;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-size: var(--text-base);
+    line-height: 1.625;
   }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
@@ -215,26 +261,27 @@ body:has([data-error-scene]) :is([data-section-nav], [data-language-switch], #ko
 .gm-style .gm-style-iw-d:has(.hotspot-card) {
     overflow: auto !important;
 }
-/* Centers the 20px title line on the 48px close button. */
+/* Aligns the title with Google's close button while allowing the title to wrap. */
 .gm-style .gm-style-iw-ch:has(.hotspot-card__title) {
     padding-top: 14px;
 }
 .hotspot-card__title {
     margin: 0;
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 1.125rem;
     font-weight: 600;
-    line-height: 20px;
+    line-height: 1.35;
     color: var(--foreground);
 }
 .hotspot-card {
     display: grid;
     gap: 12px;
-    width: 232px;
+    width: 16rem;
+    max-width: calc(100vw - 6rem);
     padding: 4px 16px 16px 0;
     font-family: var(--font-sans);
-    font-size: 13px;
-    line-height: 1.4;
+    font-size: 1rem;
+    line-height: 1.625;
     color: var(--foreground);
 }
 .hotspot-card__level {
@@ -246,7 +293,7 @@ body:has([data-error-scene]) :is([data-section-nav], [data-language-switch], #ko
     padding: 4px 10px 4px 8px;
     border-radius: 999px;
     background: color-mix(in srgb, var(--level) 12%, white);
-    font-size: 12px;
+    font-size: 0.875rem;
     font-weight: 500;
 }
 .hotspot-card__level::before {
@@ -268,7 +315,7 @@ body:has([data-error-scene]) :is([data-section-nav], [data-language-switch], #ko
     line-height: 1.2;
 }
 .hotspot-card__date {
-    font-size: 12px;
+    font-size: 0.875rem;
     color: var(--muted-foreground);
 }
 .hotspot-card__facts {
@@ -280,16 +327,18 @@ body:has([data-error-scene]) :is([data-section-nav], [data-language-switch], #ko
     border-top: 1px solid var(--border);
 }
 .hotspot-card__facts dt {
+    font-size: 0.875rem;
     color: var(--muted-foreground);
 }
 .hotspot-card__facts dd {
     margin: 0;
     text-align: right;
-    font-weight: 500;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
 .hotspot-card__action {
-    min-height: 40px;
+    min-height: 2.75rem;
+    padding: 0.625rem 0.75rem;
     border: 0;
     border-radius: 999px;
     background: var(--accent);

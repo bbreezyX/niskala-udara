@@ -26,8 +26,8 @@ export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 
 			<AboutSection id="bukan-ispu" title="Universal AQI bukan ISPU">
 				<p className="max-w-prose">
-					ISPU, indeks resmi pemerintah Indonesia, justru makin buruk saat angkanya makin tinggi. Kedua indeks memakai arah
-					dan skala yang berbeda, jadi jangan membandingkan angkanya secara langsung. AQI 80 di sini berarti udara sangat
+					ISPU, indeks resmi pemerintah Indonesia, menunjukkan kualitas udara yang semakin buruk saat angkanya semakin tinggi.
+					Kedua indeks memakai arah dan skala yang berbeda sehingga angkanya tidak dapat dibandingkan langsung. AQI 80 berarti udara sangat
 					baik; ISPU 80 berarti udara sedang.
 				</p>
 			</AboutSection>
@@ -59,7 +59,7 @@ export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 					kesehatan dan informasi resmi pemerintah setempat.
 				</p>
 				<p className="max-w-prose">
-					Cara kami memproses lokasi dijelaskan di{' '}
+					Pemrosesan lokasi dijelaskan dalam{' '}
 					<Link href="/privacy" className="text-primary underline underline-offset-4">
 						Kebijakan Privasi
 					</Link>

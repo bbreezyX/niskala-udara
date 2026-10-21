@@ -3,12 +3,12 @@ import type { LegalSection } from '../legal-sections';
 /** English translation of the Indonesian original, which prevails if the two differ. */
 export const PRIVACY_EN: LegalSection[] = [
 	{
-		title: 'Data we process',
+		title: 'Data processing',
 		body: (
 			<>
-				Niskala only processes location coordinates to fetch air quality data. When you choose a city, the coordinates sent
-				are that city&apos;s reference point. When you press &quot;Use my location&quot;, your browser asks for your permission
-				first, and the device coordinates are then rounded to about 100 metres before they are sent.
+				Niskala only processes location coordinates to fetch air quality data. For a selected city, the coordinates sent
+				are those of its reference point. After &quot;Use device location&quot; is selected, the browser requests location
+				permission. Device coordinates are then rounded to about 100 metres before they are sent.
 			</>
 		)
 	},
@@ -29,31 +29,31 @@ export const PRIVACY_EN: LegalSection[] = [
 		title: 'The Map page',
 		body: (
 			<>
-				The map loads directly from Google Maps in your browser, so Google receives technical data such as your IP address and
-				may use cookies under its own policy. A point you click on the map is rounded to about 100 metres, then sent through the
-				Niskala server to Google to fetch its air quality. Hotspot data from NASA FIRMS and wind data from Open-Meteo are
-				fetched by the server without any data about you.
+				The map loads directly from Google Maps in the browser, so Google receives technical data such as the IP address and
+				may use cookies under its own policy. A selected point on the map is rounded to about 100 metres, then sent through
+				the Niskala server to Google to fetch air quality data. The server fetches hotspot data from NASA FIRMS and wind data
+				from Open-Meteo without sending user data to either provider.
 			</>
 		)
 	},
 	{
-		title: 'What stays on your device',
+		title: 'Storage on the device',
 		body: (
 			<>
-				So the overview opens on your region, your browser keeps the region you last picked, or the nearest one after you use
-				&quot;Use my location&quot;. Only the region name (for example Riau) is kept, never coordinates, in the browser&apos;s
-				local storage (localStorage). It is never sent to the server and is not a cookie. You can remove it by clearing this
-				site&apos;s data in your browser settings.
+				The browser stores the last selected region, or the nearest region after &quot;Use device location&quot; is selected,
+				so Overview opens on that region. The browser&apos;s local storage (localStorage) contains only the region name,
+				for example Riau, without coordinates. This data is not sent to the server and is not a cookie. To remove it,
+				clear the site data in the browser settings.
 			</>
 		)
 	},
 	{
-		title: "What we don't do",
+		title: 'Data collection limits',
 		body: (
 			<>
-				We don&apos;t store your coordinates or searches, don&apos;t set cookies of our own, don&apos;t require an account, and
-				don&apos;t use analytics or ads. Server logs record only technical information such as the type of error and how long
-				a request took, never coordinates.
+				Niskala does not store coordinates or searches, set its own cookies, require an account, or use analytics or
+				advertising. Server logs record only technical information such as the error type and request duration, without
+				coordinates.
 			</>
 		)
 	},
@@ -61,8 +61,8 @@ export const PRIVACY_EN: LegalSection[] = [
 		title: 'Location permission',
 		body: (
 			<>
-				Location permission is only requested after you press the button, and you can revoke it at any time in your browser
-				settings. Without it, you can still choose a city from the list.
+				Location permission is only requested after &quot;Use device location&quot; is selected. Permission can be revoked
+				at any time in the browser settings. Selecting a city from the list remains available without location permission.
 			</>
 		)
 	}

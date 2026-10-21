@@ -20,11 +20,11 @@ export function LegalArticle({
 	const date = dateTimeFormat(locale, UPDATED_FORMAT).format(new Date(updated));
 
 	return (
-		<article className="mx-auto grid max-w-3xl gap-4 px-4 pt-10 sm:px-6 [&_a]:text-primary [&_a]:underline [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_p]:text-foreground/85">
+		<article className="body-copy mx-auto grid max-w-3xl gap-4 px-4 pt-10 text-foreground/85 sm:px-6 [&_a]:text-primary [&_a]:underline [&_h2]:mt-5 [&_p]:max-w-prose">
 			<header className="mb-2">
-				<h1 className="font-display text-4xl leading-[1.1] tracking-[-0.02em] text-balance sm:text-5xl">{title}</h1>
-				<p className="mt-2 text-sm text-muted-foreground">{fill(legal.updated, { date })}</p>
-				{legal.translationNote && <p className="mt-3 rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">{legal.translationNote}</p>}
+				<h1 className="page-title">{title}</h1>
+				<p className="meta-copy mt-3 text-muted-foreground">{fill(legal.updated, { date })}</p>
+				{legal.translationNote && <p className="body-copy mt-4 rounded-xl bg-muted px-4 py-3 text-muted-foreground">{legal.translationNote}</p>}
 			</header>
 			{children}
 		</article>

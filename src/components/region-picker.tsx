@@ -82,9 +82,8 @@ export function RegionPicker({
 							<CommandGroup
 								key={island.id}
 								heading={placeName(island, locale)}
-								// Island headings are category labels, not choices: small caps-style text that stays pinned while
-								// its provinces scroll under it. The group must not clip, or sticky has nothing to stick to.
-								className="overflow-visible **:[[cmdk-group-items]]:flex **:[[cmdk-group-items]]:flex-col **:[[cmdk-group-items]]:gap-1 **:[[cmdk-group-heading]]:sticky **:[[cmdk-group-heading]]:top-0 **:[[cmdk-group-heading]]:z-10 **:[[cmdk-group-heading]]:bg-popover **:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:pt-3 **:[[cmdk-group-heading]]:pb-1.5 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:tracking-[0.08em] **:[[cmdk-group-heading]]:uppercase"
+								// Category headings stay pinned as provinces scroll. Keeping the group unclipped lets sticky work.
+								className="overflow-visible **:[[cmdk-group-items]]:flex **:[[cmdk-group-items]]:flex-col **:[[cmdk-group-items]]:gap-1 **:[[cmdk-group-heading]]:sticky **:[[cmdk-group-heading]]:top-0 **:[[cmdk-group-heading]]:z-10 **:[[cmdk-group-heading]]:bg-popover **:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:pt-3 **:[[cmdk-group-heading]]:pb-1.5 **:[[cmdk-group-heading]]:text-sm **:[[cmdk-group-heading]]:font-semibold"
 							>
 								{island.regions.map((region) => {
 									const active = region.id === value;
@@ -107,7 +106,7 @@ export function RegionPicker({
 												{placeName(region, locale)}
 												{active && <span className="sr-only">{t.regionPicker.selected}</span>}
 											</span>
-											<span className="text-xs font-normal text-muted-foreground tabular-nums">{plural(t.common.locations, COUNTS.get(region.id) ?? 0, locale)}</span>
+											<span className="meta-copy font-normal text-muted-foreground tabular-nums">{plural(t.common.locations, COUNTS.get(region.id) ?? 0, locale)}</span>
 										</CommandItem>
 									);
 								})}

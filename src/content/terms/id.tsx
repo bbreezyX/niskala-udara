@@ -8,7 +8,7 @@ export const TERMS_ID: LegalSection[] = [
 		body: (
 			<>
 				Niskala menampilkan perkiraan kualitas udara terkini, kadar polutan, dan rekomendasi kesehatan umum untuk lokasi
-				yang kamu pilih. Layanan ini gratis, tanpa akun, dan disediakan apa adanya.
+				pilihan. Layanan ini gratis, tanpa akun, dan disediakan apa adanya.
 			</>
 		)
 	},
@@ -35,7 +35,7 @@ export const TERMS_ID: LegalSection[] = [
 		title: 'Ketentuan Google',
 		body: (
 			<>
-				Dengan menggunakan Niskala, kamu juga terikat pada{' '}
+				Pengguna Niskala juga terikat pada{' '}
 				<a href="https://maps.google.com/help/terms_maps/" rel="noopener noreferrer">
 					Persyaratan Layanan Tambahan Google Maps/Google Earth
 				</a>{' '}
@@ -55,7 +55,7 @@ export const TERMS_ID: LegalSection[] = [
 		title: 'Privasi',
 		body: (
 			<>
-				Cara kami memproses lokasi dijelaskan di <Link href="/privacy">Kebijakan Privasi</Link>.
+				Pemrosesan lokasi dijelaskan dalam <Link href="/privacy">Kebijakan Privasi</Link>.
 			</>
 		)
 	}

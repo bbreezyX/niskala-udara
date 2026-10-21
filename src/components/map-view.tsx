@@ -158,7 +158,7 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 						<Crosshair data-icon="inline-start" />
 						{t.map.checkCenter}
 					</Button>
-					<p className="text-center text-xs text-muted-foreground">{t.map.clickHint}</p>
+					<p className="meta-copy text-center text-muted-foreground">{t.map.clickHint}</p>
 				</section>
 
 				<Separator />

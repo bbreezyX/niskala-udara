@@ -7,8 +7,8 @@ export const TERMS_EN: LegalSection[] = [
 		title: 'The service',
 		body: (
 			<>
-				Niskala shows estimated current air quality, pollutant levels, and general health advice for the location you choose.
-				The service is free, needs no account, and is provided as is.
+				Niskala displays estimated current air quality, pollutant levels, and general health advice for the selected location.
+				The service is free, requires no account, and is provided as is.
 			</>
 		)
 	},
@@ -27,7 +27,7 @@ export const TERMS_EN: LegalSection[] = [
 		body: (
 			<>
 				Information on this site is general. For health decisions, follow health professionals and official information from
-				your local government.
+				the relevant local government.
 			</>
 		)
 	},
@@ -35,7 +35,7 @@ export const TERMS_EN: LegalSection[] = [
 		title: "Google's terms",
 		body: (
 			<>
-				By using Niskala, you are also bound by the{' '}
+				Users of Niskala are also bound by the{' '}
 				<a href="https://maps.google.com/help/terms_maps/" rel="noopener noreferrer">
 					Google Maps/Google Earth Additional Terms of Service
 				</a>{' '}
@@ -55,7 +55,7 @@ export const TERMS_EN: LegalSection[] = [
 		title: 'Privacy',
 		body: (
 			<>
-				How we handle location is explained in the <Link href="/privacy">Privacy Policy</Link>.
+				Location processing is explained in the <Link href="/privacy">Privacy Policy</Link>.
 			</>
 		)
 	}
