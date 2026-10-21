@@ -8,12 +8,13 @@ const TIMEOUT_MS = 10_000;
 /** Locations per request, which keeps each URL near 1.5 KB. */
 const CHUNK = 100;
 /**
- * One fetch holds two days of hourly wind, so the current hour is read from it until it expires.
- * Three hours keeps a full grid at 429 × 8 = 3,432 calls a day, inside the free 10,000.
+ * One fetch holds yesterday plus two days of hourly wind, so the current hour and the smoke trace's
+ * past hours are read from it until it expires. Three days of two variables is still one Open-Meteo
+ * call per location, so three hours keeps a full grid at 429 × 8 = 3,432 calls a day, inside the free 10,000.
  */
 export const WIND_TTL_MS = 3 * 3_600_000;
 
-interface Forecast {
+export interface WindForecast {
 	/** Hour starts, Unix seconds, shared by every location. */
 	times: number[];
 	/** Per location, per hour. */
@@ -52,6 +53,8 @@ async function fetchChunk(
 		hourly: 'wind_speed_10m,wind_direction_10m',
 		wind_speed_unit: 'ms',
 		forecast_days: '2',
+		// The smoke trace looks 12 hours back, which at 07:00 WIB (00:00 UTC) reaches into yesterday.
+		past_days: '1',
 		timeformat: 'unixtime',
 		// The grid point itself, sea or land; the default moves to a nearby land cell.
 		cell_selection: 'nearest'
@@ -72,7 +75,7 @@ async function fetchChunk(
 }
 
 /** The full grid's hourly wind for two days. Any missing location fails the whole field. */
-export async function fetchWindForecast(apiKey?: string, fetchFn: typeof fetch = fetch, now = new Date()): Promise<Forecast> {
+export async function fetchWindForecast(apiKey?: string, fetchFn: typeof fetch = fetch, now = new Date()): Promise<WindForecast> {
 	const points = gridPoints();
 	const chunks = Array.from({ length: Math.ceil(points.length / CHUNK) }, (_, i) => points.slice(i * CHUNK, (i + 1) * CHUNK));
 	const locations = (await Promise.all(chunks.map((chunk) => fetchChunk(chunk, apiKey, fetchFn)))).flat();
@@ -97,7 +100,7 @@ export async function fetchWindForecast(apiKey?: string, fetchFn: typeof fetch =
 const round = (value: number) => Math.round(value * 10) / 10 || 0;
 
 /** The hour containing `now`, as eastward/northward components. */
-export function windAt(forecast: Forecast, now = new Date()): WindData {
+export function windAt(forecast: WindForecast, now = new Date()): WindData {
 	const seconds = now.getTime() / 1000;
 	const hour = forecast.times.findLastIndex((time) => time <= seconds);
 	if (hour < 0 || seconds - forecast.times[hour] >= 3600) throw new AirQualityError('no_data', 'wind: hour outside forecast');
@@ -120,10 +123,10 @@ export function windAt(forecast: Forecast, now = new Date()): WindData {
 	};
 }
 
-let cache: { at: number; forecast: Promise<Forecast> } | null = null;
+let cache: { at: number; forecast: Promise<WindForecast> } | null = null;
 
-/** Shares one upstream fetch across visitors for WIND_TTL_MS; failures are not cached. */
-export async function getWind(apiKey?: string, fetchFn: typeof fetch = fetch): Promise<WindData> {
+/** Shares one upstream fetch across visitors and the smoke trace for WIND_TTL_MS; failures are not cached. */
+export function getWindForecast(apiKey?: string, fetchFn: typeof fetch = fetch): Promise<WindForecast> {
 	const now = Date.now();
 	let entry = cache;
 	if (!entry || now - entry.at >= WIND_TTL_MS) {
@@ -133,7 +136,11 @@ export async function getWind(apiKey?: string, fetchFn: typeof fetch = fetch): P
 		});
 		cache = entry = fresh;
 	}
-	return windAt(await entry.forecast);
+	return entry.forecast;
+}
+
+export async function getWind(apiKey?: string, fetchFn: typeof fetch = fetch): Promise<WindData> {
+	return windAt(await getWindForecast(apiKey, fetchFn));
 }
 
 export function clearWindCache() {

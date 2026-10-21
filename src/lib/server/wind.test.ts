@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WIND_GRID } from '@/lib/config/map';
 import { handleWindRequest } from './handle-map';
-import { clearWindCache, fetchWindForecast, gridPoints, windAt, WIND_TTL_MS } from './wind';
+import { clearWindCache, fetchWindForecast, getWind, getWindForecast, gridPoints, windAt, WIND_TTL_MS } from './wind';
 
 const HOUR = 3600;
 const START = Date.parse('2026-10-19T00:00:00Z') / 1000;
@@ -52,6 +52,12 @@ describe('fetchWindForecast', () => {
 		expect(forecast.speeds).toHaveLength(gridPoints().length);
 	});
 
+	it('asks for one past day so the last 12 hours are always covered', async () => {
+		const fetchFn = vi.fn<typeof fetch>().mockImplementation(async (url) => openMeteo(String(url)));
+		await fetchWindForecast(undefined, fetchFn);
+		expect(new URL(String(fetchFn.mock.calls[0][0])).searchParams.get('past_days')).toBe('1');
+	});
+
 	it('uses the commercial endpoint when a key is set', async () => {
 		const fetchFn = vi.fn<typeof fetch>().mockImplementation(async (url) => openMeteo(String(url)));
 		await fetchWindForecast('om-key', fetchFn);
@@ -85,6 +91,18 @@ describe('windAt', () => {
 		const fetchFn = vi.fn<typeof fetch>().mockImplementation(async (url) => openMeteo(String(url)));
 		const forecast = await fetchWindForecast(undefined, fetchFn);
 		expect(() => windAt(forecast, new Date((START + 48 * HOUR) * 1000))).toThrow();
+	});
+});
+
+describe('getWindForecast', () => {
+	it('shares one upstream fetch between the current hour and the trace', async () => {
+		vi.useFakeTimers({ now: (START + 5 * HOUR) * 1000 });
+		const fetchFn = vi.fn<typeof fetch>().mockImplementation(async (url) => openMeteo(String(url)));
+		await getWind(undefined, fetchFn);
+		const calls = fetchFn.mock.calls.length;
+		const forecast = await getWindForecast(undefined, fetchFn);
+		expect(fetchFn).toHaveBeenCalledTimes(calls);
+		expect(forecast.times).toEqual(TIMES);
 	});
 });
 
