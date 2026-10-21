@@ -1,135 +1,30 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import {
-	createColumnHelper,
-	createPaginatedRowModel,
-	createSortedRowModel,
-	rowPaginationFeature,
-	rowSortingFeature,
-	tableFeatures,
-	useTable
-} from '@tanstack/react-table';
-import { Tabs as TabsPrimitive } from 'radix-ui';
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { aqiBand, bandEdge } from '@/lib/aqi';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ToggleGroup as ToggleGroupPrimitive } from 'radix-ui';
 import { CITIES, DEFAULT_REGION, type City, type RegionId } from '@/lib/config/cities';
 import { HISTORY_RANGES, type HistoryRange } from '@/lib/coordinates';
 import { postJson, toRemote, withLanguage, type Remote } from '@/lib/client/api';
 import { useRememberedRegion } from '@/lib/client/region-memory';
-import { formatDataTime, formatDay, formatHour, pollutantLabel, timeZoneLabel, type ClientErrorCode } from '@/lib/format';
-import { dateTimeFormat } from '@/lib/date-format';
-import { fill, type Locale } from '@/lib/i18n/config';
-import type { Dictionary } from '@/lib/i18n/dictionaries/id';
+import { formatDay, formatHour, timeZoneLabel, type ClientErrorCode } from '@/lib/format';
+import { dailyPattern, dayRows, hourSlots, summarize } from '@/lib/history';
+import { fill } from '@/lib/i18n/config';
 import type { AirQualityData } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AqiBadge } from './aqi-badge';
-import { AqiGauge } from './aqi-gauge';
-import { CityPicker, useNearby } from './city-picker';
-import { Attribution, DataUnavailable, Recommendation, StateMessage } from './info-blocks';
+import { CityPicker, useNearby, type Nearby } from './city-picker';
+import { HistoryChart } from './history-chart';
+import { DaysTile } from './history-days';
+import { DominantTile } from './history-dominant';
+import { HourTile } from './history-hour';
+import { PatternTile } from './history-pattern';
+import { SummaryTile } from './history-summary';
+import { HoursTable } from './history-table';
+import { Attribution, DataUnavailable, Recommendation } from './info-blocks';
 import { useDictionary, useLocale } from './locale-provider';
-import { PollutantBreakdown } from './pollutant-breakdown';
-import { TrendChart } from './trend-chart';
+import { PageIntro } from './page-intro';
 
-interface HourRow {
-	t: number;
-	hour: AirQualityData;
-	/** AQI change against the hour before; null for the oldest hour. */
-	change: number | null;
-}
-
-const PAGE_SIZE = 12;
-
-const features = tableFeatures({
-	rowSortingFeature,
-	sortedRowModel: createSortedRowModel(),
-	rowPaginationFeature,
-	paginatedRowModel: createPaginatedRowModel()
-});
-
-const helper = createColumnHelper<typeof features, HourRow>();
-
-/** Change against the hour before. Higher UAQI is better, so a drop is shown as worse. */
-function deltaOf(change: number | null, text: Dictionary['history']['delta']) {
-	if (change === null) return { short: '–', spoken: text.start, className: 'text-muted-foreground', icon: null };
-	if (change > 0) return { short: String(change), spoken: fill(text.better, { n: String(change) }), className: 'text-success', icon: ArrowUp };
-	if (change < 0) return { short: String(-change), spoken: fill(text.worse, { n: String(-change) }), className: 'text-destructive', icon: ArrowDown };
-	return { short: text.sameShort, spoken: text.same, className: 'text-muted-foreground', icon: null };
-}
-
-function columnsFor(timeZone: string, locale: Locale, t: Dictionary) {
-	return helper.columns([
-		helper.accessor('t', {
-			header: t.history.columns.hour,
-			cell: ({ row }) => (
-				<span className="grid leading-tight">
-					<span className="font-semibold tabular-nums">{formatHour(row.original.hour.dataTime, timeZone, locale)}</span>
-					{/* Sorted by time, day separators carry the date; otherwise each row shows it. */}
-					<span className="text-xs text-muted-foreground in-data-[grouped=true]:sr-only">{formatDay(row.original.hour.dataTime, timeZone, locale)}</span>
-				</span>
-			)
-		}),
-		helper.accessor((row) => row.hour.index.aqi, {
-			id: 'aqi',
-			header: t.history.columns.aqi,
-			cell: ({ row }) => {
-				const { index } = row.original.hour;
-				const band = aqiBand(index.aqi);
-				return (
-					<span className="flex items-center gap-3">
-						{/* The bar is the AQI out of 100, in the band's color: the category is read from its color. */}
-						<span className="h-2.5 max-w-64 flex-1 rounded-full bg-muted" aria-hidden="true">
-							<span className="block h-full rounded-full" style={{ width: `${Math.max(3, Math.min(100, index.aqi))}%`, background: band.fill, boxShadow: bandEdge(band) }} />
-						</span>
-						<span className="w-7 text-right font-semibold tabular-nums">{index.aqiDisplay}</span>
-						<span className="sr-only">{index.category ?? t.aqi.bands[band.key]}</span>
-					</span>
-				);
-			}
-		}),
-		helper.display({
-			id: 'dominant',
-			header: t.history.columns.pollutant,
-			cell: ({ row }) => {
-				const dominant = row.original.hour.index.dominantPollutant;
-				return dominant ? <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">{pollutantLabel(dominant)}</span> : '–';
-			}
-		}),
-		helper.display({
-			id: 'trend',
-			header: t.history.columns.change,
-			cell: ({ row }) => {
-				const delta = deltaOf(row.original.change, t.history.delta);
-				const Icon = delta.icon;
-				return (
-					<span className={cn('inline-flex items-center gap-0.5 text-sm font-semibold tabular-nums', delta.className)}>
-						{Icon && <Icon className="size-3.5" aria-hidden="true" />}
-						<span aria-hidden="true">{delta.short}</span>
-						<span className="sr-only">{delta.spoken}</span>
-					</span>
-				);
-			}
-		})
-	]);
-}
-
-const COLUMN_CLASS: Record<string, string> = {
-	t: 'w-24',
-	aqi: 'w-full',
-	dominant: 'max-sm:hidden min-[1100px]:max-xl:hidden',
-	trend: 'text-right'
-};
-
-const EMPTY: HourRow[] = [];
-
-/** Headers here are plain strings, so a sort button can carry its column name as its own text. */
-function headerText(column: { id: string; columnDef: { header?: unknown } }) {
-	return typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
-}
+const TILE = 'rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6';
 
 /** The first city of the region remembered on this device, else of the default region. */
 function firstCity(remembered: RegionId | null): City {
@@ -137,7 +32,7 @@ function firstCity(remembered: RegionId | null): City {
 	return CITIES.find((c) => c.region === region) ?? CITIES[0];
 }
 
-export function HistoryView({ configured }: { configured: boolean }) {
+export function HistoryView({ configured, title }: { configured: boolean; title: string }) {
 	const locale = useLocale();
 	const t = useDictionary();
 	// The city the user picked; until then, the nearest one (when location access was already granted)
@@ -148,7 +43,6 @@ export function HistoryView({ configured }: { configured: boolean }) {
 	const [history, setHistory] = useState<Remote<AirQualityData[]>>({ status: 'idle' });
 	const [selectedTime, setSelectedTime] = useState<number | null>(null);
 	const [reloadVersion, setReloadVersion] = useState(0);
-	const panel = useRef<HTMLElement>(null);
 
 	const fallback = firstCity(useRememberedRegion());
 	const city =
@@ -174,153 +68,208 @@ export function HistoryView({ configured }: { configured: boolean }) {
 	}, [configured, settling, city.latitude, city.longitude, range, reloadVersion, locale]);
 
 	const hours = useMemo(() => (history.status === 'success' ? history.data : []), [history]);
-	const rows = useMemo(
-		() =>
-			hours.length === 0
-				? EMPTY
-				: hours.map((hour, i) => ({ t: Date.parse(hour.dataTime), hour, change: i > 0 ? hour.index.aqi - hours[i - 1].index.aqi : null })),
-		[hours]
-	);
-	const columns = useMemo(() => columnsFor(city.timeZone, locale, t), [city.timeZone, locale, t]);
-
-	const table = useHistoryTable(columns, rows);
-
-	const newest = rows.at(-1);
-	const selected = rows.find((row) => row.t === selectedTime) ?? newest;
-
-	function select(t: number) {
-		setSelectedTime(t);
-		// When the panel sits below the table, bring it into view.
-		if (panel.current && !matchMedia('(min-width: 1100px)').matches) panel.current.scrollIntoView({ block: 'start', behavior: 'smooth' });
-	}
 
 	if (!configured) {
-		return <DataUnavailable title={t.errors.not_configured.title} description={t.errors.not_configured.description} />;
+		return (
+			<div className="grid gap-6">
+				<PageIntro title={title} />
+				<DataUnavailable title={t.errors.not_configured.title} description={t.errors.not_configured.description} />
+			</div>
+		);
 	}
 
-	const pageCount = table.getPageCount();
-	const { pageIndex } = table.state.pagination;
-	const groupedByDay = table.state.sorting[0]?.id === 't';
-	const dayLabel = dateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'short', timeZone: city.timeZone });
-
 	return (
-		<div className="grid items-start gap-5 min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(320px,22rem)_minmax(260px,20rem)]">
-			{/* The range tabs own the table below them: the card is the tab set, its content the one panel. */}
-			<TabsPrimitive.Root asChild value={String(range)} onValueChange={(next) => setRange(Number(next) as HistoryRange)}>
-				<Card className="min-w-0 rounded-2xl">
-					<CardHeader className="gap-0">
-						<p className="text-sm text-muted-foreground">{fill(t.history.kicker, { zone: timeZoneLabel(city.timeZone) })}</p>
-						{/* The city is what this card is about, so its name is the heading and the way to change it. */}
-						<h2 className="mt-0.5 min-w-0">
-							<CityPicker
-								variant="heading"
-								value={city}
-								onChange={(next) => setPickedId(next.id)}
-								nearby={nearby}
-								onLocate={() => locate(false, (nearest) => setPickedId(nearest.id))}
-							/>
-						</h2>
-						<div className="mt-3 flex items-center gap-4 border-b">
-							<TabsPrimitive.List aria-label={t.history.rangeLabel} className="flex gap-6">
-								{HISTORY_RANGES.map((hours) => (
-									<TabsPrimitive.Trigger
-										key={hours}
-										value={String(hours)}
-										className="relative -mb-px inline-flex min-h-11 items-center rounded-t-md text-sm font-medium whitespace-nowrap text-muted-foreground outline-none after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-primary after:opacity-0 after:transition-opacity hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=active]:text-foreground data-[state=active]:after:opacity-100 motion-reduce:after:transition-none"
-									>
-										{fill(t.history.rangeOption, { n: String(hours) })}
-									</TabsPrimitive.Trigger>
-								))}
-							</TabsPrimitive.List>
-							{history.status === 'success' && newest && (
-								<p className="ml-auto text-sm whitespace-nowrap text-muted-foreground tabular-nums max-sm:hidden">
-									{fill(t.history.latest, { time: formatHour(newest.hour.dataTime, city.timeZone, locale) })}
-								</p>
-							)}
-						</div>
-					</CardHeader>
-
-					<TabsPrimitive.Content value={String(range)} asChild>
-						<CardContent className="grid gap-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-							{history.status === 'error' ? (
-								<HistoryError code={history.code} onRetry={() => setReloadVersion((v) => v + 1)} />
-							) : (
-								<>
-									<Table aria-busy={history.status !== 'success'} data-grouped={groupedByDay} className="text-sm">
-										<TableCaption className="sr-only">{fill(t.history.caption, { name: city.name })}</TableCaption>
-										<TableHeader>
-											<HistoryTableHead table={table} />
-										</TableHeader>
-										<TableBody>
-											<HistoryRows
-												loaded={history.status === 'success'}
-												table={table}
-												selectedTime={selected?.t}
-												groupedByDay={groupedByDay}
-												dayLabel={dayLabel}
-												city={city}
-												onSelect={select}
-											/>
-										</TableBody>
-									</Table>
-
-									{pageCount > 1 && <HistoryPager table={table} pageIndex={pageIndex} pageCount={pageCount} />}
-								</>
-							)}
-						</CardContent>
-					</TabsPrimitive.Content>
-				</Card>
-			</TabsPrimitive.Root>
-
-			<aside
-				ref={panel}
-				tabIndex={-1}
-				aria-labelledby="detail-title"
-				className="flex scroll-mt-20 flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10 outline-none min-[1100px]:sticky min-[1100px]:top-20 min-[1100px]:max-h-[calc(100dvh-6rem)]"
-			>
-				{/*
-				  The card keeps its rounded shape; scrolling happens in this inset layer (16px from top and bottom,
-				  4px from the right) so the scrollbar never crosses the rounded corners. Padding adds up to the same 20px.
-				*/}
-				<div className="@container my-4 mr-1 grid min-h-0 content-start gap-5 py-1 pr-4 pl-5 min-[1100px]:overflow-y-auto">
-					{selected ? (
-						<HourDetail city={city} hour={selected.hour} hours={hours} range={range} />
-					) : (
-						<>
-							<h2 id="detail-title" className="sr-only">
-								{t.history.detail}
-							</h2>
-							<Skeleton className="h-40 rounded-xl" />
-							<Skeleton className="h-64 rounded-xl" />
-						</>
-					)}
-				</div>
-			</aside>
-
-			{/* Health advice for the selected hour gets its own column, so it is in view without scrolling the detail panel. */}
-			{selected ? (
-				<Recommendation
-					aqi={selected.hour.index.aqi}
-					recommendations={selected.hour.recommendations ?? {}}
-					className="rounded-2xl border-0 bg-card p-5 ring-1 ring-foreground/10 min-[1100px]:sticky min-[1100px]:top-20"
-				/>
+		<div className="grid gap-6">
+			<HistoryHeader
+				title={title}
+				city={city}
+				hours={hours}
+				nearby={nearby}
+				onPick={(next) => setPickedId(next.id)}
+				onLocate={() => locate(false, (nearest) => setPickedId(nearest.id))}
+				range={range}
+				onRange={setRange}
+			/>
+			{history.status === 'error' ? (
+				<HistoryError code={history.code} onRetry={() => setReloadVersion((v) => v + 1)} />
+			) : hours.length > 0 ? (
+				<HistoryBody hours={hours} range={range} city={city} selectedTime={selectedTime} onSelectTime={setSelectedTime} />
 			) : (
-				<Skeleton className="h-48 rounded-2xl" />
+				<HistorySkeleton name={city.name} />
 			)}
 		</div>
 	);
 }
 
-type HistoryTable = ReturnType<typeof useHistoryTable>;
+/** Title, the span the data covers, and the two choices that change it: city and range. */
+function HistoryHeader({
+	title,
+	city,
+	hours,
+	nearby,
+	onPick,
+	onLocate,
+	range,
+	onRange
+}: {
+	title: string;
+	city: City;
+	hours: AirQualityData[];
+	nearby: Nearby;
+	onPick: (city: City) => void;
+	onLocate: () => void;
+	range: HistoryRange;
+	onRange: (range: HistoryRange) => void;
+}) {
+	const locale = useLocale();
+	const t = useDictionary();
+	const first = hours[0];
+	const latest = hours.at(-1);
+	const stamp = (iso: string) => `${formatDay(iso, city.timeZone, locale)} ${formatHour(iso, city.timeZone, locale)}`;
 
-function useHistoryTable(columns: ReturnType<typeof columnsFor>, rows: HourRow[]) {
-	return useTable({
-		features,
-		columns,
-		data: rows,
-		initialState: { sorting: [{ id: 't', desc: true }], pagination: { pageIndex: 0, pageSize: PAGE_SIZE } },
-		enableSortingRemoval: false
-	});
+	return (
+		<div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+			<div className="grid min-w-0 gap-2">
+				<PageIntro title={title} />
+				{first && latest && (
+					<p className="text-sm text-muted-foreground">
+						{fill(t.history.meta, {
+							name: city.name,
+							from: stamp(first.dataTime),
+							to: stamp(latest.dataTime),
+							zone: timeZoneLabel(city.timeZone)
+						})}{' '}
+						· {fill(t.history.latest, { time: formatHour(latest.dataTime, city.timeZone, locale) })}
+					</p>
+				)}
+			</div>
+			<div className="flex flex-wrap items-center gap-3">
+				<CityPicker value={city} onChange={onPick} nearby={nearby} onLocate={onLocate} />
+				<ToggleGroupPrimitive.Root
+					type="single"
+					value={String(range)}
+					// Radix lets a single toggle group be emptied; a range must always be chosen.
+					onValueChange={(next) => {
+						if (next) onRange(Number(next) as HistoryRange);
+					}}
+					aria-label={t.history.rangeLabel}
+					className="flex rounded-full bg-muted p-1"
+				>
+					{HISTORY_RANGES.map((n) => (
+						<ToggleGroupPrimitive.Item
+							key={n}
+							value={String(n)}
+							className="min-h-11 rounded-full px-4 text-sm font-semibold text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+						>
+							{fill(t.history.rangeOption, { n: String(n) })}
+						</ToggleGroupPrimitive.Item>
+					))}
+				</ToggleGroupPrimitive.Root>
+			</div>
+		</div>
+	);
+}
+
+function HistoryBody({
+	hours,
+	range,
+	city,
+	selectedTime,
+	onSelectTime
+}: {
+	hours: AirQualityData[];
+	range: HistoryRange;
+	city: City;
+	selectedTime: number | null;
+	onSelectTime: (time: number | null) => void;
+}) {
+	const t = useDictionary();
+	const hourTile = useRef<HTMLElement>(null);
+	const slots = useMemo(() => hourSlots(hours, range), [hours, range]);
+	const summary = useMemo(() => summarize(hours), [hours]);
+	const pattern = useMemo(() => dailyPattern(hours, city.timeZone), [hours, city.timeZone]);
+	const days = useMemo(() => dayRows(slots, city.timeZone), [slots, city.timeZone]);
+
+	const latest = hours[hours.length - 1];
+	const selected = hours.find((hour) => Date.parse(hour.dataTime) === selectedTime) ?? latest;
+	const selectedT = Date.parse(selected.dataTime);
+
+	function select(time: number) {
+		onSelectTime(time);
+		const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		hourTile.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+	}
+
+	return (
+		<div className="grid gap-4">
+			<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+				<SummaryTile summary={summary} range={range} total={hours.length} timeZone={city.timeZone} />
+				<section aria-labelledby="history-chart" className={`grid content-start gap-4 ${TILE}`}>
+					<div className="grid gap-1">
+						<h2 id="history-chart" className="panel-title">
+							{t.history.chart.title}
+						</h2>
+						<p className="text-sm text-muted-foreground">{t.history.chart.note}</p>
+					</div>
+					<HistoryChart
+						slots={slots}
+						timeZone={city.timeZone}
+						selected={selectedT}
+						marks={{ worst: summary.worst, best: summary.best, latest }}
+						onSelect={select}
+						label={fill(t.history.trendLabel, { name: city.name, n: String(range) })}
+					/>
+				</section>
+			</div>
+			<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
+				<div className="grid md:col-span-2 xl:col-span-5">
+					<PatternTile pattern={pattern} range={range} />
+				</div>
+				<div className="grid xl:col-span-3">
+					<DominantTile dominant={summary.dominant} total={hours.length} />
+				</div>
+				<div className="grid xl:col-span-4">
+					<DaysTile rows={days} timeZone={city.timeZone} />
+				</div>
+			</div>
+			<div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+				<HourTile ref={hourTile} hour={selected} timeZone={city.timeZone} isLatest={selected === latest} onBack={() => onSelectTime(null)} />
+				<Recommendation
+					aqi={selected.index.aqi}
+					recommendations={selected.recommendations ?? {}}
+					className={`content-start border-0 ${TILE}`}
+				/>
+			</div>
+			<HoursTable slots={slots} city={city} selected={selectedT} onSelect={select} />
+			<Attribution />
+		</div>
+	);
+}
+
+/** Same rows and heights as the loaded page, so nothing shifts when the data arrives. */
+function HistorySkeleton({ name }: { name: string }) {
+	const t = useDictionary();
+	return (
+		<div className="grid gap-4">
+			<p role="status" className="sr-only">
+				{fill(t.common.loadingPlace, { name })}
+			</p>
+			<div aria-hidden="true" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+				<Skeleton className="h-96 rounded-2xl" />
+				<Skeleton className="h-96 rounded-2xl" />
+			</div>
+			<div aria-hidden="true" className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
+				<Skeleton className="h-56 rounded-2xl md:col-span-2 xl:col-span-5" />
+				<Skeleton className="h-56 rounded-2xl xl:col-span-3" />
+				<Skeleton className="h-56 rounded-2xl xl:col-span-4" />
+			</div>
+			<div aria-hidden="true" className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+				<Skeleton className="h-80 rounded-2xl" />
+				<Skeleton className="h-80 rounded-2xl" />
+			</div>
+			<Skeleton aria-hidden="true" className="h-14 rounded-2xl" />
+		</div>
+	);
 }
 
 /** Why the history failed to load, with a way to ask again. */
@@ -334,181 +283,5 @@ function HistoryError({ code, onRetry }: { code: ClientErrorCode; onRetry: () =>
 				{t.common.retry}
 			</Button>
 		</div>
-	);
-}
-
-/** Column headers; sortable ones are buttons that name their column and show the direction. */
-function HistoryTableHead({ table }: { table: HistoryTable }) {
-	return (
-		<>
-			{table.getHeaderGroups().map((group) => (
-				<TableRow key={group.id} className="hover:bg-transparent">
-					{group.headers.map((header) => {
-						const sorted = header.column.getIsSorted();
-						const SortIcon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
-						return (
-							<TableHead
-								key={header.id}
-								aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-								className={cn('h-10 px-2 text-xs font-semibold text-muted-foreground', COLUMN_CLASS[header.column.id])}
-							>
-								{header.column.getCanSort() ? (
-									<button
-										type="button"
-										onClick={header.column.getToggleSortingHandler()}
-										className="inline-flex min-h-9 items-center gap-1 hover:text-foreground"
-									>
-										{headerText(header.column)}
-										<SortIcon className={cn('size-3.5', !sorted && 'opacity-40')} aria-hidden="true" />
-									</button>
-								) : (
-									<table.FlexRender header={header} />
-								)}
-							</TableHead>
-						);
-					})}
-				</TableRow>
-			))}
-		</>
-	);
-}
-
-/** One row per hour, grouped under a day heading while sorted by time; skeleton rows until the data arrives. */
-function HistoryRows({
-	loaded,
-	table,
-	selectedTime,
-	groupedByDay,
-	dayLabel,
-	city,
-	onSelect
-}: {
-	loaded: boolean;
-	table: HistoryTable;
-	selectedTime: number | undefined;
-	groupedByDay: boolean;
-	dayLabel: Intl.DateTimeFormat;
-	city: City;
-	onSelect: (t: number) => void;
-}) {
-	const locale = useLocale();
-	const t = useDictionary();
-	if (!loaded) {
-		return Array.from({ length: 8 }, (_, i) => (
-			<TableRow key={i} aria-hidden="true">
-				<TableCell colSpan={4}>
-					<Skeleton className="h-8" />
-				</TableCell>
-			</TableRow>
-		));
-	}
-	return table.getRowModel().rows.map((row, i, all) => {
-		const isSelected = row.original.t === selectedTime;
-		const day = dayLabel.format(row.original.t);
-		const newDay = groupedByDay && (i === 0 || dayLabel.format(all[i - 1].original.t) !== day);
-		return (
-			<Fragment key={row.id}>
-				{newDay && (
-					<TableRow className="border-0 hover:bg-transparent">
-						<TableCell colSpan={4} className="px-2 pt-4 pb-1 text-xs font-semibold text-muted-foreground">
-							{day}
-						</TableCell>
-					</TableRow>
-				)}
-				<TableRow
-					data-state={isSelected ? 'selected' : undefined}
-					onClick={() => onSelect(row.original.t)}
-					className="cursor-pointer border-0 hover:bg-muted/60 data-[state=selected]:bg-secondary [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl"
-				>
-					{row.getAllCells().map((cell) => (
-						<TableCell key={cell.id} className={cn('h-11 px-2 py-1', COLUMN_CLASS[cell.column.id])}>
-							{cell.column.id === 't' ? (
-								<button
-									type="button"
-									aria-pressed={isSelected}
-									aria-label={fill(t.history.showHour, {
-										time: `${formatHour(row.original.hour.dataTime, city.timeZone, locale)}, ${formatDay(row.original.hour.dataTime, city.timeZone, locale)}`
-									})}
-									onClick={(event) => {
-										event.stopPropagation();
-										onSelect(row.original.t);
-									}}
-									className="min-h-10 rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-								>
-									<table.FlexRender cell={cell} />
-								</button>
-							) : (
-								<table.FlexRender cell={cell} />
-							)}
-						</TableCell>
-					))}
-				</TableRow>
-			</Fragment>
-		);
-	});
-}
-
-function HistoryPager({ table, pageIndex, pageCount }: { table: HistoryTable; pageIndex: number; pageCount: number }) {
-	const t = useDictionary();
-	return (
-		<nav aria-label={t.history.pagesLabel} className="flex items-center justify-between gap-2">
-			<Button variant="outline" size="lg" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>
-				<ChevronLeft data-icon="inline-start" />
-				{t.history.previous}
-			</Button>
-			<p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
-				{fill(t.history.page, { page: String(pageIndex + 1), count: String(pageCount) })}
-			</p>
-			<Button variant="outline" size="lg" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
-				{t.history.next}
-				<ChevronRight data-icon="inline-end" />
-			</Button>
-		</nav>
-	);
-}
-
-/** The selected hour in full: its AQI, the trend around it and its pollutant levels. */
-function HourDetail({ city, hour, hours, range }: { city: City; hour: AirQualityData; hours: AirQualityData[]; range: HistoryRange }) {
-	const locale = useLocale();
-	const t = useDictionary();
-	return (
-		<>
-			<header>
-				<h2 id="detail-title" className="text-lg font-semibold">
-					{city.name}
-				</h2>
-				<p className="text-sm text-muted-foreground">
-					<time dateTime={hour.dataTime}>{formatDataTime(hour.dataTime, city.timeZone, locale)}</time>
-				</p>
-			</header>
-			<div className="flex flex-wrap items-center gap-5 @max-[28rem]:flex-col @max-[28rem]:text-center">
-				<AqiGauge size="lg" aqi={hour.index.aqi} display={hour.index.aqiDisplay} />
-				<div className="grid min-w-48 flex-1 justify-items-start gap-2 @max-[28rem]:justify-items-center">
-					<AqiBadge aqi={hour.index.aqi} category={hour.index.category} color={hour.index.color} />
-					<p className="text-sm font-semibold text-muted-foreground">{hour.index.displayName}</p>
-					{hour.index.dominantPollutant && (
-						<p className="text-muted-foreground">
-							{t.common.dominantPollutant}:{' '}
-							<strong className="font-semibold text-foreground">{pollutantLabel(hour.index.dominantPollutant)}</strong>
-						</p>
-					)}
-					<p className="text-xs text-muted-foreground">{t.common.scale}</p>
-				</div>
-			</div>
-			<section className="grid gap-3 rounded-xl border p-4">
-				<h3 className="font-semibold">{fill(t.history.trendTitle, { n: String(range) })}</h3>
-				<TrendChart
-					points={hours.map((h) => ({ dateTime: h.dataTime, aqi: h.index.aqi }))}
-					timeZone={city.timeZone}
-					selected={hour.dataTime}
-					label={fill(t.history.trendLabel, { name: city.name, n: String(range) })}
-				/>
-			</section>
-			<section className="@container grid gap-3">
-				<h3 className="font-semibold">{t.pollutants.levelsThisHour}</h3>
-				<PollutantBreakdown pollutants={hour.pollutants} dominant={hour.index.dominantPollutant} />
-			</section>
-			<Attribution />
-		</>
 	);
 }

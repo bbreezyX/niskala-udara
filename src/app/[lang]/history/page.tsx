@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { connection } from 'next/server';
 import { HistoryView } from '@/components/history-view';
-import { PageIntro } from '@/components/page-intro';
 import { airQualityKey } from '@/lib/server/env';
 import { toLocale } from '@/lib/i18n/config';
 import { getDictionary, localeAlternates } from '@/lib/i18n/server';
@@ -23,8 +22,7 @@ export default async function HistoryPage({ params }: Props) {
 	await connection();
 	return (
 		<div className="page-frame grid gap-6 pt-8 md:pt-10">
-			<PageIntro title={pages.history.heading} />
-			<HistoryView configured={Boolean(airQualityKey())} />
+			<HistoryView configured={Boolean(airQualityKey())} title={pages.history.heading} />
 		</div>
 	);
 }

@@ -342,27 +342,13 @@ export const id = {
 		selected: ' (dipilih)'
 	},
 	history: {
-		kicker: 'Catatan per jam, waktu {zone}',
 		rangeLabel: 'Rentang waktu',
 		rangeOption: '{n} jam',
 		meta: '{name} · {from} – {to} {zone}',
 		latest: 'Data terakhir {time}',
 		caption: 'Kualitas udara per jam di {name}, terbaru di atas.',
-		columns: { hour: 'Jam', aqi: 'AQI', category: 'Kategori', pollutant: 'Polutan', change: 'Perubahan' },
-		delta: {
-			start: 'Awal data',
-			better: 'Membaik {n} dari jam sebelumnya',
-			worse: 'Memburuk {n} dari jam sebelumnya',
-			same: 'Tetap dari jam sebelumnya',
-			sameShort: 'tetap'
-		},
-		pagesLabel: 'Halaman catatan',
-		previous: 'Sebelumnya',
-		next: 'Berikutnya',
-		page: 'Halaman {page} dari {count}',
-		trendTitle: 'Tren AQI {n} jam',
+		columns: { hour: 'Jam', aqi: 'AQI', category: 'Kategori', pollutant: 'Polutan' },
 		trendLabel: 'Tren AQI {name}, {n} jam terakhir',
-		detail: 'Detail',
 		showHour: 'Lihat detail {time}',
 		hours: { one: '{n} jam', other: '{n} jam' },
 		summary: {

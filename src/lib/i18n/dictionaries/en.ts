@@ -341,27 +341,13 @@ export const en: Dictionary = {
 		selected: ' (selected)'
 	},
 	history: {
-		kicker: 'Hourly records, times in {zone}',
 		rangeLabel: 'Time range',
 		rangeOption: '{n} hours',
 		meta: '{name} · {from} – {to} {zone}',
 		latest: 'Latest {time}',
 		caption: 'Hourly air quality in {name}, newest first.',
-		columns: { hour: 'Hour', aqi: 'AQI', category: 'Category', pollutant: 'Pollutant', change: 'Change' },
-		delta: {
-			start: 'Start of data',
-			better: '{n} better than the hour before',
-			worse: '{n} worse than the hour before',
-			same: 'Same as the hour before',
-			sameShort: 'same'
-		},
-		pagesLabel: 'Record pages',
-		previous: 'Previous',
-		next: 'Next',
-		page: 'Page {page} of {count}',
-		trendTitle: '{n}-hour AQI trend',
+		columns: { hour: 'Hour', aqi: 'AQI', category: 'Category', pollutant: 'Pollutant' },
 		trendLabel: 'AQI trend for {name}, last {n} hours',
-		detail: 'Details',
 		showHour: 'Show details for {time}',
 		hours: { one: '{n} hour', other: '{n} hours' },
 		summary: {
