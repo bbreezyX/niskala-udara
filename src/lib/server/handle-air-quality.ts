@@ -3,7 +3,7 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/config';
 import type { ApiErrorCode } from '@/lib/types';
 import { getCurrentConditions, getForecast, getHistory } from './air-quality-cache';
 import { AirQualityError } from './google-air-quality';
-import { fail, isCrossSite, log as logScoped, respond } from './http';
+import { fail, isCrossSite, log as logScoped, readJsonBody, respond } from './http';
 
 const MAX_BODY_BYTES = 1024;
 
@@ -24,24 +24,10 @@ function createHandler<Input>(
 
 		if (isCrossSite(request)) return fail('invalid_request', 403);
 
-		if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
-			return fail('invalid_request', 415);
-		}
+		const body = await readJsonBody(request, MAX_BODY_BYTES);
+		if ('response' in body) return body.response;
 
-		const declaredLength = Number(request.headers.get('content-length') ?? 0);
-		if (declaredLength > MAX_BODY_BYTES) return fail('invalid_request', 413);
-
-		const text = await request.text();
-		if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) return fail('invalid_request', 413);
-
-		let payload: unknown;
-		try {
-			payload = JSON.parse(text);
-		} catch {
-			return fail('invalid_request');
-		}
-
-		const input = parse(payload);
+		const input = parse(body.payload);
 		if (!input) return fail('invalid_request');
 
 		// ?lang= picks the language of Google's text; the body stays exactly the coordinates.

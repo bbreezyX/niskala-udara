@@ -23,6 +23,25 @@ export function fail(code: ApiErrorCode, status = STATUS[code]): Response {
 	return respond({ error: { code } }, status);
 }
 
+/** A small JSON body, or the response refusing it: wrong content type (415), too big (413) or not JSON (400). */
+export async function readJsonBody(request: Request, maxBytes: number): Promise<{ payload: unknown } | { response: Response }> {
+	if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
+		return { response: fail('invalid_request', 415) };
+	}
+
+	const declaredLength = Number(request.headers.get('content-length') ?? 0);
+	if (declaredLength > maxBytes) return { response: fail('invalid_request', 413) };
+
+	const text = await request.text();
+	if (new TextEncoder().encode(text).byteLength > maxBytes) return { response: fail('invalid_request', 413) };
+
+	try {
+		return { payload: JSON.parse(text) };
+	} catch {
+		return { response: fail('invalid_request') };
+	}
+}
+
 /** Sanitized: callers pass only codes, statuses and durations; never keys or coordinates. */
 export function log(scope: string, code: ApiErrorCode, detail: string, startedAt: number) {
 	console.error(`[${scope}] ${code}: ${detail} (${Math.round(performance.now() - startedAt)} ms)`);

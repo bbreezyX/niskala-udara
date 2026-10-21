@@ -1,6 +1,6 @@
 import type { Wind } from '@/lib/client/wind-layer';
 import { shownHotspots } from '@/lib/hotspot-encoding';
-import type { Coordinates, FireGroup, Hotspot, TraceHotspot, TraceLevel, TracePoint } from '@/lib/types';
+import type { Coordinates, FireData, FireGroup, Hotspot, SmokeTrace, TraceHotspot, TraceLevel, TracePoint } from '@/lib/types';
 
 /**
  * Smoke Trace: follow the wind back from a place, widen the path into a corridor, and find the
@@ -231,4 +231,43 @@ export function traceLevel(count: number, totalFrp: number): TraceLevel {
 /** Distances shown to readers: 5 km steps close by, 10 km further out, so they never look surveyed. */
 export function roundDistanceKm(km: number): number {
 	return km < 50 ? Math.round(km / 5) * 5 : Math.round(km / 10) * 10;
+}
+
+/** Enough to draw the corridor's fires; a busy day can put thousands in it. */
+export const MAX_TRACE_HOTSPOTS = 300;
+
+export function buildSmokeTrace({
+	origin,
+	wind,
+	windFetchedAt,
+	fires,
+	now
+}: {
+	origin: Coordinates;
+	wind: WindHistory;
+	windFetchedAt: string;
+	fires: FireData;
+	now: Date;
+}): SmokeTrace {
+	const path = traceBack(wind, origin, now.getTime() / 1000);
+	const hotspots = corridorHotspots(path, fires.hotspots);
+	const totalFrp = hotspots.reduce((sum, h) => sum + (h.frp ?? 0), 0);
+	const [main] = groupHotspots(origin, hotspots);
+	const end = path.points.at(-1)!;
+	return {
+		hours: TRACE_HOURS,
+		startedAt: now.toISOString(),
+		windFetchedAt,
+		firesFetchedAt: fires.fetchedAt,
+		missingFireSources: fires.missingSources,
+		calm: path.calm,
+		truncated: path.truncated,
+		from: path.calm || path.points.length < 2 ? null : bearingDeg(origin, end),
+		path: path.points,
+		hotspots: hotspots.slice(0, MAX_TRACE_HOTSPOTS),
+		count: hotspots.length,
+		totalFrp,
+		mainGroup: main ? { ...main, distanceKm: roundDistanceKm(main.distanceKm), hoursBack: Math.max(1, Math.round(main.hoursBack)) } : null,
+		level: traceLevel(hotspots.length, totalFrp)
+	};
 }

@@ -146,3 +146,25 @@ export interface FireGroup {
 }
 
 export type TraceLevel = 'none' | 'light' | 'heavy';
+
+/** POST /api/smoke-trace: where a place's air came from over the last hours, and the fires on the way. */
+export interface SmokeTrace {
+	hours: number;
+	/** When the trace starts going back (ISO 8601, UTC). */
+	startedAt: string;
+	windFetchedAt: string;
+	firesFetchedAt: string;
+	missingFireSources: string[];
+	calm: boolean;
+	truncated: boolean;
+	/** Compass bearing from the place to where its air was at the end of the path; null when calm. */
+	from: number | null;
+	path: TracePoint[];
+	/** The corridor's strongest hotspots, capped; `count` has them all. */
+	hotspots: TraceHotspot[];
+	count: number;
+	totalFrp: number;
+	/** The strongest group, with its distance rounded and its hours whole, ready to show. */
+	mainGroup: FireGroup | null;
+	level: TraceLevel;
+}

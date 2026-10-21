@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { WIND_GRID } from '@/lib/config/map';
-import type { Coordinates, Hotspot } from '@/lib/types';
+import type { Coordinates, FireData, Hotspot } from '@/lib/types';
 import {
 	bearingDeg,
+	buildSmokeTrace,
 	corridorHotspots,
 	distanceKm,
 	groupHotspots,
@@ -148,5 +149,47 @@ describe('traceLevel', () => {
 describe('roundDistanceKm', () => {
 	it('rounds to 5 km under 50 km and to 10 km above', () => {
 		expect([12, 43, 47.6, 52, 123, 125].map(roundDistanceKm)).toEqual([10, 45, 50, 50, 120, 130]);
+	});
+});
+
+describe('buildSmokeTrace', () => {
+	const fires = (hotspots: Hotspot[]): FireData => ({
+		hotspots,
+		windowHours: 24,
+		fetchedAt: '2026-10-21T05:50:00.000Z',
+		sources: ['VIIRS_NOAA20_NRT'],
+		missingSources: ['VIIRS_SNPP_NRT']
+	});
+	const build = (hotspots: Hotspot[]) =>
+		buildSmokeTrace({
+			origin: PALEMBANG,
+			wind: steadyWind(5, 90),
+			windFetchedAt: '2026-10-21T04:00:00.000Z',
+			fires: fires(hotspots),
+			now: new Date(NOW * 1000)
+		});
+
+	it('reports a quiet day as level none with no group', () => {
+		expect(build([])).toMatchObject({ count: 0, totalFrp: 0, level: 'none', mainGroup: null, hotspots: [], missingFireSources: ['VIIRS_SNPP_NRT'] });
+	});
+
+	it('caps the hotspots it returns but counts them all', () => {
+		const many = Array.from({ length: 320 }, (_, i) => fire(east(PALEMBANG, 20 + i * 0.5), 1));
+		const trace = build(many);
+		expect(trace.count).toBe(320);
+		expect(trace.hotspots).toHaveLength(300);
+		expect(trace.level).toBe('heavy');
+	});
+
+	it('rounds the main group for display and carries the data times', () => {
+		const trace = build([fire(east(PALEMBANG, 83), 40)]);
+		expect(trace.mainGroup).toMatchObject({ distanceKm: 80, hoursBack: 5, count: 1 });
+		expect(trace.from).toBeCloseTo(90, 0);
+		expect(trace).toMatchObject({
+			hours: 12,
+			startedAt: '2026-10-21T06:00:00.000Z',
+			windFetchedAt: '2026-10-21T04:00:00.000Z',
+			firesFetchedAt: '2026-10-21T05:50:00.000Z'
+		});
 	});
 });
