@@ -11,7 +11,7 @@ export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 				forecast, and hourly history for cities across Indonesia. No account, no ads.
 			</AboutHeader>
 
-			<AboutSection id="reading-aqi" title="How to read the AQI number">
+			<AboutSection id="reading-aqi" title="How to Read the AQI Number">
 				<p className="max-w-prose">
 					The main number in this app is Google&apos;s <strong className="font-semibold text-foreground">Universal AQI</strong>.
 					It is calculated from the levels of several pollutants on a 0–100 scale:{' '}
@@ -24,7 +24,7 @@ export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 				</BandsFigure>
 			</AboutSection>
 
-			<AboutSection id="bukan-ispu" title="Universal AQI is not ISPU">
+			<AboutSection id="bukan-ispu" title="Universal AQI Is Not ISPU">
 				<p className="max-w-prose">
 					ISPU, the Indonesian government&apos;s official index, gets worse as its number rises. The two indexes run in
 					opposite directions on different scales, so their numbers cannot be compared directly. An AQI of 80 here means
@@ -32,7 +32,7 @@ export function AboutEn({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 				</p>
 			</AboutSection>
 
-			<AboutSection id="sumber-data" title="Data sources">
+			<AboutSection id="sumber-data" title="Data Sources">
 				<p className="max-w-prose">
 					Current conditions, forecasts, history, and the air quality heatmap come from the Google Maps Platform Air
 					Quality API. Hotspot data on the Map page comes from{' '}

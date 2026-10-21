@@ -1,12 +1,14 @@
 import type { Dictionary } from './id';
 
 // British spelling, matching the en-GB date and number formats.
+// Titles and short labels use Title Case; articles, conjunctions and prepositions stay lowercase inside titles.
+// Descriptions, advice, placeholders and measurement units keep sentence case.
 export const en: Dictionary = {
 	meta: {
-		title: 'Niskala · Air quality in Indonesia',
+		title: 'Niskala · Air Quality in Indonesia',
 		description: 'Track current air quality, pollutant levels, forecasts, and health advice for cities across Indonesia.'
 	},
-	skipToContent: 'Skip to content',
+	skipToContent: 'Skip to Content',
 	nav: {
 		label: 'Main navigation',
 		brandHome: 'Niskala, home',
@@ -15,14 +17,14 @@ export const en: Dictionary = {
 		history: 'History'
 	},
 	search: {
-		label: 'Search cities',
+		label: 'Search Cities',
 		placeholder: 'Search a city or regency…',
 		inputLabel: 'Search monitored cities',
-		open: 'Search cities (Ctrl K)',
-		close: 'Close search',
+		open: 'Search Cities (Ctrl K)',
+		close: 'Close Search',
 		empty: 'No city found. Only monitored cities are available.',
 		locationGroup: 'Location',
-		myLocation: 'Device location',
+		myLocation: 'Device Location',
 		myLocationKeywords: ['device', 'nearby', 'me', 'current']
 	},
 	languageSwitch: { switchTo: 'Switch to {name}' },
@@ -35,21 +37,21 @@ export const en: Dictionary = {
 		about: 'About',
 		privacy: 'Privacy',
 		terms: 'Terms of Use',
-		dataSources: 'Data sources',
-		airQualitySource: 'Air quality: Google Air Quality API',
+		dataSources: 'Data Sources',
+		airQualitySource: 'Air Quality: Google Air Quality API',
 		ispuSource: 'Station ISPU:',
-		hotspotSource: 'Fire hotspots:',
+		hotspotSource: 'Fire Hotspots:',
 		windSource: 'Wind:'
 	},
 	pages: {
 		map: {
 			title: 'Map',
-			heading: 'Air quality and hotspot map',
+			heading: 'Air Quality and Hotspot Map',
 			description: 'Air quality map (Universal AQI), 24-hour fire hotspots, and wind direction across Indonesia.'
 		},
 		history: {
 			title: 'History',
-			heading: 'Air quality history',
+			heading: 'Air Quality History',
 			description: 'Hourly air quality history for monitored cities.'
 		},
 		about: {
@@ -58,8 +60,8 @@ export const en: Dictionary = {
 		},
 		privacy: { title: 'Privacy', heading: 'Privacy Policy' },
 		terms: { title: 'Terms of Use', heading: 'Terms of Use' },
-		locationMe: { title: 'Device location' },
-		locationPoint: { title: 'Point on the map' },
+		locationMe: { title: 'Device Location' },
+		locationPoint: { title: 'Point on the Map' },
 		city: { description: 'Current air quality, 24-hour trend, forecast, and pollutant levels in {name}.' }
 	},
 	legal: {
@@ -70,15 +72,15 @@ export const en: Dictionary = {
 	common: {
 		refresh: 'Refresh',
 		refreshing: 'Refreshing…',
-		retry: 'Try again',
-		notAvailable: 'Not available yet',
-		dataNotAvailable: 'No data yet',
+		retry: 'Try Again',
+		notAvailable: 'Not Available Yet',
+		dataNotAvailable: 'No Data Yet',
 		loadingPlace: 'Loading data for {name}',
 		locations: { one: '{n} location', other: '{n} locations' },
 		scale: 'Scale 0–100, higher is better.',
 		scaleIspu: 'AQI 0–100, higher is better. For ISPU, higher is worse.',
-		howToRead: 'How to read the AQI',
-		dominantPollutant: 'Dominant pollutant',
+		howToRead: 'How to Read the AQI',
+		dominantPollutant: 'Dominant Pollutant',
 		backToOverview: 'Back to Overview',
 		backToMap: 'Back to Map',
 		forecast: 'Forecast'
@@ -96,7 +98,7 @@ export const en: Dictionary = {
 			good: 'Good',
 			moderate: 'Moderate',
 			unhealthy: 'Unhealthy',
-			veryUnhealthy: 'Very unhealthy',
+			veryUnhealthy: 'Very Unhealthy',
 			hazardous: 'Hazardous'
 		},
 		sourceStation: 'ISPU from KLH/BPLH station {name}, {time}.',
@@ -104,15 +106,15 @@ export const en: Dictionary = {
 		direction: 'Higher is worse.'
 	},
 	health: {
-		title: 'Health advice',
-		groupsLabel: 'Advice for',
+		title: 'Health Advice',
+		groupsLabel: 'Advice For',
 		groups: {
 			generalPopulation: 'Everyone',
 			children: 'Children',
-			elderly: 'Older adults',
-			pregnantWomen: 'Pregnant women',
-			lungDiseasePopulation: 'Lung disease',
-			heartDiseasePopulation: 'Heart disease',
+			elderly: 'Older Adults',
+			pregnantWomen: 'Pregnant Women',
+			lungDiseasePopulation: 'Lung Disease',
+			heartDiseasePopulation: 'Heart Disease',
 			athletes: 'Athletes'
 		},
 		headlines: [
@@ -127,32 +129,32 @@ export const en: Dictionary = {
 	pollutants: {
 		info: {
 			pm25: {
-				name: 'Fine particles',
+				name: 'Fine Particles',
 				about: 'Very fine dust, smaller than 2.5 micrometres, about 1/30 the width of a hair. It can reach deep into the lungs and into the bloodstream.',
 				sources: 'Forest and land fire smoke, vehicles, burning rubbish.'
 			},
 			pm10: {
-				name: 'Coarse particles',
+				name: 'Coarse Particles',
 				about: 'Dust up to 10 micrometres across. It lodges in the nose and upper airways and can trigger coughing and irritation.',
 				sources: 'Road dust, construction, smoke from burning.'
 			},
 			no2: {
-				name: 'Nitrogen dioxide',
+				name: 'Nitrogen Dioxide',
 				about: 'A gas from burning fuel. It irritates the airways, especially for people with asthma.',
 				sources: 'Motor vehicles, power stations, industry.'
 			},
 			o3: {
-				name: 'Ground-level ozone',
+				name: 'Ground-Level Ozone',
 				about: 'A gas formed when other pollutants react in sunlight, usually rising during the day. It can make the chest feel tight.',
 				sources: 'Vehicle and industrial exhaust reacting with sunlight.'
 			},
 			so2: {
-				name: 'Sulphur dioxide',
+				name: 'Sulphur Dioxide',
 				about: 'A sharp-smelling gas from burning fuel that contains sulphur. It irritates the eyes and airways.',
 				sources: 'Coal power stations, industry, volcanoes.'
 			},
 			co: {
-				name: 'Carbon monoxide',
+				name: 'Carbon Monoxide',
 				about: 'A colourless, odourless gas from incomplete burning. It reduces how much oxygen the blood can carry.',
 				sources: 'Vehicles, fires, generators and stoves.'
 			}
@@ -162,10 +164,10 @@ export const en: Dictionary = {
 			PARTS_PER_BILLION: 'parts per billion parts of air'
 		},
 		commonSources: 'Common sources: ',
-		levels: 'Pollutant levels',
+		levels: 'Pollutant Levels',
 		levelsLatest: 'At the latest data hour, against WHO guidelines',
-		levelsThisHour: 'Pollutant levels this hour',
-		main: 'Main pollutant',
+		levelsThisHour: 'Pollutant Levels This Hour',
+		main: 'Main Pollutant',
 		timesWho: '{ratio} the WHO guideline',
 		belowWho: 'Below the WHO guideline',
 		whoSuffix: ' the WHO guideline',
@@ -174,96 +176,96 @@ export const en: Dictionary = {
 	// Full-page states: a URL with no page behind it, and a page that failed to render.
 	errorPage: {
 		notFound: {
-			title: 'Page not found',
+			title: 'Page Not Found',
 			description: 'This address is not available. Check the link or open Overview to select a location.'
 		},
 		failed: {
-			title: 'Page failed to load',
+			title: 'Page Failed to Load',
 			description: 'An error occurred while loading this page. Try again or wait a few minutes.'
 		}
 	},
 	errors: {
 		not_configured: {
-			title: 'Data source not configured',
+			title: 'Data Source Not Configured',
 			description: 'The server has no access key for air quality data yet, so there are no numbers to show.'
 		},
 		not_authorized: {
-			title: 'Access to the data source was refused',
+			title: 'Access to the Data Source Was Refused',
 			description: 'The server is not allowed to fetch air quality data right now.'
 		},
 		quota_exceeded: {
-			title: 'Request limit reached',
+			title: 'Request Limit Reached',
 			description: 'Too many requests in a short time. Try again in a moment.'
 		},
 		location_unsupported: {
-			title: 'Location not supported yet',
+			title: 'Location Not Supported Yet',
 			description: 'Air quality data is not available for this location. Try another city.'
 		},
 		no_data: {
-			title: 'No data yet',
+			title: 'No Data Yet',
 			description: 'The data source sent no air quality values for this location.'
 		},
 		timeout: {
-			title: 'Request timed out',
+			title: 'Request Timed Out',
 			description: 'The data source took too long to respond.'
 		},
 		upstream_error: {
-			title: 'Data failed to load',
+			title: 'Data Failed to Load',
 			description: 'Something went wrong while fetching air quality data.'
 		},
 		invalid_request: {
-			title: 'Invalid request',
+			title: 'Invalid Request',
 			description: 'The location sent could not be processed.'
 		},
 		network: {
-			title: 'Cannot connect',
+			title: 'Cannot Connect',
 			description: 'Check the internet connection, then try again.'
 		}
 	},
 	location: {
-		lastData: 'Latest data',
-		next24: 'Next 24 hours',
+		lastData: 'Latest Data',
+		next24: 'Next 24 Hours',
 		bestPin: 'Best {hour}, AQI {aqi}',
 		bestSpoken: 'Best {detail}',
 		plannerHint: 'Hover, tap, or drag along the band to see the AQI for each hour.',
 		plannerMissing: 'An hourly forecast is not available for this location yet.',
-		trendTitle: '48-hour trend',
+		trendTitle: '48-Hour Trend',
 		trendDescription: 'Last 24 hours and the 24-hour forecast, in {zone}',
 		recorded: 'Recorded',
 		trendLabel: 'AQI trend for {name}, last 24 hours and 24-hour forecast',
 		trendMissing: 'A trend is not available for this location yet.',
-		low24: '24-hour low',
-		high24: '24-hour high',
-		average24: '24-hour average',
+		low24: '24-Hour Low',
+		high24: '24-Hour High',
+		average24: '24-Hour Average',
 		fromHours: { one: 'from {n} hour of data', other: 'from {n} hours of data' },
-		relatedTitle: 'Other places in {region}',
-		thisArea: 'this area',
+		relatedTitle: 'Other Places in {region}',
+		thisArea: 'This Area',
 		relatedOrder: 'Best air first',
 		thisPage: 'this page',
-		notLoaded: 'Not loaded',
+		notLoaded: 'Not Loaded',
 		relatedNote: 'Readings show for places already loaded in Overview, without new data requests.'
 	},
 	device: {
-		name: 'Device location',
+		name: 'Device Location',
 		note: 'Based on device location, rounded to about 100 m',
 		unsupported: 'This browser does not support device location. Select a city from the list.',
 		denied: 'Location access denied. Select a city from the list to continue.',
 		notFound: 'The device location could not be found. Try again or select a city from the list.',
-		errorTitle: 'Location not available',
-		pickCity: 'Select a city',
-		locating: 'Finding device location…',
+		errorTitle: 'Location Not Available',
+		pickCity: 'Select a City',
+		locating: 'Finding Device Location…',
 		locatingHint: 'Allow location access in the browser. Coordinates are rounded to about 100 metres before they are sent.'
 	},
 	point: {
-		name: 'Selected point',
-		invalidTitle: 'Invalid point',
+		name: 'Selected Point',
+		invalidTitle: 'Invalid Point',
 		invalidDescription: 'Pick a point directly on the map to see its air quality.',
-		openMap: 'Open the map'
+		openMap: 'Open the Map'
 	},
 	card: {
-		forecast24: '24-hour forecast',
+		forecast24: '24-Hour Forecast',
 		forecastLabel: '24-hour AQI forecast for {name}',
-		forecastMissing: 'Forecast not available yet',
+		forecastMissing: 'Forecast Not Available Yet',
 		dataAt: 'Data {time}'
 	},
 	chart: {
@@ -279,19 +281,19 @@ export const en: Dictionary = {
 			evening: 'Good evening',
 			neutral: 'Hello'
 		},
-		heading: 'Air quality overview',
+		heading: 'Air Quality Overview',
 		lead: 'Select a region or use the device location to view air quality.',
-		useMyLocation: 'Use device location',
+		useMyLocation: 'Use Device Location',
 		overviewPrefix: 'Overview, ',
 		dataAt: 'Data {time}',
 		refreshData: 'Refresh',
 		refreshingData: 'Refreshing…',
 		listLabel: 'Monitored locations',
-		emptyTitle: 'No locations in this category',
+		emptyTitle: 'No Locations in This Category',
 		emptyDescription: 'Pick another AQI category or reset the filter to see every location.',
-		resetFilter: 'Reset filter',
+		resetFilter: 'Reset Filter',
 		hidden: { one: '{n} location hidden by the filter.', other: '{n} locations hidden by the filter.' },
-		showAll: 'Show all',
+		showAll: 'Show All',
 		loading: { one: 'Loading data for {n} location.', other: 'Loading data for {n} locations.' },
 		loaded: { one: 'Data for {n} location loaded.', other: 'Data for {n} locations loaded.' }
 	},
@@ -305,9 +307,9 @@ export const en: Dictionary = {
 	filter: {
 		trigger: 'Filter',
 		active: '(active)',
-		title: 'Filter air quality',
+		title: 'Filter Air Quality',
 		hint: 'Tap one or more categories.',
-		bandsLabel: 'AQI categories',
+		bandsLabel: 'AQI Categories',
 		bandOption: '{band}, AQI {min} to {max}, {count}',
 		sort: 'Sort',
 		sorts: {
@@ -321,17 +323,17 @@ export const en: Dictionary = {
 			other: '{n} locations still loading stay in the list.'
 		},
 		reset: 'Reset',
-		pickOne: 'Pick at least one',
-		apply: { one: 'Show {n} location', other: 'Show {n} locations' }
+		pickOne: 'Pick at Least One',
+		apply: { one: 'Show {n} Location', other: 'Show {n} Locations' }
 	},
 	cityPicker: {
 		trigger: 'City: {name}. Change city',
 		placeholder: 'Search a city, regency, or province…',
 		empty: 'No city found.',
 		nearest: 'Nearest',
-		locating: 'Finding device location…',
+		locating: 'Finding Device Location…',
 		denied: 'Location permission denied in the browser',
-		useMine: 'Use device location',
+		useMine: 'Use Device Location',
 		useMineKeywords: ['location', 'device', 'nearest', 'near', 'me']
 	},
 	regionPicker: {
@@ -341,7 +343,7 @@ export const en: Dictionary = {
 		selected: ' (selected)'
 	},
 	history: {
-		rangeLabel: 'Time range',
+		rangeLabel: 'Time Range',
 		rangeOption: '{n} hours',
 		meta: '{name} · {from} – {to} {zone}',
 		latest: 'Latest {time}',
@@ -351,67 +353,67 @@ export const en: Dictionary = {
 		showHour: 'Show details for {time}',
 		hours: { one: '{n} hour', other: '{n} hours' },
 		summary: {
-			average: 'Average over the last {n} hours',
+			average: 'Average over the Last {n} Hours',
 			verdict: '{band} in {count} of {total} hours.',
 			ceiling: 'Never reached {band}.',
 			peak: 'Reached {band} at {time}.',
 			waffle: 'One square per hour, sorted by category'
 		},
 		chart: {
-			title: 'Hour by hour',
+			title: 'Hour by Hour',
 			note: 'Background bands mark the categories. A break in the line means no data for that hour.',
 			worst: 'Worst',
 			best: 'Best',
 			latest: 'Latest'
 		},
 		pattern: {
-			title: 'Daily pattern',
+			title: 'Daily Pattern',
 			lead: 'Average for each hour of the day over the last {n} hours.',
 			tendency: 'The air tends to be cleanest {best} and most polluted {worst}.',
 			cleanest: 'Cleanest',
-			dirtiest: 'Most polluted',
+			dirtiest: 'Most Polluted',
 			average: 'average {avg} · {band}',
 			none: 'No clear hourly pattern in this range.',
 			needDays: 'A daily pattern needs at least two days of data. Choose 72 hours to see it.',
 			parts: { night: 'before dawn', morning: 'in the morning', midday: 'around midday', afternoon: 'in the afternoon', evening: 'in the evening' }
 		},
 		dominant: {
-			title: 'Main pollutant',
+			title: 'Main Pollutant',
 			share: 'Set the AQI in {count} of {total} hours.'
 		},
-		days: { title: 'By day', average: 'average' },
+		days: { title: 'By Day', average: 'average' },
 		hour: {
-			latest: 'Latest hour',
-			picked: 'Selected hour',
+			latest: 'Latest Hour',
+			picked: 'Selected Hour',
 			hint: 'Pick a point on the chart or a row in the table to see another hour.',
-			back: 'Back to the latest hour'
+			back: 'Back to the Latest Hour'
 		},
-		table: { summary: 'All hours as a table ({n})', show: 'Show', noData: 'No data' }
+		table: { summary: 'All Hours as a Table ({n})', show: 'Show', noData: 'No Data' }
 	},
 	map: {
 		unconfigured: {
-			title: 'Map not configured',
+			title: 'Map Not Configured',
 			description: 'The browser key for Google Maps is not set on the server yet, so the map cannot be shown.'
 		},
 		auth: {
-			title: 'Google Maps rejected the key',
+			title: 'Google Maps Rejected the Key',
 			description: 'Make sure the Maps JavaScript API is enabled and this domain is allowed in the key restrictions.'
 		},
-		network: { title: 'Map failed to load', description: 'Check the internet connection, then reload the page.' },
+		network: { title: 'Map Failed to Load', description: 'Check the internet connection, then reload the page.' },
 		regionLabel: 'Air quality, hotspot and wind map',
-		firesTitle: 'Hotspots in Indonesia, {n} hours',
+		firesTitle: 'Hotspots in Indonesia, {n} Hours',
 		firesUnconfigured: 'Hotspot data is not set up on the server.',
 		detections: { one: 'detection', other: 'detections' },
-		confidence: { high: 'High confidence', nominal: 'Medium confidence', low: 'Low confidence' },
+		confidence: { high: 'High Confidence', nominal: 'Medium Confidence', low: 'Low Confidence' },
 		lastDetected: 'Last detected {time}. ',
 		updated: 'Updated {time}.',
 		missingSources: 'Some satellites are not available yet, so the count may be lower.',
 		firesFailed: 'Hotspot data failed to load.',
-		layers: 'Map layers',
-		airQuality: 'Air quality',
+		layers: 'Map Layers',
+		airQuality: 'Air Quality',
 		scaleLow: '0, poor',
 		scaleHigh: '100, excellent',
-		hotspots: 'Fire hotspots',
+		hotspots: 'Fire Hotspots',
 		wind: 'Wind',
 		windCentre: 'Map centre: {speed} km/h, blowing {toward}',
 		windCalm: 'Map centre: calm',
@@ -419,28 +421,28 @@ export const en: Dictionary = {
 		windValid: 'Model forecast for {time}.',
 		windFailed: 'Wind data failed to load.',
 		stations: {
-			title: 'KLH/BPLH station ISPU',
+			title: 'KLH/BPLH Station ISPU',
 			scaleLow: '0, good',
 			scaleHigh: '≥ 300, hazardous',
 			count: { one: '{n} station reported in the last 3 hours.', other: '{n} stations reported in the last 3 hours.' },
 			missing: 'Some provinces failed to load, so the count may be lower.',
 			failed: 'Station ISPU failed to load.',
-			critical: 'Critical parameter',
+			critical: 'Critical Parameter',
 			marker: 'Station {name}: ISPU {value}, {category}'
 		},
 		compass: ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'],
-		checkCenter: 'View AQI at the map centre',
+		checkCenter: 'View AQI at the Map Centre',
 		clickHint: 'Or click any point on the map.',
-		about: 'About this data',
+		about: 'About This Data',
 		aboutText:
 			'Hotspots are heat anomalies seen by satellite and are not always fires. Cloud or thick smoke can hide a fire. Map colours are a model estimate per 500 m, not measurements. Wind is a weather model forecast (ECMWF, ICON, GFS) on points about 165 km apart, so local winds such as sea breezes do not show.',
-		hotspotSource: 'Fire hotspots:',
+		hotspotSource: 'Fire Hotspots:',
 		windSource: 'Wind:',
 		card: {
-			title: 'Fire hotspot',
+			title: 'Fire Hotspot',
 			satellite: 'Satellite',
-			intensity: 'Heat intensity',
-			check: 'View air quality'
+			intensity: 'Heat Intensity',
+			check: 'View Air Quality'
 		}
 	}
 };

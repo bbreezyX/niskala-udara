@@ -4,7 +4,7 @@ import type { LegalSection } from '../legal-sections';
 /** English translation of the Indonesian original, which prevails if the two differ. */
 export const TERMS_EN: LegalSection[] = [
 	{
-		title: 'The service',
+		title: 'The Service',
 		body: (
 			<>
 				Niskala displays estimated current air quality, pollutant levels, and general health advice for the selected location.
@@ -13,7 +13,7 @@ export const TERMS_EN: LegalSection[] = [
 		)
 	},
 	{
-		title: 'Data sources',
+		title: 'Data Sources',
 		body: (
 			<>
 				Air quality data comes from the Google Maps Platform Air Quality API and is shown unaltered. Hotspots come from NASA
@@ -23,7 +23,7 @@ export const TERMS_EN: LegalSection[] = [
 		)
 	},
 	{
-		title: 'Not medical advice',
+		title: 'Not Medical Advice',
 		body: (
 			<>
 				Information on this site is general. For health decisions, follow health professionals and official information from
@@ -32,7 +32,7 @@ export const TERMS_EN: LegalSection[] = [
 		)
 	},
 	{
-		title: "Google's terms",
+		title: "Google's Terms",
 		body: (
 			<>
 				Users of Niskala are also bound by the{' '}

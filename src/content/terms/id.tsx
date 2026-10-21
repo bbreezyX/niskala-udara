@@ -13,7 +13,7 @@ export const TERMS_ID: LegalSection[] = [
 		)
 	},
 	{
-		title: 'Sumber data',
+		title: 'Sumber Data',
 		body: (
 			<>
 				Data kualitas udara berasal dari Google Maps Platform Air Quality API dan ditampilkan tanpa diubah. Hotspot berasal
@@ -23,7 +23,7 @@ export const TERMS_ID: LegalSection[] = [
 		)
 	},
 	{
-		title: 'Bukan nasihat medis',
+		title: 'Bukan Nasihat Medis',
 		body: (
 			<>
 				Informasi di situs ini bersifat umum. Untuk keputusan kesehatan, ikuti arahan tenaga kesehatan dan informasi resmi

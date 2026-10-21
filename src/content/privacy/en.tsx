@@ -3,17 +3,17 @@ import type { LegalSection } from '../legal-sections';
 /** English translation of the Indonesian original, which prevails if the two differ. */
 export const PRIVACY_EN: LegalSection[] = [
 	{
-		title: 'Data processing',
+		title: 'Data Processing',
 		body: (
 			<>
 				Niskala only processes location coordinates to fetch air quality data. For a selected city, the coordinates sent
-				are those of its reference point. After &quot;Use device location&quot; is selected, the browser requests location
+				are those of its reference point. After &quot;Use Device Location&quot; is selected, the browser requests location
 				permission. Device coordinates are then rounded to about 100 metres before they are sent.
 			</>
 		)
 	},
 	{
-		title: 'Where the data goes',
+		title: 'Where the Data Goes',
 		body: (
 			<>
 				Coordinates are sent to the Niskala server and passed on to the Google Maps Platform Air Quality API to fetch current
@@ -26,7 +26,7 @@ export const PRIVACY_EN: LegalSection[] = [
 		)
 	},
 	{
-		title: 'The Map page',
+		title: 'The Map Page',
 		body: (
 			<>
 				The map loads directly from Google Maps in the browser, so Google receives technical data such as the IP address and
@@ -37,10 +37,10 @@ export const PRIVACY_EN: LegalSection[] = [
 		)
 	},
 	{
-		title: 'Storage on the device',
+		title: 'Storage on the Device',
 		body: (
 			<>
-				The browser stores the last selected region, or the nearest region after &quot;Use device location&quot; is selected,
+				The browser stores the last selected region, or the nearest region after &quot;Use Device Location&quot; is selected,
 				so Overview opens on that region. The browser&apos;s local storage (localStorage) contains only the region name,
 				for example Riau, without coordinates. This data is not sent to the server and is not a cookie. To remove it,
 				clear the site data in the browser settings.
@@ -48,7 +48,7 @@ export const PRIVACY_EN: LegalSection[] = [
 		)
 	},
 	{
-		title: 'Data collection limits',
+		title: 'Data Collection Limits',
 		body: (
 			<>
 				Niskala does not store coordinates or searches, set its own cookies, require an account, or use analytics or
@@ -58,10 +58,10 @@ export const PRIVACY_EN: LegalSection[] = [
 		)
 	},
 	{
-		title: 'Location permission',
+		title: 'Location Permission',
 		body: (
 			<>
-				Location permission is only requested after &quot;Use device location&quot; is selected. Permission can be revoked
+				Location permission is only requested after &quot;Use Device Location&quot; is selected. Permission can be revoked
 				at any time in the browser settings. Selecting a city from the list remains available without location permission.
 			</>
 		)

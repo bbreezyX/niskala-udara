@@ -11,7 +11,7 @@ export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 				jam, dan riwayat per jam untuk kota-kota di Indonesia, tanpa akun dan tanpa iklan.
 			</AboutHeader>
 
-			<AboutSection id="reading-aqi" title="Cara membaca angka AQI">
+			<AboutSection id="reading-aqi" title="Cara Membaca Angka AQI">
 				<p className="max-w-prose">
 					Angka utama di aplikasi ini adalah <strong className="font-semibold text-foreground">Universal AQI</strong> dari
 					Google. Indeks ini dihitung dari kadar beberapa polutan dan memakai skala 0–100:{' '}
@@ -24,7 +24,7 @@ export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 				</BandsFigure>
 			</AboutSection>
 
-			<AboutSection id="bukan-ispu" title="Universal AQI bukan ISPU">
+			<AboutSection id="bukan-ispu" title="Universal AQI Bukan ISPU">
 				<p className="max-w-prose">
 					ISPU, indeks resmi pemerintah Indonesia, menunjukkan kualitas udara yang semakin buruk saat angkanya semakin tinggi.
 					Kedua indeks memakai arah dan skala yang berbeda sehingga angkanya tidak dapat dibandingkan langsung. AQI 80 berarti udara sangat
@@ -32,7 +32,7 @@ export function AboutId({ bandNames }: { bandNames: Dictionary['aqi']['bands'] }
 				</p>
 			</AboutSection>
 
-			<AboutSection id="sumber-data" title="Sumber data">
+			<AboutSection id="sumber-data" title="Sumber Data">
 				<p className="max-w-prose">
 					Kondisi terkini, prakiraan, riwayat, dan peta panas kualitas udara berasal dari Google Maps Platform Air Quality
 					API. Data hotspot di halaman Peta berasal dari{' '}

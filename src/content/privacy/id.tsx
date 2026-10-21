@@ -3,17 +3,17 @@ import type { LegalSection } from '../legal-sections';
 /** Indonesian original. It prevails over the English translation. */
 export const PRIVACY_ID: LegalSection[] = [
 	{
-		title: 'Data yang diproses',
+		title: 'Data yang Diproses',
 		body: (
 			<>
 				Niskala hanya memproses koordinat lokasi untuk mengambil data kualitas udara. Untuk kota yang dipilih, koordinat
-				yang dikirim adalah titik referensi kota tersebut. Setelah tombol &quot;Gunakan lokasi perangkat&quot; dipilih, browser
+				yang dikirim adalah titik referensi kota tersebut. Setelah tombol &quot;Gunakan Lokasi Perangkat&quot; dipilih, browser
 				meminta izin akses lokasi. Koordinat perangkat kemudian dibulatkan menjadi sekitar 100 meter sebelum dikirim.
 			</>
 		)
 	},
 	{
-		title: 'Ke mana data dikirim',
+		title: 'Ke Mana Data Dikirim',
 		body: (
 			<>
 				Koordinat dikirim ke server Niskala, lalu diteruskan ke Google Maps Platform Air Quality API untuk mengambil
@@ -37,18 +37,18 @@ export const PRIVACY_ID: LegalSection[] = [
 		)
 	},
 	{
-		title: 'Penyimpanan pada perangkat',
+		title: 'Penyimpanan pada Perangkat',
 		body: (
 			<>
 				Browser menyimpan wilayah terakhir yang dipilih, atau wilayah terdekat setelah penggunaan tombol
-				&quot;Gunakan lokasi perangkat&quot;, agar Pantauan langsung membuka wilayah tersebut. Penyimpanan lokal browser
+				&quot;Gunakan Lokasi Perangkat&quot;, agar Pantauan langsung membuka wilayah tersebut. Penyimpanan lokal browser
 				(localStorage) hanya berisi nama wilayah, misalnya Riau, tanpa koordinat. Data ini tidak dikirim ke server dan
 				bukan cookie. Untuk menghapusnya, bersihkan data situs melalui pengaturan browser.
 			</>
 		)
 	},
 	{
-		title: 'Batas pengumpulan data',
+		title: 'Batas Pengumpulan Data',
 		body: (
 			<>
 				Niskala tidak menyimpan koordinat atau hasil pencarian, tidak memasang cookie sendiri, tidak memerlukan akun, dan
@@ -58,10 +58,10 @@ export const PRIVACY_ID: LegalSection[] = [
 		)
 	},
 	{
-		title: 'Izin lokasi',
+		title: 'Izin Lokasi',
 		body: (
 			<>
-				Izin lokasi hanya diminta setelah tombol &quot;Gunakan lokasi perangkat&quot; dipilih. Izin dapat dicabut kapan saja
+				Izin lokasi hanya diminta setelah tombol &quot;Gunakan Lokasi Perangkat&quot; dipilih. Izin dapat dicabut kapan saja
 				melalui pengaturan browser. Pemilihan kota dari daftar tetap tersedia tanpa izin lokasi.
 			</>
 		)
