@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { WIND_GRID } from '@/lib/config/map';
-import { bearingDeg, distanceKm, traceBack, windAtTime, type WindHistory } from './smoke-trace';
+import type { Coordinates, Hotspot } from '@/lib/types';
+import {
+	bearingDeg,
+	corridorHotspots,
+	distanceKm,
+	groupHotspots,
+	roundDistanceKm,
+	traceBack,
+	traceLevel,
+	windAtTime,
+	type WindHistory
+} from './smoke-trace';
 
 const HOUR = 3600;
 const NOW = Date.parse('2026-10-21T06:00:00Z') / 1000;
@@ -66,5 +77,76 @@ describe('traceBack', () => {
 			truncated: false,
 			calm: true
 		});
+	});
+});
+
+/** A point `km` east (positive) or west (negative) of `from`, at the same latitude. */
+const east = (from: Coordinates, km: number) => ({
+	latitude: from.latitude,
+	longitude: from.longitude + km / (111.32 * Math.cos((from.latitude * Math.PI) / 180))
+});
+const fire = (at: Coordinates, frp: number | null, confidence: Hotspot['confidence'] = 'nominal'): Hotspot => ({
+	...at,
+	frp,
+	confidence,
+	acquiredAt: '2026-10-21T05:30:00.000Z',
+	satellite: 'NOAA-20'
+});
+
+describe('corridorHotspots', () => {
+	const path = traceBack(steadyWind(5, 90), PALEMBANG, NOW);
+
+	it('keeps fires inside the radius at the place and drops those just outside', () => {
+		const found = corridorHotspots(path, [fire(east(PALEMBANG, -14.5), 3), fire(east(PALEMBANG, -15.5), 3)]);
+		expect(found).toHaveLength(1);
+	});
+
+	it('records how long ago the air passed over the fire, and ignores low confidence', () => {
+		const at = east(PALEMBANG, 100);
+		const found = corridorHotspots(path, [fire(at, 12), fire(at, 40, 'low')]);
+		expect(found).toHaveLength(1);
+		expect(found[0].hoursBack).toBeCloseTo(5.5);
+	});
+});
+
+describe('groupHotspots', () => {
+	it('keeps a cluster together across a 0.1° line', () => {
+		const groups = groupHotspots(PALEMBANG, [
+			{ ...fire({ latitude: -3, longitude: 105.07 }, 5), hoursBack: 2 },
+			{ ...fire({ latitude: -3, longitude: 105.12 }, 5), hoursBack: 2 }
+		]);
+		expect(groups).toHaveLength(1);
+	});
+
+	it('links hotspots just under 10 km apart where a degree of longitude is shorter', () => {
+		// At 11°S a lat-sized bucket is under 10 km wide in longitude, so these two would sit two buckets apart.
+		const size = 10 / 110.57;
+		const first = { latitude: -11, longitude: 1170 * size - 1e-6 };
+		const groups = groupHotspots(PALEMBANG, [
+			{ ...fire(first, 5), hoursBack: 2 },
+			{ ...fire(east(first, 9.95), 5), hoursBack: 2 }
+		]);
+		expect(groups).toHaveLength(1);
+	});
+
+	it('ranks by total fire power, not by how many hotspots a group has', () => {
+		const strong = [0, 1, 2].map((i) => ({ ...fire(east(PALEMBANG, 150 + i), 100), hoursBack: 8 }));
+		const many = Array.from({ length: 50 }, (_, i) => ({ ...fire(east(PALEMBANG, 60 + i * 0.1), 2), hoursBack: 3 }));
+		const [first] = groupHotspots(PALEMBANG, [...many, ...strong]);
+		expect(first).toMatchObject({ count: 3, totalFrp: 300 });
+		expect(Math.abs(first.distanceKm - 151)).toBeLessThan(1);
+		expect(Math.abs(first.bearing - 90)).toBeLessThan(1);
+	});
+});
+
+describe('traceLevel', () => {
+	it('is none without hotspots, heavy from 100 MW, and light for hotspots without FRP', () => {
+		expect([traceLevel(0, 0), traceLevel(5, 99.9), traceLevel(5, 100), traceLevel(3, 0)]).toEqual(['none', 'light', 'heavy', 'light']);
+	});
+});
+
+describe('roundDistanceKm', () => {
+	it('rounds to 5 km under 50 km and to 10 km above', () => {
+		expect([12, 43, 47.6, 52, 123, 125].map(roundDistanceKm)).toEqual([10, 45, 50, 50, 120, 130]);
 	});
 });

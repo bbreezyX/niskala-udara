@@ -1,5 +1,6 @@
 import type { Wind } from '@/lib/client/wind-layer';
-import type { Coordinates, TracePoint } from '@/lib/types';
+import { shownHotspots } from '@/lib/hotspot-encoding';
+import type { Coordinates, FireGroup, Hotspot, TraceHotspot, TraceLevel, TracePoint } from '@/lib/types';
 
 /**
  * Smoke Trace: follow the wind back from a place, widen the path into a corridor, and find the
@@ -14,6 +15,10 @@ export const SPREAD = 0.25;
 /** A whole path shorter than this is stagnant air: no direction, just a circle around the place. */
 export const CALM_PATH_KM = 30;
 export const CALM_RADIUS_KM = 50;
+/** Hotspots this close belong to one burning area, so a cluster is never split by a grid line. */
+export const GROUP_LINK_KM = 10;
+/** Total corridor fire power from which smoke may be named as contributing. */
+export const HEAVY_FRP_MW = 100;
 
 const EARTH_RADIUS_KM = 6371;
 const RADIANS = Math.PI / 180;
@@ -130,4 +135,100 @@ export function traceBack(wind: WindHistory, origin: Coordinates, startTime: num
 		return { points: [{ ...tracePoint(origin, 0, 0), radiusKm: CALM_RADIUS_KM }], truncated: false, calm: true };
 	}
 	return { points, truncated, calm: false };
+}
+
+const KM_PER_DEGREE_LAT = 110.57;
+const KM_PER_DEGREE_LON = 111.32;
+
+/** The fires the traced air passed over, strongest first. Low confidence is left out, as on the map by default. */
+export function corridorHotspots(path: TracePath, hotspots: readonly Hotspot[]): TraceHotspot[] {
+	const { points } = path;
+	// A box around the corridor first: Indonesia can have over 15,000 detections a day.
+	const pad = Math.max(...points.map((point) => point.radiusKm));
+	const widest = Math.max(...points.map((point) => Math.abs(point.latitude)));
+	const padLat = pad / KM_PER_DEGREE_LAT;
+	const padLon = pad / (KM_PER_DEGREE_LON * Math.cos((widest + padLat) * RADIANS));
+	const south = Math.min(...points.map((point) => point.latitude)) - padLat;
+	const north = Math.max(...points.map((point) => point.latitude)) + padLat;
+	const west = Math.min(...points.map((point) => point.longitude)) - padLon;
+	const east = Math.max(...points.map((point) => point.longitude)) + padLon;
+
+	const found: TraceHotspot[] = [];
+	for (const hotspot of shownHotspots(hotspots, false)) {
+		const { latitude, longitude } = hotspot;
+		if (latitude < south || latitude > north || longitude < west || longitude > east) continue;
+		let nearest: TracePoint | null = null;
+		let nearestKm = Infinity;
+		for (const point of points) {
+			const km = distanceKm(point, hotspot);
+			if (km <= point.radiusKm && km < nearestKm) {
+				nearest = point;
+				nearestKm = km;
+			}
+		}
+		if (nearest) found.push({ latitude, longitude, frp: hotspot.frp, acquiredAt: hotspot.acquiredAt, hoursBack: nearest.hoursBack });
+	}
+	return found.sort((a, b) => (b.frp ?? -1) - (a.frp ?? -1));
+}
+
+/** Contiguous burning areas (single-link within GROUP_LINK_KM), strongest total fire power first. */
+export function groupHotspots(origin: Coordinates, hotspots: readonly TraceHotspot[]): FireGroup[] {
+	const parent = hotspots.map((_, i) => i);
+	const root = (i: number): number => (parent[i] === i ? i : (parent[i] = root(parent[i])));
+	// Buckets at least one link wide in both directions, so each hotspot is compared only with its
+	// neighbouring buckets. A degree of longitude shrinks away from the equator, so size for the widest latitude.
+	const widest = Math.max(0, ...hotspots.map((h) => Math.abs(h.latitude)));
+	const size = GROUP_LINK_KM / Math.min(KM_PER_DEGREE_LAT, KM_PER_DEGREE_LON * Math.cos(widest * RADIANS));
+	const buckets = new Map<string, number[]>();
+	const cell = (h: TraceHotspot) => [Math.floor(h.latitude / size), Math.floor(h.longitude / size)];
+	hotspots.forEach((hotspot, i) => {
+		const [row, col] = cell(hotspot);
+		for (let dr = -1; dr <= 1; dr++) {
+			for (let dc = -1; dc <= 1; dc++) {
+				for (const j of buckets.get(`${row + dr}:${col + dc}`) ?? []) {
+					if (distanceKm(hotspot, hotspots[j]) <= GROUP_LINK_KM) parent[root(i)] = root(j);
+				}
+			}
+		}
+		const key = `${row}:${col}`;
+		const bucket = buckets.get(key);
+		if (bucket) bucket.push(i);
+		else buckets.set(key, [i]);
+	});
+
+	const members = new Map<number, TraceHotspot[]>();
+	hotspots.forEach((hotspot, i) => {
+		const group = members.get(root(i));
+		if (group) group.push(hotspot);
+		else members.set(root(i), [hotspot]);
+	});
+	return [...members.values()]
+		.map((group) => {
+			const totalFrp = group.reduce((sum, h) => sum + (h.frp ?? 0), 0);
+			// FRP-weighted centre; without any FRP every hotspot weighs the same.
+			const weight = (h: TraceHotspot) => (totalFrp > 0 ? (h.frp ?? 0) / totalFrp : 1 / group.length);
+			const centre = {
+				latitude: group.reduce((sum, h) => sum + h.latitude * weight(h), 0),
+				longitude: group.reduce((sum, h) => sum + h.longitude * weight(h), 0)
+			};
+			return {
+				...centre,
+				count: group.length,
+				totalFrp,
+				distanceKm: distanceKm(origin, centre),
+				bearing: bearingDeg(origin, centre),
+				hoursBack: Math.min(...group.map((h) => h.hoursBack))
+			};
+		})
+		.sort((a, b) => b.totalFrp - a.totalFrp || b.count - a.count);
+}
+
+export function traceLevel(count: number, totalFrp: number): TraceLevel {
+	if (count === 0) return 'none';
+	return totalFrp >= HEAVY_FRP_MW ? 'heavy' : 'light';
+}
+
+/** Distances shown to readers: 5 km steps close by, 10 km further out, so they never look surveyed. */
+export function roundDistanceKm(km: number): number {
+	return km < 50 ? Math.round(km / 5) * 5 : Math.round(km / 10) * 10;
 }

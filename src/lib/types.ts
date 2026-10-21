@@ -122,3 +122,27 @@ export interface TracePoint {
 	/** How far either side of the path the air may have passed, in km. */
 	radiusKm: number;
 }
+
+/** A FIRMS hotspot inside a smoke trace's corridor. */
+export interface TraceHotspot {
+	latitude: number;
+	longitude: number;
+	frp: number | null;
+	acquiredAt: string;
+	/** Roughly how long ago the traced air passed over it. */
+	hoursBack: number;
+}
+
+/** Corridor hotspots burning as one contiguous area, summarised from the place's point of view. */
+export interface FireGroup {
+	latitude: number;
+	longitude: number;
+	count: number;
+	totalFrp: number;
+	distanceKm: number;
+	/** Compass bearing from the place to the group. */
+	bearing: number;
+	hoursBack: number;
+}
+
+export type TraceLevel = 'none' | 'light' | 'heavy';
