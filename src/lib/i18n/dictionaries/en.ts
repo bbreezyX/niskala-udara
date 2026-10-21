@@ -469,5 +469,46 @@ export const en: Dictionary = {
 			intensity: 'Heat Intensity',
 			check: 'View Air Quality'
 		}
+	},
+	smokeTrace: {
+		title: 'Where This Air Came From, Last {hours} Hours',
+		smokeLikely: {
+			one: 'Over the last {hours} hours the wind came from the {direction} and passed over {n} hotspot. The strongest fire group is about {km} km from here. PM2.5 is high, so fire smoke is likely contributing.',
+			other: 'Over the last {hours} hours the wind came from the {direction} and passed over {n} hotspots. The strongest fire group is about {km} km from here. PM2.5 is high, so fire smoke is likely contributing.'
+		},
+		fires: {
+			one: 'Over the last {hours} hours the wind came from the {direction} and passed over {n} hotspot. The strongest fire group is about {km} km from here. Air quality here is currently {band}.',
+			other: 'Over the last {hours} hours the wind came from the {direction} and passed over {n} hotspots. The strongest fire group is about {km} km from here. Air quality here is currently {band}.'
+		},
+		none: 'Over the last {hours} hours the wind came from the {direction} without passing any hotspot seen by satellite.',
+		calmFires: {
+			one: 'The wind has been nearly calm for the last {hours} hours. There is {n} hotspot within {km} km, and its smoke can settle around here.',
+			other: 'The wind has been nearly calm for the last {hours} hours. There are {n} hotspots within {km} km, and their smoke can settle around here.'
+		},
+		calmNone: 'The wind has been nearly calm for the last {hours} hours, and there are no hotspots within {km} km.',
+		mapFires: {
+			one: 'Map centre: over the last {hours} hours the wind came from the {direction} and passed over {n} hotspot. The strongest fire group is about {km} km from the map centre.',
+			other: 'Map centre: over the last {hours} hours the wind came from the {direction} and passed over {n} hotspots. The strongest fire group is about {km} km from the map centre.'
+		},
+		mapNone: 'Map centre: over the last {hours} hours the wind came from the {direction} without passing any hotspot seen by satellite.',
+		mapCalmFires: {
+			one: 'Map centre: the wind has been nearly calm for the last {hours} hours. There is {n} hotspot within {km} km.',
+			other: 'Map centre: the wind has been nearly calm for the last {hours} hours. There are {n} hotspots within {km} km.'
+		},
+		mapCalmNone: 'Map centre: the wind has been nearly calm for the last {hours} hours, and there are no hotspots within {km} km.',
+		truncated: 'The trace stops at the edge of the wind data, so fires outside Indonesia are not counted.',
+		facts: {
+			hotspots: 'Hotspots in the Wind Path',
+			power: 'Total Intensity',
+			powerValue: '{mw} MW',
+			group: 'Strongest Group',
+			groupValue: '{km} km {direction}, ~{hours} h'
+		},
+		north: 'N',
+		method: 'An estimate from 10 m model wind and satellite detections, not a smoke measurement.',
+		dataTimes: 'Wind fetched {wind}. Hotspots updated {fires}.',
+		failed: 'The smoke trace failed to load.',
+		unconfigured: 'Hotspot data is not set up on the server, so the smoke trace is not available.',
+		mapSwitch: 'Smoke Trace (Map Centre)'
 	}
 };

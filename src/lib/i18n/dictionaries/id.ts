@@ -470,6 +470,47 @@ export const id = {
 			intensity: 'Intensitas Panas',
 			check: 'Lihat Kualitas Udara'
 		}
+	},
+	smokeTrace: {
+		title: 'Asal Udara, {hours} Jam Terakhir',
+		smokeLikely: {
+			one: 'Angin {hours} jam terakhir datang dari {direction} dan melewati {n} titik api. Kelompok api terkuat ada sekitar {km} km dari sini. PM2.5 sedang tinggi, jadi asap kebakaran kemungkinan ikut menyumbang.',
+			other: 'Angin {hours} jam terakhir datang dari {direction} dan melewati {n} titik api. Kelompok api terkuat ada sekitar {km} km dari sini. PM2.5 sedang tinggi, jadi asap kebakaran kemungkinan ikut menyumbang.'
+		},
+		fires: {
+			one: 'Angin {hours} jam terakhir datang dari {direction} dan melewati {n} titik api. Kelompok api terkuat ada sekitar {km} km dari sini. Kualitas udara di sini saat ini {band}.',
+			other: 'Angin {hours} jam terakhir datang dari {direction} dan melewati {n} titik api. Kelompok api terkuat ada sekitar {km} km dari sini. Kualitas udara di sini saat ini {band}.'
+		},
+		none: 'Angin {hours} jam terakhir datang dari {direction} tanpa melewati titik api yang terdeteksi satelit.',
+		calmFires: {
+			one: 'Angin hampir tenang selama {hours} jam terakhir. Ada {n} titik api dalam {km} km, dan asapnya bisa mengendap di sekitar sini.',
+			other: 'Angin hampir tenang selama {hours} jam terakhir. Ada {n} titik api dalam {km} km, dan asapnya bisa mengendap di sekitar sini.'
+		},
+		calmNone: 'Angin hampir tenang selama {hours} jam terakhir, dan tidak ada titik api dalam {km} km.',
+		mapFires: {
+			one: 'Tengah peta: angin {hours} jam terakhir datang dari {direction} dan melewati {n} titik api. Kelompok api terkuat ada sekitar {km} km dari tengah peta.',
+			other: 'Tengah peta: angin {hours} jam terakhir datang dari {direction} dan melewati {n} titik api. Kelompok api terkuat ada sekitar {km} km dari tengah peta.'
+		},
+		mapNone: 'Tengah peta: angin {hours} jam terakhir datang dari {direction} tanpa melewati titik api yang terdeteksi satelit.',
+		mapCalmFires: {
+			one: 'Tengah peta: angin hampir tenang selama {hours} jam terakhir. Ada {n} titik api dalam {km} km.',
+			other: 'Tengah peta: angin hampir tenang selama {hours} jam terakhir. Ada {n} titik api dalam {km} km.'
+		},
+		mapCalmNone: 'Tengah peta: angin hampir tenang selama {hours} jam terakhir, dan tidak ada titik api dalam {km} km.',
+		truncated: 'Jejak berhenti di batas data angin, jadi api di luar Indonesia tidak terhitung.',
+		facts: {
+			hotspots: 'Titik Api di Jalur Angin',
+			power: 'Total Intensitas',
+			powerValue: '{mw} MW',
+			group: 'Kelompok Terkuat',
+			groupValue: '{km} km ke {direction}, ±{hours} jam'
+		},
+		north: 'U',
+		method: 'Perkiraan dari angin model 10 m dan deteksi satelit, bukan pengukuran asap.',
+		dataTimes: 'Angin diambil {wind}. Hotspot diperbarui {fires}.',
+		failed: 'Jejak asap gagal dimuat.',
+		unconfigured: 'Data hotspot belum dikonfigurasi di server, jadi jejak asap belum tersedia.',
+		mapSwitch: 'Jejak Asap (Tengah Peta)'
 	}
 };
 
