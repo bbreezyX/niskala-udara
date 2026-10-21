@@ -8,6 +8,8 @@ import { loadGoogleMaps, MapsLoadError, onMapsAuthFailure } from './google-maps'
 import { createHeatmapType } from './heatmap-tiles';
 import { rememberedRegion } from './region-memory';
 import { syncOverlays, type HotspotLayer } from './hotspot-layer';
+import type { SmokeTrace } from '@/lib/types';
+import { createSmokeTraceOverlay } from './smoke-trace-layer';
 import { createWindOverlay, type WindField } from './wind-layer';
 
 // Google Maps objects are imperative handles; they live here only while the map is usable.
@@ -101,4 +103,17 @@ export function useWindOverlay(state: MapState, field: WindField | null, show: b
 		overlay.setMap(state.map);
 		return () => overlay.setMap(null);
 	}, [state, field, show]);
+}
+
+/** The brand primary (--primary in globals.css): red and orange already mean fire and bad air on this map. */
+const TRACE_COLOR = '#13386b';
+
+/** Draws the smoke trace's corridor while `show` is on; a new trace replaces the old overlay. */
+export function useSmokeTraceOverlay(state: MapState, trace: SmokeTrace | null, show: boolean) {
+	useEffect(() => {
+		if (state.status !== 'ready' || !trace || !show) return;
+		const overlay = createSmokeTraceOverlay(trace, TRACE_COLOR);
+		overlay.setMap(state.map);
+		return () => overlay.setMap(null);
+	}, [state, trace, show]);
 }

@@ -7,16 +7,17 @@ import { roundCoordinates } from '@/lib/coordinates';
 import { getJson, toRemote, type Remote } from '@/lib/client/api';
 import { HotspotLayer } from '@/lib/client/hotspot-layer';
 import { describeWind, WindField } from '@/lib/client/wind-layer';
-import { useGoogleMap, useMapOverlays, useWindOverlay, type MapState } from '@/lib/client/use-google-map';
+import { useGoogleMap, useMapOverlays, useSmokeTraceOverlay, useWindOverlay, type MapState } from '@/lib/client/use-google-map';
+import { useSmokeTrace } from '@/lib/client/use-smoke-trace';
+import { shownHotspots } from '@/lib/hotspot-encoding';
 import type { KlhkNationalData } from '@/lib/server/klhk-ispu';
-import type { FireData, WindData } from '@/lib/types';
+import type { Coordinates, FireData, WindData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StateMessage } from './info-blocks';
 import { useDictionary, useLocale, useLocalePath } from './locale-provider';
-import { shownHotspots } from '@/lib/hotspot-encoding';
 import { hotspotStyle, useHotspotClicks } from './map-hotspots';
 import { FiresSummary, LayerControls, MapAbout, type CentreWind } from './map-panel';
 import { useStationLayer } from './map-stations';
@@ -62,6 +63,32 @@ function useCentreWind(map: google.maps.Map | null, field: WindField | null): Ce
 	return map && field ? centre : null;
 }
 
+/**
+ * The map centre while `enabled`, read 400 ms after the map last came to rest, so a run of pans ends in
+ * one trace request rather than one per pan.
+ */
+function useMapCentre(map: google.maps.Map | null, enabled: boolean): Coordinates | null {
+	const [centre, setCentre] = useState<Coordinates | null>(null);
+	useEffect(() => {
+		if (!map || !enabled) return;
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const read = () => {
+			clearTimeout(timer);
+			timer = setTimeout(() => {
+				const point = map.getCenter();
+				if (point) setCentre(roundCoordinates({ latitude: point.lat(), longitude: point.lng() }));
+			}, 400);
+		};
+		read();
+		const listener = map.addListener('idle', read);
+		return () => {
+			clearTimeout(timer);
+			listener.remove();
+		};
+	}, [map, enabled]);
+	return map && enabled ? centre : null;
+}
+
 function MapError({ status }: { status: MapState['status'] }) {
 	const t = useDictionary();
 	if (status !== 'unconfigured' && status !== 'auth' && status !== 'network') return null;
@@ -81,6 +108,8 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	const [showLowConfidence, setShowLowConfidence] = useState(false);
 	const [showWind, setShowWind] = useState(true);
 	const [showStations, setShowStations] = useState(true);
+	// Off by default: the corridor covers dots and heatmap, and it answers a question the reader opts into.
+	const [showTrace, setShowTrace] = useState(false);
 	const [fires, loadFires] = useRemoteJson<FireData>('/api/fires', firesConfigured);
 	const [wind, loadWind] = useRemoteJson<WindData>('/api/wind', true);
 	const [stations, loadStations] = useRemoteJson<KlhkNationalData>('/api/klhk-ispu/stations', true);
@@ -117,6 +146,9 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 	useWindOverlay(mapState, windField, showWind);
 	const centreWind = useCentreWind(map, windField);
 	useStationLayer(map, stations.status === 'success' ? stations.data.stations : null, showStations, selectPoint);
+	const centre = useMapCentre(map, showTrace);
+	const [trace, reloadTrace] = useSmokeTrace(centre);
+	useSmokeTraceOverlay(mapState, trace.status === 'success' ? trace.data : null, showTrace);
 
 	const failed = mapState.status === 'unconfigured' || mapState.status === 'auth' || mapState.status === 'network';
 
@@ -128,6 +160,10 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 					{/* Keep scroll inside the map even at its zoom limits; Google Maps owns this element's children. */}
 					<div ref={mapElement} role="region" aria-label={t.map.regionLabel} className="absolute inset-0 overflow-hidden overscroll-contain" />
 					{mapState.status === 'loading' && <Skeleton className="absolute inset-0 rounded-none" />}
+					{/* Marks where the smoke trace starts: the map centre. */}
+					{showTrace && map && (
+						<Crosshair aria-hidden="true" strokeWidth={2.25} className="pointer-events-none absolute top-1/2 left-1/2 size-6 -translate-x-1/2 -translate-y-1/2 text-primary" />
+					)}
 				</div>
 			</Card>
 
@@ -157,6 +193,10 @@ export function MapView({ mapsKey, firesConfigured }: Props) {
 					onShowStations={setShowStations}
 					stations={stations}
 					onRetryStations={loadStations}
+					showTrace={showTrace}
+					onShowTrace={setShowTrace}
+					trace={trace}
+					onRetryTrace={reloadTrace}
 				/>
 
 				<Separator />

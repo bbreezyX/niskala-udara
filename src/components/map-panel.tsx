@@ -8,7 +8,8 @@ import { formatDataTime, formatHour, numberFormat, timeZoneLabel } from '@/lib/f
 import { fill, plural } from '@/lib/i18n/config';
 import { ISPU_BANDS } from '@/lib/ispu';
 import type { KlhkNationalData } from '@/lib/server/klhk-ispu';
-import type { FireData, WindData } from '@/lib/types';
+import { traceSentence } from '@/lib/smoke-trace-copy';
+import type { FireData, SmokeTrace, WindData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -179,11 +180,15 @@ interface LayerControlsProps {
 	onShowStations: (checked: boolean) => void;
 	stations: Remote<KlhkNationalData>;
 	onRetryStations: () => void;
+	showTrace: boolean;
+	onShowTrace: (checked: boolean) => void;
+	trace: Remote<SmokeTrace>;
+	onRetryTrace: () => void;
 }
 
 export function LayerControls(props: LayerControlsProps) {
 	const { showHeatmap, onShowHeatmap, showFires, onShowFires, showWind, onShowWind, wind, mapReady, firesConfigured } = props;
-	const { showStations, onShowStations, stations } = props;
+	const { showStations, onShowStations, stations, showTrace, onShowTrace } = props;
 	const t = useDictionary();
 	return (
 		<section className="grid gap-1 p-5" aria-labelledby="layers-title">
@@ -227,7 +232,43 @@ export function LayerControls(props: LayerControlsProps) {
 				<Switch id="layer-wind" checked={showWind} onCheckedChange={onShowWind} disabled={!mapReady || wind.status !== 'success'} />
 			</div>
 			<WindStatus {...props} />
+			<div className="mt-2 flex min-h-11 items-center justify-between gap-3">
+				<Label htmlFor="layer-trace" className="font-semibold">
+					{t.smokeTrace.mapSwitch}
+				</Label>
+				<Switch id="layer-trace" checked={showTrace} onCheckedChange={onShowTrace} disabled={!mapReady || !firesConfigured} />
+			</div>
+			<TraceStatus {...props} />
 		</section>
+	);
+}
+
+/** The smoke trace for the map centre in words, with the times of the data behind it. */
+function TraceStatus({ showTrace, trace, onRetryTrace }: LayerControlsProps) {
+	const t = useDictionary();
+	const locale = useLocale();
+	if (!showTrace) return null;
+	if (trace.status === 'error') {
+		if (trace.code === 'not_configured') return <p className="meta-copy text-muted-foreground">{t.smokeTrace.unconfigured}</p>;
+		return (
+			<div className="flex items-center justify-between gap-3 text-sm">
+				<p className="font-semibold text-destructive">{t.smokeTrace.failed}</p>
+				<Button variant="outline" size="sm" onClick={onRetryTrace}>
+					<RotateCw data-icon="inline-start" />
+					{t.common.retry}
+				</Button>
+			</div>
+		);
+	}
+	if (trace.status !== 'success') return <Skeleton className="h-16 rounded-md" />;
+
+	const zone = viewerTimeZone();
+	const time = (iso: string) => `${formatHour(iso, zone, locale)} ${timeZoneLabel(zone)}`;
+	return (
+		<div className="meta-copy grid gap-1 text-muted-foreground" aria-live="polite">
+			<p className="text-sm text-foreground">{traceSentence(trace.data, null, t, locale)}</p>
+			<p>{fill(t.smokeTrace.dataTimes, { wind: time(trace.data.windFetchedAt), fires: time(trace.data.firesFetchedAt) })}</p>
+		</div>
 	);
 }
 
