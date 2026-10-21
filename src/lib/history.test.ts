@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dailyPattern, dayRows, HOUR_MS, hourSlots, partOfDay, summarize } from './history';
+import { dailyPattern, dayRows, HOUR_MS, hourSlots, partOfDay, summarize, tendency } from './history';
 import type { AirQualityData } from './types';
 
 function reading(iso: string, aqi: number, dominantPollutant: string | null = 'pm25', color: string | null = null): AirQualityData {
@@ -110,6 +110,16 @@ describe('partOfDay', () => {
 			'evening',
 			'evening'
 		]);
+	});
+});
+
+describe('tendency', () => {
+	it('names the parts of day both windows start in', () => {
+		expect(tendency({ best: { startHour: 17, avg: 40 }, worst: { startHour: 3, avg: 2 } })).toEqual({ best: 'afternoon', worst: 'night' });
+	});
+
+	it('says nothing when both windows start in the same part of day', () => {
+		expect(tendency({ best: { startHour: 8, avg: 76 }, worst: { startHour: 5, avg: 63 } })).toBeNull();
 	});
 });
 

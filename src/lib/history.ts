@@ -125,6 +125,13 @@ export function partOfDay(hour: number): PartOfDay {
 	return 'evening';
 }
 
+/** The parts of day to name in a sentence; null when both windows share one, since "cleanest in the morning and most polluted in the morning" says nothing. */
+export function tendency(pattern: DailyPattern): { best: PartOfDay; worst: PartOfDay } | null {
+	const best = partOfDay(pattern.best.startHour);
+	const worst = partOfDay(pattern.worst.startHour);
+	return best === worst ? null : { best, worst };
+}
+
 export function dayRows(slots: HourSlot[], timeZone: string): DayRow[] {
 	const rows: DayRow[] = [];
 	for (const slot of slots) {

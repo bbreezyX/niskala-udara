@@ -4,7 +4,7 @@ import { Moon, Sun } from 'lucide-react';
 import { aqiBand, bandEdge } from '@/lib/aqi';
 import type { HistoryRange } from '@/lib/coordinates';
 import { formatHourOfDay } from '@/lib/format';
-import { partOfDay, type DailyPattern, type PatternWindow } from '@/lib/history';
+import { tendency as partsOf, type DailyPattern, type PatternWindow } from '@/lib/history';
 import { fill } from '@/lib/i18n/config';
 import { useDictionary, useLocale } from './locale-provider';
 
@@ -12,12 +12,8 @@ import { useDictionary, useLocale } from './locale-provider';
 export function PatternTile({ pattern, range }: { pattern: DailyPattern | null; range: HistoryRange }) {
 	const t = useDictionary();
 	const copy = t.history.pattern;
-	const tendency = pattern
-		? fill(copy.tendency, {
-				best: copy.parts[partOfDay(pattern.best.startHour)],
-				worst: copy.parts[partOfDay(pattern.worst.startHour)]
-			})
-		: '';
+	const parts = pattern ? partsOf(pattern) : null;
+	const tendency = parts ? fill(copy.tendency, { best: copy.parts[parts.best], worst: copy.parts[parts.worst] }) : '';
 
 	return (
 		<section aria-labelledby="history-pattern" className="grid content-start gap-4 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">

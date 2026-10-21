@@ -77,6 +77,8 @@ function HistoryPlot({ slots, timeZone, selected, marks, onSelect }: Omit<Props,
 				accessibilityLayer={false}
 				margin={{ top: 16, right: 16, bottom: 0, left: 0 }}
 				onClick={(state) => {
+					// A click that no hover preceded (a tap) carries no index; Number(null) would quietly pick the first hour.
+					if (state.activeIndex == null) return;
 					const slot = slots[Number(state.activeIndex)];
 					if (slot?.hour) onSelect(slot.t);
 				}}
@@ -127,12 +129,16 @@ function HistoryPlot({ slots, timeZone, selected, marks, onSelect }: Omit<Props,
 					connectNulls={false}
 					isAnimationActive={false}
 				/>
-				{pins.map(({ hour, title, edge }) => {
+				{pins.map(({ hour, title }) => {
 					const aqi = hour.index.aqi;
+					const x = Date.parse(hour.dataTime);
+					// Near either end a centred label would be clipped, so it turns inward there.
+					const along = rows.length > 1 ? (x - rows[0].t) / (rows[rows.length - 1].t - rows[0].t) : 0.5;
+					const position = along < 0.08 ? 'right' : along > 0.92 ? 'left' : aqi >= 60 ? 'bottom' : 'top';
 					return (
 						<ReferenceDot
 							key={title}
-							x={Date.parse(hour.dataTime)}
+							x={x}
 							y={aqi}
 							r={5}
 							fill={aqiBand(aqi).fill}
@@ -140,8 +146,7 @@ function HistoryPlot({ slots, timeZone, selected, marks, onSelect }: Omit<Props,
 							strokeWidth={2}
 							label={{
 								value: `${title} ${aqi}`,
-								// The latest hour sits on the right edge, so its label goes left to stay inside the plot.
-								position: edge ? 'left' : aqi >= 60 ? 'bottom' : 'top',
+								position,
 								fontSize: '0.75rem',
 								fontWeight: 600,
 								fill: 'var(--foreground)'

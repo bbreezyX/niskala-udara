@@ -64,7 +64,7 @@ export function SummaryTile({ summary, range, total, timeZone }: Props) {
 			<div className="mt-auto grid gap-2.5">
 				<p className="flex justify-between gap-3 text-sm text-muted-foreground">
 					<span>{copy.waffle}</span>
-					<span className="tabular-nums">{plural(t.history.hours, total, locale)}</span>
+					<span className="shrink-0 whitespace-nowrap tabular-nums">{plural(t.history.hours, total, locale)}</span>
 				</p>
 				<div aria-hidden="true" className="grid grid-cols-24 gap-[3px]">
 					{squares.map(({ id, band }) => (
