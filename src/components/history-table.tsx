@@ -25,7 +25,8 @@ export function HoursTable({ slots, city, selected, onSelect }: Props) {
 	const count = slots.filter((slot) => slot.hour).length;
 
 	return (
-		<details className="group rounded-2xl bg-card px-5 ring-1 ring-foreground/10 sm:px-6">
+		// min-w-0: as a grid item the table's width would otherwise widen the whole page on a phone.
+		<details className="group min-w-0 rounded-2xl bg-card px-5 ring-1 ring-foreground/10 sm:px-6">
 			<summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
 				{fill(t.history.table.summary, { n: String(count) })}
 				<ChevronDown
@@ -41,7 +42,7 @@ export function HoursTable({ slots, city, selected, onSelect }: Props) {
 							<TableHead className="text-xs font-semibold text-muted-foreground">{columns.hour}</TableHead>
 							<TableHead className="text-xs font-semibold text-muted-foreground">{columns.aqi}</TableHead>
 							<TableHead className="text-xs font-semibold text-muted-foreground">{columns.category}</TableHead>
-							<TableHead className="text-xs font-semibold text-muted-foreground">{columns.pollutant}</TableHead>
+							<TableHead className="text-xs font-semibold text-muted-foreground max-sm:hidden">{columns.pollutant}</TableHead>
 							<TableHead>
 								<span className="sr-only">{t.history.table.show}</span>
 							</TableHead>
@@ -98,7 +99,7 @@ function HourRow({
 			<TableCell>{when}</TableCell>
 			<TableCell className="font-semibold tabular-nums">{index.aqiDisplay}</TableCell>
 			<TableCell>{t.aqi.bands[aqiBand(index.aqi).key]}</TableCell>
-			<TableCell>{index.dominantPollutant ? pollutantLabel(index.dominantPollutant) : '–'}</TableCell>
+			<TableCell className="max-sm:hidden">{index.dominantPollutant ? pollutantLabel(index.dominantPollutant) : '–'}</TableCell>
 			<TableCell className="text-right">
 				<Button
 					variant="ghost"

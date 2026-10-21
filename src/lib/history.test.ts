@@ -83,12 +83,18 @@ describe('dailyPattern', () => {
 	});
 
 	it('lets a window cross midnight', () => {
-		const hours = series(0, 24, (h) => (h === 23 || h === 0 ? 1 : 30));
+		const hours = series(0, 48, (h) => (h === 23 || h === 0 ? 1 : 30));
 		expect(dailyPattern(hours, 'Asia/Jakarta')?.worst).toEqual({ startHour: 23, avg: 1 });
 	});
 
 	it('claims no pattern when windows differ by less than 5 points', () => {
-		expect(dailyPattern(series(0, 24, (h) => 60 + (h % 3)), 'Asia/Jakarta')).toBeNull();
+		expect(dailyPattern(series(0, 48, (h) => 60 + (h % 3)), 'Asia/Jakarta')).toBeNull();
+	});
+
+	it('claims no pattern from a single day, where a steady trend would pass for one', () => {
+		// Rising 2 points an hour: the oldest and newest hours meet on the clock and look like a daily low and high.
+		const rising = Array.from({ length: 24 }, (_, i) => reading(at(i), 20 + 2 * i));
+		expect(dailyPattern(rising, 'Asia/Jakarta')).toBeNull();
 	});
 
 	it('claims no pattern without two adjacent hours', () => {

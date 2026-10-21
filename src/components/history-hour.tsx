@@ -26,8 +26,10 @@ export function HourTile({ hour, timeZone, isLatest, onBack, ref }: Props) {
 	return (
 		<section
 			ref={ref}
+			// Focusable so "back to the latest hour", which removes itself, can hand focus to the tile.
+			tabIndex={-1}
 			aria-labelledby="history-hour"
-			className="@container grid scroll-mt-20 content-start gap-5 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6"
+			className="@container grid scroll-mt-20 content-start gap-5 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 outline-none sm:p-6"
 		>
 			<div className="grid gap-3">
 				{/* Picking another hour from the table keeps focus there, so the new hour is announced instead. */}

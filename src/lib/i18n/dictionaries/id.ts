@@ -373,6 +373,7 @@ export const id = {
 			dirtiest: 'Paling pekat',
 			average: 'rata-rata {avg} · {band}',
 			none: 'Belum ada pola jam yang jelas di rentang ini.',
+			needDays: 'Pola harian butuh data minimal dua hari. Pilih 72 jam untuk melihatnya.',
 			parts: { night: 'dini hari', morning: 'pagi', midday: 'siang', afternoon: 'sore', evening: 'malam' }
 		},
 		dominant: {

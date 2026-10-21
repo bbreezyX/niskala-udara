@@ -60,6 +60,9 @@ function HistoryPlot({ slots, timeZone, selected, marks, onSelect }: Omit<Props,
 	const rows = useMemo<Row[]>(() => slots.map((slot) => ({ t: slot.t, aqi: slot.hour?.index.aqi ?? null })), [slots]);
 	// Each day after the first starts at midnight: those are the dividers, and with the first slot, the ticks.
 	const dayStarts = useMemo(() => dayRows(slots, timeZone).map((day) => day.t), [slots, timeZone]);
+	// When the first midnight comes soon after the first hour, their two labels would overlap on a phone; keep the midnight.
+	const span = rows.length > 1 ? rows[rows.length - 1].t - rows[0].t : 0;
+	const ticks = dayStarts.length > 1 && dayStarts[1] - dayStarts[0] < span * 0.18 ? dayStarts.slice(1) : dayStarts;
 	const dayLabel = dateTimeFormat(locale, { weekday: 'short', day: 'numeric', timeZone });
 
 	const latestT = Date.parse(marks.latest.dataTime);
@@ -76,6 +79,8 @@ function HistoryPlot({ slots, timeZone, selected, marks, onSelect }: Omit<Props,
 				data={rows}
 				accessibilityLayer={false}
 				margin={{ top: 16, right: 16, bottom: 0, left: 0 }}
+				// A tap sends mousemove and click in one go; throttled, the click would still see the previous tap's hour.
+				throttledEvents={[]}
 				onClick={(state) => {
 					// A click that no hover preceded (a tap) carries no index; Number(null) would quietly pick the first hour.
 					if (state.activeIndex == null) return;
@@ -97,7 +102,8 @@ function HistoryPlot({ slots, timeZone, selected, marks, onSelect }: Omit<Props,
 						fill={band.fill}
 						fillOpacity={0.1}
 						stroke="none"
-						label={{ value: t.aqi.bands[band.key], position: 'insideTopRight', fill: band.ink, fontSize: '0.75rem' }}
+						// Left, because the latest hour's label always sits at the right edge.
+						label={{ value: t.aqi.bands[band.key], position: 'insideTopLeft', fill: band.ink, fontSize: '0.75rem' }}
 					/>
 				))}
 				{dayStarts.slice(1).map((start) => (
@@ -108,7 +114,7 @@ function HistoryPlot({ slots, timeZone, selected, marks, onSelect }: Omit<Props,
 					type="number"
 					scale="time"
 					domain={['dataMin', 'dataMax']}
-					ticks={dayStarts}
+					ticks={ticks}
 					tickFormatter={(value: number) => dayLabel.format(value)}
 					tickLine={false}
 					axisLine={false}

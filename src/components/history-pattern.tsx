@@ -4,7 +4,7 @@ import { Moon, Sun } from 'lucide-react';
 import { aqiBand, bandEdge } from '@/lib/aqi';
 import type { HistoryRange } from '@/lib/coordinates';
 import { formatHourOfDay } from '@/lib/format';
-import { tendency as partsOf, type DailyPattern, type PatternWindow } from '@/lib/history';
+import { PATTERN_MIN_DAYS, tendency as partsOf, type DailyPattern, type PatternWindow } from '@/lib/history';
 import { fill } from '@/lib/i18n/config';
 import { useDictionary, useLocale } from './locale-provider';
 
@@ -14,6 +14,8 @@ export function PatternTile({ pattern, range }: { pattern: DailyPattern | null; 
 	const copy = t.history.pattern;
 	const parts = pattern ? partsOf(pattern) : null;
 	const tendency = parts ? fill(copy.tendency, { best: copy.parts[parts.best], worst: copy.parts[parts.worst] }) : '';
+	// A range shorter than the days a pattern needs gets a pointer to the longer range, not "no clear pattern".
+	const short = !pattern && range < PATTERN_MIN_DAYS * 24;
 
 	return (
 		<section aria-labelledby="history-pattern" className="grid content-start gap-4 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
@@ -22,7 +24,7 @@ export function PatternTile({ pattern, range }: { pattern: DailyPattern | null; 
 					{copy.title}
 				</h2>
 				<p className="body-copy text-pretty text-muted-foreground">
-					{fill(copy.lead, { n: String(range) })} {tendency}
+					{short ? copy.needDays : `${fill(copy.lead, { n: String(range) })} ${tendency}`}
 				</p>
 			</div>
 			{pattern ? (
@@ -31,7 +33,7 @@ export function PatternTile({ pattern, range }: { pattern: DailyPattern | null; 
 					<WindowCard span={pattern.worst} label={copy.dirtiest} />
 				</div>
 			) : (
-				<p className="body-copy">{copy.none}</p>
+				!short && <p className="body-copy">{copy.none}</p>
 			)}
 		</section>
 	);

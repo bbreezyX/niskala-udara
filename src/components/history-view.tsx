@@ -233,7 +233,16 @@ function HistoryBody({
 				</div>
 			</div>
 			<div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-				<HourTile ref={hourTile} hour={selected} timeZone={city.timeZone} isLatest={selected === latest} onBack={() => onSelectTime(null)} />
+				<HourTile
+					ref={hourTile}
+					hour={selected}
+					timeZone={city.timeZone}
+					isLatest={selected === latest}
+					onBack={() => {
+						onSelectTime(null);
+						hourTile.current?.focus({ preventScroll: true });
+					}}
+				/>
 				<Recommendation
 					aqi={selected.index.aqi}
 					recommendations={selected.recommendations ?? {}}

@@ -7,6 +7,12 @@ export const HOUR_MS = 3_600_000;
 /** Below this many AQI points between the cleanest and most polluted window, hour-to-hour noise would pass for a pattern. */
 export const PATTERN_MIN_SPREAD = 5;
 
+/**
+ * Samples each hour of the day needs before it counts. With one day, the oldest and newest hours sit side
+ * by side on the clock, so a steady trend over the day would read as a daily low and high.
+ */
+export const PATTERN_MIN_DAYS = 2;
+
 /** One hour of the requested range; `hour` is null when Google sent nothing for it. */
 export interface HourSlot {
 	t: number;
@@ -102,7 +108,7 @@ export function dailyPattern(hours: AirQualityData[], timeZone: string): DailyPa
 		slot.total += hour.index.aqi;
 		slot.n += 1;
 	}
-	const avg = sums.map(({ total, n }) => (n ? total / n : null));
+	const avg = sums.map(({ total, n }) => (n >= PATTERN_MIN_DAYS ? total / n : null));
 	let best: { h: number; v: number } | null = null;
 	let worst: { h: number; v: number } | null = null;
 	for (let h = 0; h < 24; h++) {

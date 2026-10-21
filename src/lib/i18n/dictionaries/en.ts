@@ -372,6 +372,7 @@ export const en: Dictionary = {
 			dirtiest: 'Most polluted',
 			average: 'average {avg} · {band}',
 			none: 'No clear hourly pattern in this range.',
+			needDays: 'A daily pattern needs at least two days of data. Choose 72 hours to see it.',
 			parts: { night: 'before dawn', morning: 'in the morning', midday: 'around midday', afternoon: 'in the afternoon', evening: 'in the evening' }
 		},
 		dominant: {
