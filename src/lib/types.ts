@@ -111,3 +111,14 @@ export interface WindData {
 	/** When the server fetched the model run, not when it was computed. */
 	fetchedAt: string;
 }
+
+/** One sample of a smoke trace's path, going back in time from the place. */
+export interface TracePoint {
+	latitude: number;
+	longitude: number;
+	hoursBack: number;
+	/** Distance travelled along the path from the place, in km. */
+	distanceKm: number;
+	/** How far either side of the path the air may have passed, in km. */
+	radiusKm: number;
+}
