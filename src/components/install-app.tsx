@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { Download, EllipsisVertical, Share2, X } from 'lucide-react';
+import { Download, EllipsisVertical, Share2, Smartphone, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { BrandMark } from './brand-mark';
@@ -103,7 +103,7 @@ export function InstallApp() {
 								void install();
 							}}
 						>
-							<Download aria-hidden="true" />
+							<Smartphone aria-hidden="true" />
 						</Button>
 					</DialogTrigger>
 					<span aria-hidden="true" className="rounded-full bg-background/95 px-2 py-0.5 text-xs font-semibold text-foreground">
