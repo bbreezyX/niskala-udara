@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WIND_GRID } from '@/lib/config/map';
 import { handleWindRequest } from './handle-map';
-import { clearWindCache, fetchWindForecast, getWind, getWindForecast, gridPoints, windAt, WIND_TTL_MS } from './wind';
+import { clearWindCache, fetchWindForecast, getWind, getWindForecast, gridPoints, windAt, WIND_FAILURE_HOLD_MS, WIND_TTL_MS } from './wind';
 
 const HOUR = 3600;
 const START = Date.parse('2026-10-19T00:00:00Z') / 1000;
@@ -135,14 +135,28 @@ describe('handleWindRequest', () => {
 		expect(fetchFn).toHaveBeenCalledTimes(chunks * 2);
 	});
 
-	it('does not cache failures and rejects cross-site requests', async () => {
+	it('holds a failure briefly instead of re-fetching the whole grid on every request', async () => {
 		vi.useFakeTimers({ now: (START + 2 * HOUR) * 1000 });
 		const fetchFn = vi
 			.fn<typeof fetch>()
-			.mockResolvedValueOnce(new Response('oops', { status: 500 }))
+			.mockResolvedValueOnce(new Response('oops', { status: 429 }))
 			.mockImplementation(async (url) => openMeteo(String(url)));
-		expect((await handleWindRequest(request(), undefined, fetchFn)).status).toBe(502);
+		expect((await handleWindRequest(request(), undefined, fetchFn)).status).toBe(503);
+		const calls = fetchFn.mock.calls.length;
+
+		// During the hold every request gets the same failure and Open-Meteo hears nothing.
+		const held = await handleWindRequest(request(), undefined, fetchFn);
+		expect(held.status).toBe(503);
+		expect(await held.json()).toEqual({ error: { code: 'quota_exceeded' } });
+		expect(fetchFn).toHaveBeenCalledTimes(calls);
+
+		vi.advanceTimersByTime(WIND_FAILURE_HOLD_MS);
 		expect((await handleWindRequest(request(), undefined, fetchFn)).status).toBe(200);
+	});
+
+	it('rejects cross-site requests', async () => {
+		const fetchFn = vi.fn<typeof fetch>();
 		expect((await handleWindRequest(request({ 'sec-fetch-site': 'cross-site' }), undefined, fetchFn)).status).toBe(403);
+		expect(fetchFn).not.toHaveBeenCalled();
 	});
 });

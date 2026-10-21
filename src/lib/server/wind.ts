@@ -125,16 +125,27 @@ export function windAt(forecast: WindForecast, now = new Date()): WindData {
 	};
 }
 
-let cache: { at: number; forecast: Promise<WindForecast> } | null = null;
+/**
+ * How long a failed fetch is remembered. The trace is requested on every location page and map pan, so
+ * without a hold each request during an outage or rate limit would fetch the whole 429-point grid again,
+ * keeping Open-Meteo's limit tripped and spending the day's calls. Two minutes keeps retries under one
+ * grid a minute, inside the 600-a-minute limit.
+ */
+export const WIND_FAILURE_HOLD_MS = 2 * 60_000;
 
-/** Shares one upstream fetch across visitors and the smoke trace for WIND_TTL_MS; failures are not cached. */
+let cache: { at: number; forecast: Promise<WindForecast>; failed: boolean } | null = null;
+
+/** Shares one upstream fetch across visitors and the smoke trace for WIND_TTL_MS; a failure is shared for WIND_FAILURE_HOLD_MS. */
 export function getWindForecast(apiKey?: string, fetchFn: typeof fetch = fetch): Promise<WindForecast> {
 	const now = Date.now();
 	let entry = cache;
-	if (!entry || now - entry.at >= WIND_TTL_MS) {
-		const fresh = { at: now, forecast: fetchWindForecast(apiKey, fetchFn) };
+	if (!entry || now - entry.at >= (entry.failed ? WIND_FAILURE_HOLD_MS : WIND_TTL_MS)) {
+		const fresh = { at: now, forecast: fetchWindForecast(apiKey, fetchFn), failed: false };
 		fresh.forecast.catch(() => {
-			if (cache === fresh) cache = null;
+			// The hold counts from the failure, not the start of a fetch that may have taken seconds.
+			if (cache !== fresh) return;
+			fresh.failed = true;
+			fresh.at = Date.now();
 		});
 		cache = entry = fresh;
 	}
