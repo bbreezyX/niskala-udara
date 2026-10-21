@@ -2,10 +2,10 @@
 
 import { RotateCw } from 'lucide-react';
 import { useSmokeTrace } from '@/lib/client/use-smoke-trace';
-import { formatDataTime, numberFormat } from '@/lib/format';
+import { formatDataTime } from '@/lib/format';
 import { fill } from '@/lib/i18n/config';
 import { TRACE_HOURS } from '@/lib/smoke-trace';
-import { compassPoint, traceSentence } from '@/lib/smoke-trace-copy';
+import { traceFacts, traceSentence } from '@/lib/smoke-trace-copy';
 import type { AirQualityData, Coordinates, SmokeTrace } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -63,26 +63,8 @@ export function SmokeTraceCard({ coordinates, current, timeZone }: Props) {
 function TraceBody({ trace, current, timeZone }: { trace: SmokeTrace; current: AirQualityData; timeZone: string }) {
 	const t = useDictionary();
 	const locale = useLocale();
-	const number = numberFormat(locale, 0);
 	const sentence = traceSentence(trace, { aqi: current.index.aqi, dominantPollutant: current.index.dominantPollutant }, t, locale);
-	const group = trace.mainGroup;
-	const facts = [
-		{ label: t.smokeTrace.facts.hotspots, value: number.format(trace.count) },
-		{ label: t.smokeTrace.facts.power, value: fill(t.smokeTrace.facts.powerValue, { mw: number.format(trace.totalFrp) }) },
-		...(group
-			? [
-					{
-						label: t.smokeTrace.facts.group,
-						value: fill(t.smokeTrace.facts.groupValue, {
-							km: String(group.distanceKm),
-							direction: t.map.compass[compassPoint(group.bearing)],
-							hours: String(group.hoursBack)
-						}),
-						wide: true
-					}
-				]
-			: [])
-	];
+	const facts = traceFacts(trace, t, locale);
 
 	// From lg the figure takes a side column; on phones it follows the text it illustrates.
 	return (

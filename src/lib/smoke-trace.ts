@@ -93,6 +93,8 @@ export function windAtTime(wind: WindHistory, latitude: number, longitude: numbe
 			// Directions are converted to components before mixing, so 350° and 10° average to north, not south.
 			const speed = speeds[i][hour];
 			const radians = directions[i][hour] * RADIANS;
+			// A missing hour is unknown wind, not still air: the trace stops here and says so.
+			if (!Number.isFinite(speed) || !Number.isFinite(radians)) return null;
 			u += -speed * Math.sin(radians) * share * weight;
 			v += -speed * Math.cos(radians) * share * weight;
 		}

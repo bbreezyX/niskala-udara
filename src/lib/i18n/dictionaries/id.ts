@@ -500,10 +500,12 @@ export const id = {
 		truncated: 'Jejak berhenti di batas data angin, jadi api di luar Indonesia tidak terhitung.',
 		facts: {
 			hotspots: 'Titik Api di Jalur Angin',
+			hotspotsCalm: 'Titik Api dalam {km} km',
 			power: 'Total Intensitas',
 			powerValue: '{mw} MW',
 			group: 'Kelompok Terkuat',
-			groupValue: '{km} km ke {direction}, ±{hours} jam'
+			groupValue: '{km} km ke {direction}, ±{hours} jam',
+			groupValueCalm: '{km} km ke {direction}'
 		},
 		north: 'U',
 		method: 'Perkiraan dari angin model 10 m dan deteksi satelit, bukan pengukuran asap.',

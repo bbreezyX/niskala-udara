@@ -55,3 +55,26 @@ export function traceSentence(trace: SmokeTrace, reading: TraceReading | null, t
 	}[variant]();
 	return trace.truncated && !trace.calm ? `${sentence} ${copy.truncated}` : sentence;
 }
+
+export interface TraceFact {
+	label: string;
+	value: string;
+	/** Spans the whole row on phones, where the value is a longer phrase. */
+	wide?: boolean;
+}
+
+/** The facts under the sentence. Calm air has no wind path and no travel time, so neither is claimed. */
+export function traceFacts(trace: SmokeTrace, t: Dictionary, locale: Locale): TraceFact[] {
+	const copy = t.smokeTrace.facts;
+	const number = numberFormat(locale, 0);
+	const group = trace.mainGroup;
+	const facts: TraceFact[] = [
+		{ label: trace.calm ? fill(copy.hotspotsCalm, { km: String(CALM_RADIUS_KM) }) : copy.hotspots, value: number.format(trace.count) },
+		{ label: copy.power, value: fill(copy.powerValue, { mw: number.format(trace.totalFrp) }) }
+	];
+	if (group) {
+		const values = { km: String(group.distanceKm), direction: t.map.compass[compassPoint(group.bearing)], hours: String(group.hoursBack) };
+		facts.push({ label: copy.group, value: fill(trace.calm ? copy.groupValueCalm : copy.groupValue, values), wide: true });
+	}
+	return facts;
+}

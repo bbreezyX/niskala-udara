@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { en } from '@/lib/i18n/dictionaries/en';
 import { id } from '@/lib/i18n/dictionaries/id';
 import type { SmokeTrace } from '@/lib/types';
-import { traceSentence, traceVariant } from './smoke-trace-copy';
+import { traceFacts, traceSentence, traceVariant } from './smoke-trace-copy';
 
 const base: SmokeTrace = {
 	hours: 12,
@@ -56,5 +56,23 @@ describe('traceSentence', () => {
 			/ Jejak berhenti di batas data angin, jadi api di luar Indonesia tidak terhitung\.$/
 		);
 		expect(traceSentence(trace({ count: 1, level: 'light' }), smoky, en, 'en')).toContain('1 hotspot.');
+	});
+});
+
+describe('traceFacts', () => {
+	it('names the wind path, the total power and the strongest group with its travel hours', () => {
+		expect(traceFacts(trace(), id, 'id')).toEqual([
+			{ label: 'Titik Api di Jalur Angin', value: '38' },
+			{ label: 'Total Intensitas', value: '420 MW' },
+			{ label: 'Kelompok Terkuat', value: '80 km ke barat daya, ±5 jam', wide: true }
+		]);
+	});
+
+	it('claims no wind path or travel hours when the air was calm', () => {
+		expect(traceFacts(trace({ calm: true, from: null, count: 4 }), id, 'id')).toEqual([
+			{ label: 'Titik Api dalam 50 km', value: '4' },
+			{ label: 'Total Intensitas', value: '420 MW' },
+			{ label: 'Kelompok Terkuat', value: '80 km ke barat daya', wide: true }
+		]);
 	});
 });

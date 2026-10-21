@@ -87,6 +87,19 @@ describe('windAt', () => {
 		expect(wind.grid).toEqual(WIND_GRID);
 	});
 
+	it('keeps a missing hour missing for the trace, and calm on the map', async () => {
+		const fetchFn = vi.fn<typeof fetch>().mockImplementation(async (url) => {
+			const count = new URL(String(url)).searchParams.get('latitude')!.split(',').length;
+			const speeds = TIMES.map((_, i) => (i === 5 ? null : 5));
+			const location = { hourly: { time: TIMES, wind_speed_10m: speeds, wind_direction_10m: TIMES.map(() => 90) } };
+			return Response.json(count === 1 ? location : Array.from({ length: count }, () => location));
+		});
+		const forecast = await fetchWindForecast(undefined, fetchFn);
+		expect(forecast.speeds[0][5]).toBeNaN();
+		const wind = windAt(forecast, new Date((START + 5 * HOUR + 60) * 1000));
+		expect([wind.u[0], wind.v[0]]).toEqual([0, 0]);
+	});
+
 	it('refuses a time past the forecast', async () => {
 		const fetchFn = vi.fn<typeof fetch>().mockImplementation(async (url) => openMeteo(String(url)));
 		const forecast = await fetchWindForecast(undefined, fetchFn);

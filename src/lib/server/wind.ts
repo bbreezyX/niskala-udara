@@ -90,13 +90,15 @@ export async function fetchWindForecast(apiKey?: string, fetchFn: typeof fetch =
 		if (!speed || !direction || speed.length !== times.length || direction.length !== times.length) {
 			throw new AirQualityError('no_data', 'wind: incomplete location');
 		}
-		// A gap in one hour becomes calm rather than failing the whole map.
-		speeds.push(speed.map((value) => value ?? 0));
-		directions.push(direction.map((value) => value ?? 0));
+		// A gap stays NaN: the map draws it as calm rather than failing (see windAt), and the smoke
+		// trace stops there instead of reading missing data as still air.
+		speeds.push(speed.map((value) => value ?? Number.NaN));
+		directions.push(direction.map((value) => value ?? Number.NaN));
 	}
 	return { times, speeds, directions, fetchedAt: now.toISOString() };
 }
 
+/** `|| 0` turns -0 into 0 and a missing (NaN) hour into calm, so the map's JSON never carries null. */
 const round = (value: number) => Math.round(value * 10) / 10 || 0;
 
 /** The hour containing `now`, as eastward/northward components. */

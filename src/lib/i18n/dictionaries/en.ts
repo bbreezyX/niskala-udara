@@ -499,10 +499,12 @@ export const en: Dictionary = {
 		truncated: 'The trace stops at the edge of the wind data, so fires outside Indonesia are not counted.',
 		facts: {
 			hotspots: 'Hotspots in the Wind Path',
+			hotspotsCalm: 'Hotspots within {km} km',
 			power: 'Total Intensity',
 			powerValue: '{mw} MW',
 			group: 'Strongest Group',
-			groupValue: '{km} km {direction}, ~{hours} h'
+			groupValue: '{km} km {direction}, ~{hours} h',
+			groupValueCalm: '{km} km {direction}'
 		},
 		north: 'N',
 		method: 'An estimate from 10 m model wind and satellite detections, not a smoke measurement.',

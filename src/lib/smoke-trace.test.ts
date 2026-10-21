@@ -193,3 +193,23 @@ describe('buildSmokeTrace', () => {
 		});
 	});
 });
+
+describe('missing wind', () => {
+	it('has no wind where a contributing hour is missing', () => {
+		const wind = steadyWind(5, 90);
+		const hour = wind.times.indexOf(NOW);
+		wind.speeds[0][hour] = Number.NaN;
+		const corner = { latitude: WIND_GRID.south, longitude: WIND_GRID.west };
+		expect(windAtTime(wind, corner.latitude, corner.longitude, NOW)).toBeNull();
+	});
+
+	it('stops at missing past hours instead of calling the air calm', () => {
+		const wind = steadyWind(5, 90);
+		const cutoff = wind.times.indexOf(NOW - 3 * HOUR);
+		for (const speeds of wind.speeds) speeds.fill(Number.NaN, 0, cutoff);
+		const { points, truncated, calm } = traceBack(wind, PALEMBANG, NOW);
+		expect({ truncated, calm }).toEqual({ truncated: true, calm: false });
+		expect(points.at(-1)!.hoursBack).toBeLessThanOrEqual(3);
+		expect(points.every((p) => Number.isFinite(p.latitude) && Number.isFinite(p.longitude) && Number.isFinite(p.distanceKm))).toBe(true);
+	});
+});
