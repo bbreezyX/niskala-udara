@@ -1,9 +1,11 @@
 import { MAP_BOUNDS, WIND_GRID } from '@/lib/config/map';
 import { parseCoordinates } from '@/lib/coordinates';
 import { buildSmokeTrace } from '@/lib/smoke-trace';
+import type { Hotspot } from '@/lib/types';
 import { getHotspots } from './firms';
 import { AirQualityError } from './google-air-quality';
 import { fail, isCrossSite, log, readJsonBody, respond } from './http';
+import { STATIC_HEAT_SOURCES, type StaticMask } from './static-heat-sources';
 import { getWindForecast } from './wind';
 
 const MAX_BODY_BYTES = 1024;
@@ -17,7 +19,8 @@ export async function handleSmokeTraceRequest(
 	request: Request,
 	firmsKey: string | undefined,
 	openMeteoKey: string | undefined,
-	fetchFn: typeof fetch = fetch
+	fetchFn: typeof fetch = fetch,
+	staticSources: StaticMask = STATIC_HEAT_SOURCES
 ): Promise<Response> {
 	const startedAt = performance.now();
 	if (isCrossSite(request)) return fail('invalid_request', 403);
@@ -38,7 +41,18 @@ export async function handleSmokeTraceRequest(
 
 	try {
 		const [fires, forecast] = await Promise.all([getHotspots(firmsKey, fetchFn), getWindForecast(openMeteoKey, fetchFn)]);
-		const trace = buildSmokeTrace({ origin, wind: { grid: WIND_GRID, ...forecast }, windFetchedAt: forecast.fetchedAt, fires, now: new Date() });
+		// Flares, smelters and volcanoes are steady heat, not fires: they are counted apart, never as fire.
+		const fireHotspots: Hotspot[] = [];
+		const staticHotspots: Hotspot[] = [];
+		for (const hotspot of fires.hotspots) (staticSources.contains(hotspot) ? staticHotspots : fireHotspots).push(hotspot);
+		const trace = buildSmokeTrace({
+			origin,
+			wind: { grid: WIND_GRID, ...forecast },
+			windFetchedAt: forecast.fetchedAt,
+			fires: { ...fires, hotspots: fireHotspots },
+			staticHotspots,
+			now: new Date()
+		});
 		// Without wind for the present hour there is no path to show, only the place itself.
 		if (!trace.calm && trace.path.length < 2) throw new AirQualityError('no_data', 'smoke-trace: no wind for the present hour');
 		return respond({ data: trace });

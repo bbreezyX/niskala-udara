@@ -78,3 +78,9 @@ export function traceFacts(trace: SmokeTrace, t: Dictionary, locale: Locale): Tr
 	}
 	return facts;
 }
+
+/** Says that known static heat sources (flares, smelters, volcanoes) were left out, so the count is not a mystery. */
+export function staticNote(trace: SmokeTrace, t: Dictionary, locale: Locale): string | null {
+	if (trace.staticExcluded === 0) return null;
+	return plural(t.smokeTrace.staticExcluded, trace.staticExcluded, locale, { n: numberFormat(locale, 0).format(trace.staticExcluded) });
+}

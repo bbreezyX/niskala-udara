@@ -8,7 +8,7 @@ import { formatDataTime, formatHour, numberFormat, timeZoneLabel } from '@/lib/f
 import { fill, plural } from '@/lib/i18n/config';
 import { ISPU_BANDS } from '@/lib/ispu';
 import type { KlhkNationalData } from '@/lib/server/klhk-ispu';
-import { traceSentence } from '@/lib/smoke-trace-copy';
+import { staticNote, traceSentence } from '@/lib/smoke-trace-copy';
 import type { FireData, SmokeTrace, WindData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -264,9 +264,11 @@ function TraceStatus({ showTrace, trace, onRetryTrace }: LayerControlsProps) {
 
 	const zone = viewerTimeZone();
 	const time = (iso: string) => `${formatHour(iso, zone, locale)} ${timeZoneLabel(zone)}`;
+	const staticLine = staticNote(trace.data, t, locale);
 	return (
 		<div className="meta-copy grid gap-1 text-muted-foreground" aria-live="polite">
 			<p className="text-sm text-foreground">{traceSentence(trace.data, null, t, locale)}</p>
+			{staticLine && <p>{staticLine}</p>}
 			<p>{fill(t.smokeTrace.dataTimes, { wind: time(trace.data.windFetchedAt), fires: time(trace.data.firesFetchedAt) })}</p>
 		</div>
 	);

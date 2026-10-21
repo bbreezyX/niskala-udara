@@ -160,14 +160,21 @@ describe('buildSmokeTrace', () => {
 		sources: ['VIIRS_NOAA20_NRT'],
 		missingSources: ['VIIRS_SNPP_NRT']
 	});
-	const build = (hotspots: Hotspot[]) =>
+	const build = (hotspots: Hotspot[], staticHotspots: Hotspot[] = []) =>
 		buildSmokeTrace({
 			origin: PALEMBANG,
 			wind: steadyWind(5, 90),
 			windFetchedAt: '2026-10-21T04:00:00.000Z',
 			fires: fires(hotspots),
+			staticHotspots,
 			now: new Date(NOW * 1000)
 		});
+
+	it('counts static heat sources in the corridor apart from the fires', () => {
+		const trace = build([fire(east(PALEMBANG, 83), 40)], [fire(east(PALEMBANG, 50), 30), fire(east(PALEMBANG, -300), 5)]);
+		expect(trace.count).toBe(1);
+		expect(trace.staticExcluded).toBe(1);
+	});
 
 	it('reports a quiet day as level none with no group', () => {
 		expect(build([])).toMatchObject({ count: 0, totalFrp: 0, level: 'none', mainGroup: null, hotspots: [], missingFireSources: ['VIIRS_SNPP_NRT'] });

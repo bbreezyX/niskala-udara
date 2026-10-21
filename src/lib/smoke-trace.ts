@@ -243,17 +243,20 @@ export function roundDistanceKm(km: number): number {
 /** Enough to draw the corridor's fires; a busy day can put thousands in it. */
 export const MAX_TRACE_HOTSPOTS = 300;
 
+/** `fires` holds only the hotspots that may be fires; `staticHotspots` the ones a static-source mask set aside. */
 export function buildSmokeTrace({
 	origin,
 	wind,
 	windFetchedAt,
 	fires,
+	staticHotspots = [],
 	now
 }: {
 	origin: Coordinates;
 	wind: WindHistory;
 	windFetchedAt: string;
 	fires: FireData;
+	staticHotspots?: readonly Hotspot[];
 	now: Date;
 }): SmokeTrace {
 	const path = traceBack(wind, origin, now.getTime() / 1000);
@@ -275,6 +278,7 @@ export function buildSmokeTrace({
 		count: hotspots.length,
 		totalFrp,
 		mainGroup: main ? { ...main, distanceKm: roundDistanceKm(main.distanceKm), hoursBack: Math.max(1, Math.round(main.hoursBack)) } : null,
-		level: traceLevel(hotspots.length, totalFrp)
+		level: traceLevel(hotspots.length, totalFrp),
+		staticExcluded: corridorHotspots(path, staticHotspots).length
 	};
 }

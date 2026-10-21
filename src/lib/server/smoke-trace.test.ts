@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearHotspotCache } from './firms';
 import { handleSmokeTraceRequest } from './handle-smoke-trace';
+import { createStaticMask } from './static-heat-sources';
 import { clearWindCache } from './wind';
 
 const HOUR = 3600;
@@ -52,13 +53,22 @@ afterEach(() => {
 
 describe('handleSmokeTraceRequest', () => {
 	it('returns the trace for a place inside Indonesia', async () => {
-		const res = await handleSmokeTraceRequest(post(PALEMBANG), 'firms-key', undefined, routes());
+		const res = await handleSmokeTraceRequest(post(PALEMBANG), 'firms-key', undefined, routes(), createStaticMask([]));
 		expect(res.status).toBe(200);
 		expect(res.headers.get('cache-control')).toBe('no-store');
 		const { data } = await res.json();
 		expect(data.path).toHaveLength(25);
 		expect(data.count).toBe(1);
 		expect(data.level).toBe('light');
+	});
+
+	it('leaves static heat sources out of the count and reports them', async () => {
+		const flare = createStaticMask([[-2.99, 105.21]], 1);
+		const res = await handleSmokeTraceRequest(post(PALEMBANG), 'firms-key', undefined, routes(), flare);
+		const { data } = await res.json();
+		expect(data.count).toBe(0);
+		expect(data.staticExcluded).toBe(1);
+		expect(data.level).toBe('none');
 	});
 
 	it('rejects cross-site requests, other content types, big bodies, bad and out-of-bounds coordinates', async () => {

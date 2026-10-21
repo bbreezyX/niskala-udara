@@ -167,4 +167,6 @@ export interface SmokeTrace {
 	/** The strongest group, with its distance rounded and its hours whole, ready to show. */
 	mainGroup: FireGroup | null;
 	level: TraceLevel;
+	/** Hotspots in the corridor left out as known static heat sources: flares, smelters, volcanoes. */
+	staticExcluded: number;
 }

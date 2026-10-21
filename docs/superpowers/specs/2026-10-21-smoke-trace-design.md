@@ -108,6 +108,7 @@ The trace needs hourly wind for the last 12 hours, not just the current hour.
 - A hotspot is in the corridor if it is within the radius of any path point. Record the hours-back of the closest path point: roughly how long ago the air passed over it.
 - Fires are treated as burning throughout the 24-hour window. Detection time is when a satellite passed, not when the fire started or stopped, so it is not matched against the path's time.
 - Prefilter by the corridor's bounding box before measuring distances; Indonesia can have 15,000+ detections a day.
+- Leave out known static heat sources (added 2026-10-21 after calibration). FIRMS live data cannot tell a fire from a gas flare (Bontang LNG), a nickel smelter (Morowali, Weda Bay, Obi) or a volcano (Semeru), and those reached `heavy`. NASA's standard processing labels such detections (`type` 1 volcano, 2 static land source, 3 offshore), a few months behind. `scripts/build-static-heat-sources.mjs` collects them over the last 12 months of both VIIRS satellites, merges them into ~550 m points seen at least twice, and writes `src/lib/server/static-heat-sources.json`. The endpoint drops hotspots within 1 km of a point before tracing and reports how many it dropped inside the corridor (`staticExcluded`), shown as a footnote. The map is unchanged. Rerun the script every six months: new smelters, and volcanoes quiet during those 12 months, are not masked until then.
 
 ### Groups and level
 

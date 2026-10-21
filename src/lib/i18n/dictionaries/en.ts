@@ -497,6 +497,10 @@ export const en: Dictionary = {
 		},
 		mapCalmNone: 'Map centre: the wind has been nearly calm for the last {hours} hours, and there are no hotspots within {km} km.',
 		truncated: 'The trace stops at the edge of the wind data, so fires outside Indonesia are not counted.',
+		staticExcluded: {
+			one: '{n} hotspot from a static heat source (gas flare, smelter, volcano) is not counted.',
+			other: '{n} hotspots from static heat sources (gas flares, smelters, volcanoes) are not counted.'
+		},
 		facts: {
 			hotspots: 'Hotspots in the Wind Path',
 			hotspotsCalm: 'Hotspots within {km} km',

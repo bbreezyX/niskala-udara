@@ -498,6 +498,10 @@ export const id = {
 		},
 		mapCalmNone: 'Tengah peta: angin hampir tenang selama {hours} jam terakhir, dan tidak ada titik api dalam {km} km.',
 		truncated: 'Jejak berhenti di batas data angin, jadi api di luar Indonesia tidak terhitung.',
+		staticExcluded: {
+			one: '{n} titik panas dari sumber tetap (suar gas, smelter, gunung api) tidak dihitung.',
+			other: '{n} titik panas dari sumber tetap (suar gas, smelter, gunung api) tidak dihitung.'
+		},
 		facts: {
 			hotspots: 'Titik Api di Jalur Angin',
 			hotspotsCalm: 'Titik Api dalam {km} km',

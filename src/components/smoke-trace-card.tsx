@@ -5,7 +5,7 @@ import { useSmokeTrace } from '@/lib/client/use-smoke-trace';
 import { formatDataTime } from '@/lib/format';
 import { fill } from '@/lib/i18n/config';
 import { TRACE_HOURS } from '@/lib/smoke-trace';
-import { traceFacts, traceSentence } from '@/lib/smoke-trace-copy';
+import { staticNote, traceFacts, traceSentence } from '@/lib/smoke-trace-copy';
 import type { AirQualityData, Coordinates, SmokeTrace } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -65,6 +65,7 @@ function TraceBody({ trace, current, timeZone }: { trace: SmokeTrace; current: A
 	const locale = useLocale();
 	const sentence = traceSentence(trace, { aqi: current.index.aqi, dominantPollutant: current.index.dominantPollutant }, t, locale);
 	const facts = traceFacts(trace, t, locale);
+	const staticLine = staticNote(trace, t, locale);
 
 	// From lg the figure takes a side column; on phones it follows the text it illustrates.
 	return (
@@ -88,6 +89,7 @@ function TraceBody({ trace, current, timeZone }: { trace: SmokeTrace; current: A
 							fires: formatDataTime(trace.firesFetchedAt, timeZone, locale)
 						})}
 					</span>
+					{staticLine && <span>{staticLine}</span>}
 					{trace.missingFireSources.length > 0 && <span>{t.map.missingSources}</span>}
 				</p>
 			</div>

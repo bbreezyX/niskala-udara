@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { en } from '@/lib/i18n/dictionaries/en';
 import { id } from '@/lib/i18n/dictionaries/id';
 import type { SmokeTrace } from '@/lib/types';
-import { traceFacts, traceSentence, traceVariant } from './smoke-trace-copy';
+import { staticNote, traceFacts, traceSentence, traceVariant } from './smoke-trace-copy';
 
 const base: SmokeTrace = {
 	hours: 12,
@@ -18,6 +18,7 @@ const base: SmokeTrace = {
 	count: 38,
 	totalFrp: 420,
 	level: 'heavy',
+	staticExcluded: 0,
 	mainGroup: { latitude: -3.4, longitude: 104.2, count: 20, totalFrp: 300, distanceKm: 80, bearing: 230, hoursBack: 5 }
 };
 const trace = (over: Partial<SmokeTrace> = {}): SmokeTrace => ({ ...base, ...over });
@@ -74,5 +75,13 @@ describe('traceFacts', () => {
 			{ label: 'Total Intensitas', value: '420 MW' },
 			{ label: 'Kelompok Terkuat', value: '80 km ke barat daya', wide: true }
 		]);
+	});
+});
+
+describe('staticNote', () => {
+	it('says how many static heat sources were left out, and nothing when none were', () => {
+		expect(staticNote(trace({ staticExcluded: 3 }), id, 'id')).toBe('3 titik panas dari sumber tetap (suar gas, smelter, gunung api) tidak dihitung.');
+		expect(staticNote(trace({ staticExcluded: 1 }), en, 'en')).toBe('1 hotspot from a static heat source (gas flare, smelter, volcano) is not counted.');
+		expect(staticNote(trace(), id, 'id')).toBeNull();
 	});
 });
