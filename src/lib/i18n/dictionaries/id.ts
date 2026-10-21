@@ -344,10 +344,11 @@ export const id = {
 	history: {
 		kicker: 'Catatan per jam, waktu {zone}',
 		rangeLabel: 'Rentang waktu',
-		rangeOption: '{n} jam terakhir',
+		rangeOption: '{n} jam',
+		meta: '{name} · {from} – {to} {zone}',
 		latest: 'Data terakhir {time}',
-		caption: 'Kualitas udara per jam di {name}. Pilih baris untuk melihat detail.',
-		columns: { hour: 'Jam', aqi: 'AQI', pollutant: 'Polutan', change: 'Perubahan' },
+		caption: 'Kualitas udara per jam di {name}, terbaru di atas.',
+		columns: { hour: 'Jam', aqi: 'AQI', category: 'Kategori', pollutant: 'Polutan', change: 'Perubahan' },
 		delta: {
 			start: 'Awal data',
 			better: 'Membaik {n} dari jam sebelumnya',
@@ -362,7 +363,44 @@ export const id = {
 		trendTitle: 'Tren AQI {n} jam',
 		trendLabel: 'Tren AQI {name}, {n} jam terakhir',
 		detail: 'Detail',
-		showHour: 'Lihat detail {time}'
+		showHour: 'Lihat detail {time}',
+		hours: { one: '{n} jam', other: '{n} jam' },
+		summary: {
+			average: 'Rata-rata {n} jam terakhir',
+			verdict: '{band} di {count} dari {total} jam.',
+			ceiling: 'Belum sekali pun mencapai {band}.',
+			peak: 'Sempat {band} pada {time}.',
+			waffle: 'Satu kotak satu jam, diurutkan per kategori'
+		},
+		chart: {
+			title: 'Naik turun per jam',
+			note: 'Pita latar menandai kategori. Garis terputus berarti jam itu tanpa data.',
+			worst: 'Terpekat',
+			best: 'Terbersih',
+			latest: 'Terakhir'
+		},
+		pattern: {
+			title: 'Pola harian',
+			lead: 'Rata-rata tiap jam selama {n} jam terakhir.',
+			tendency: 'Udara cenderung paling bersih {best} dan paling pekat {worst}.',
+			cleanest: 'Paling bersih',
+			dirtiest: 'Paling pekat',
+			average: 'rata-rata {avg} · {band}',
+			none: 'Belum ada pola jam yang jelas di rentang ini.',
+			parts: { night: 'dini hari', morning: 'pagi', midday: 'siang', afternoon: 'sore', evening: 'malam' }
+		},
+		dominant: {
+			title: 'Polutan dominan',
+			share: 'Paling menentukan AQI di {count} dari {total} jam.'
+		},
+		days: { title: 'Per hari', average: 'rata-rata' },
+		hour: {
+			latest: 'Jam terakhir',
+			picked: 'Jam terpilih',
+			hint: 'Pilih titik di grafik atau baris di tabel untuk jam lain.',
+			back: 'Kembali ke jam terakhir'
+		},
+		table: { summary: 'Semua jam dalam tabel ({n})', show: 'Lihat', noData: 'Tidak ada data' }
 	},
 	map: {
 		unconfigured: {

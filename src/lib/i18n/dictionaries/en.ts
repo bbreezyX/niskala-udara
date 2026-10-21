@@ -343,10 +343,11 @@ export const en: Dictionary = {
 	history: {
 		kicker: 'Hourly records, times in {zone}',
 		rangeLabel: 'Time range',
-		rangeOption: 'Last {n} hours',
+		rangeOption: '{n} hours',
+		meta: '{name} · {from} – {to} {zone}',
 		latest: 'Latest {time}',
-		caption: 'Hourly air quality in {name}. Select a row to see details.',
-		columns: { hour: 'Hour', aqi: 'AQI', pollutant: 'Pollutant', change: 'Change' },
+		caption: 'Hourly air quality in {name}, newest first.',
+		columns: { hour: 'Hour', aqi: 'AQI', category: 'Category', pollutant: 'Pollutant', change: 'Change' },
 		delta: {
 			start: 'Start of data',
 			better: '{n} better than the hour before',
@@ -361,7 +362,44 @@ export const en: Dictionary = {
 		trendTitle: '{n}-hour AQI trend',
 		trendLabel: 'AQI trend for {name}, last {n} hours',
 		detail: 'Details',
-		showHour: 'Show details for {time}'
+		showHour: 'Show details for {time}',
+		hours: { one: '{n} hour', other: '{n} hours' },
+		summary: {
+			average: 'Average over the last {n} hours',
+			verdict: '{band} in {count} of {total} hours.',
+			ceiling: 'Never reached {band}.',
+			peak: 'Reached {band} at {time}.',
+			waffle: 'One square per hour, sorted by category'
+		},
+		chart: {
+			title: 'Hour by hour',
+			note: 'Background bands mark the categories. A break in the line means no data for that hour.',
+			worst: 'Worst',
+			best: 'Best',
+			latest: 'Latest'
+		},
+		pattern: {
+			title: 'Daily pattern',
+			lead: 'Average for each hour of the day over the last {n} hours.',
+			tendency: 'The air tends to be cleanest {best} and most polluted {worst}.',
+			cleanest: 'Cleanest',
+			dirtiest: 'Most polluted',
+			average: 'average {avg} · {band}',
+			none: 'No clear hourly pattern in this range.',
+			parts: { night: 'before dawn', morning: 'in the morning', midday: 'around midday', afternoon: 'in the afternoon', evening: 'in the evening' }
+		},
+		dominant: {
+			title: 'Main pollutant',
+			share: 'Set the AQI in {count} of {total} hours.'
+		},
+		days: { title: 'By day', average: 'average' },
+		hour: {
+			latest: 'Latest hour',
+			picked: 'Selected hour',
+			hint: 'Pick a point on the chart or a row in the table to see another hour.',
+			back: 'Back to the latest hour'
+		},
+		table: { summary: 'All hours as a table ({n})', show: 'Show', noData: 'No data' }
 	},
 	map: {
 		unconfigured: {
