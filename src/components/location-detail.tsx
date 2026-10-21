@@ -20,6 +20,7 @@ import { AqiGauge } from './aqi-gauge';
 import { IspuChip, useStationSource } from './ispu-chip';
 import { Attribution, DataUnavailable, Recommendation, StateMessage } from './info-blocks';
 import { PollutantBreakdown } from './pollutant-breakdown';
+import { SmokeTraceCard } from './smoke-trace-card';
 import { TrendChart, type TrendPoint } from './trend-chart';
 import { Link } from './link';
 import { useDictionary, useLocale } from './locale-provider';
@@ -369,6 +370,8 @@ function DetailBody({ feed, configured, current, data }: { feed: LocationFeed; c
 					<PollutantBreakdown pollutants={current.pollutants} dominant={current.index.dominantPollutant} />
 				</CardContent>
 			</Card>
+
+			<SmokeTraceCard coordinates={location.coordinates} current={current} timeZone={location.timeZone} />
 
 			<TrendCard location={location} data={data} />
 		</div>
