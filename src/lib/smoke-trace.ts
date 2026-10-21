@@ -17,8 +17,13 @@ export const CALM_PATH_KM = 30;
 export const CALM_RADIUS_KM = 50;
 /** Hotspots this close belong to one burning area, so a cluster is never split by a grid line. */
 export const GROUP_LINK_KM = 10;
-/** Total corridor fire power from which smoke may be named as contributing. */
-export const HEAVY_FRP_MW = 100;
+/**
+ * Total corridor fire power from which smoke may be named as contributing: about 50 typical VIIRS
+ * detections (median ~6 MW). Calibrated on 21 Oct 2026 live data, where the spec's starting 100 MW
+ * called Tangerang, Depok and Makassar "heavy" from 13–25 small detections 40–80 km away, while real
+ * haze sources upwind of Palembang and Palangka Raya were in the thousands of MW.
+ */
+export const HEAVY_FRP_MW = 300;
 
 const EARTH_RADIUS_KM = 6371;
 const RADIANS = Math.PI / 180;

@@ -141,8 +141,8 @@ describe('groupHotspots', () => {
 });
 
 describe('traceLevel', () => {
-	it('is none without hotspots, heavy from 100 MW, and light for hotspots without FRP', () => {
-		expect([traceLevel(0, 0), traceLevel(5, 99.9), traceLevel(5, 100), traceLevel(3, 0)]).toEqual(['none', 'light', 'heavy', 'light']);
+	it('is none without hotspots, heavy from 300 MW, and light for hotspots without FRP', () => {
+		expect([traceLevel(0, 0), traceLevel(5, 299.9), traceLevel(5, 300), traceLevel(3, 0)]).toEqual(['none', 'light', 'heavy', 'light']);
 	});
 });
 
