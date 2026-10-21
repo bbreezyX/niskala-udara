@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { useDictionary, useLocale } from './locale-provider';
-import { AGE, HOTSPOT_COLOR, INTENSITY, intensityClass, shownHotspots } from './map-hotspots';
+import { AGE, HOTSPOT_COLOR, INTENSITY, intensityClass, shownHotspots } from '@/lib/hotspot-encoding';
 
 /** Only called for data fetched in the browser, so it never runs during server rendering. */
 function viewerTimeZone(): string {

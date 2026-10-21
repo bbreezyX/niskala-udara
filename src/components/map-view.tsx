@@ -16,7 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StateMessage } from './info-blocks';
 import { useDictionary, useLocale, useLocalePath } from './locale-provider';
-import { hotspotStyle, shownHotspots, useHotspotClicks } from './map-hotspots';
+import { shownHotspots } from '@/lib/hotspot-encoding';
+import { hotspotStyle, useHotspotClicks } from './map-hotspots';
 import { FiresSummary, LayerControls, MapAbout, type CentreWind } from './map-panel';
 import { useStationLayer } from './map-stations';
 
