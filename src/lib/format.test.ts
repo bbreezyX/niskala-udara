@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatAgo, formatConcentration, formatDataTime, formatHour } from './format';
+import { formatAgo, formatConcentration, formatDataTime, formatHour, formatHourOfDay } from './format';
 
 const ISO = '2026-10-18T09:00:00Z';
 
@@ -9,6 +9,12 @@ describe('locale-aware formatting', () => {
 		expect(formatHour(ISO, 'Asia/Jakarta', 'en')).toBe('16:00');
 		expect(formatConcentration(2.5, 'id')).toBe('2,5');
 		expect(formatConcentration(2.5, 'en')).toBe('2.5');
+	});
+
+	it('formats an hour of day per language, wrapping 24 to midnight', () => {
+		expect(formatHourOfDay(17, 'id')).toBe('17.00');
+		expect(formatHourOfDay(17, 'en')).toBe('17:00');
+		expect(formatHourOfDay(24, 'id')).toBe('00.00');
 	});
 
 	it('keeps the Indonesian zone abbreviation in English', () => {

@@ -72,6 +72,13 @@ export function formatHour(iso: string, timeZone: string, locale: Locale): strin
 	return new Intl.DateTimeFormat(INTL_LOCALES[locale], { hour: '2-digit', minute: '2-digit', timeZone }).format(new Date(iso));
 }
 
+/** Hour of day without a date, e.g. "17.00" / "17:00"; 24 wraps to midnight. */
+export function formatHourOfDay(hour: number, locale: Locale): string {
+	return new Intl.DateTimeFormat(INTL_LOCALES[locale], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }).format(
+		Date.UTC(2000, 0, 1, hour % 24)
+	);
+}
+
 /** Short day label in the location's time zone, e.g. "Sab, 18 Okt" / "Sat 18 Oct". */
 export function formatDay(iso: string, timeZone: string, locale: Locale): string {
 	return new Intl.DateTimeFormat(INTL_LOCALES[locale], { weekday: 'short', day: 'numeric', month: 'short', timeZone }).format(
