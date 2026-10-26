@@ -286,6 +286,16 @@ export const id = {
 		forecastMissing: 'Prakiraan Belum Tersedia',
 		dataAt: 'Data {time}'
 	},
+	share: {
+		preparing: 'Menyiapkan…',
+		failed: 'Gagal, Coba Lagi',
+		// After a slow first draw iOS wants a second tap before it opens the share sheet.
+		retap: 'Ketuk Lagi',
+		// Names for the icon-only button; the retap one starts with its visible words for voice control.
+		shareLabel: 'Bagikan kualitas udara {name} sebagai gambar story',
+		downloadLabel: 'Unduh gambar story kualitas udara {name}',
+		retapLabel: 'Ketuk lagi untuk membagikan gambar {name}'
+	},
 	chart: {
 		summary: '{label}. Terendah {min}, tertinggi {max}.',
 		now: 'Sekarang',

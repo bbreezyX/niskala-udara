@@ -20,6 +20,7 @@ import { AqiGauge } from './aqi-gauge';
 import { IspuChip, useStationSource } from './ispu-chip';
 import { Attribution, DataUnavailable, Recommendation, StateMessage } from './info-blocks';
 import { PollutantBreakdown } from './pollutant-breakdown';
+import { ShareStory } from './share-story';
 import { SmokeTraceCard } from './smoke-trace-card';
 import { TrendChart, type TrendPoint } from './trend-chart';
 import { Link } from './link';
@@ -107,15 +108,21 @@ export function LocationDetail({ feed, configured, back, region, related }: Prop
 	const data = useLocationData(feed, configured);
 	const { state } = data;
 	const current = state.current.status === 'success' ? state.current.data : null;
+	const station = useKlhkStation(feed.location);
 
 	return (
 		<div className="page-frame pt-6 md:pt-8">
-			<Button asChild variant="ghost" size="lg" className="-ml-2.5 h-10 text-muted-foreground">
-				<Link href={back.href}>
-					<ArrowLeft data-icon="inline-start" />
-					{back.label}
-				</Link>
-			</Button>
+			<div className="flex items-center justify-between gap-3">
+				<Button asChild variant="ghost" size="lg" className="-ml-2.5 h-10 min-w-0 text-muted-foreground">
+					<Link href={back.href}>
+						<ArrowLeft data-icon="inline-start" />
+						{back.label}
+					</Link>
+				</Button>
+				{current && (
+					<ShareStory placement="detail" location={feed.location} place={region ?? feed.location.note} current={current} future={data.future} station={station} />
+				)}
+			</div>
 
 			<SummaryCard feed={feed} region={region} current={current} busy={data.busy} configured={configured} onRefresh={data.refresh} />
 

@@ -16,11 +16,15 @@ import { AqiBadge } from './aqi-badge';
 import { AqiGauge } from './aqi-gauge';
 import { IspuChip } from './ispu-chip';
 import { PollutantTiles } from './pollutant-tiles';
+import { ShareStory } from './share-story';
 import { TrendChart } from './trend-chart';
 import { Link } from './link';
 import { useDictionary, useLocale } from './locale-provider';
 
 const SUMMARY_POLLUTANTS: PollutantCode[] = ['pm25', 'pm10', 'no2', 'o3'];
+
+/** Stable while the forecast loads, so the story content is not rebuilt on every render. */
+const NO_HOURS: AirQualityData[] = [];
 
 /** Small section labels share one style, so the pollutant names and the forecast label read as one set. */
 const LABEL = 'meta-copy font-semibold text-muted-foreground';
@@ -161,7 +165,17 @@ export function CityCard({ feed, href, streamed }: { feed: LocationFeed; href: s
 			<CardFooter className="meta-copy mt-auto flex-wrap gap-1.5 border-t-0 bg-transparent pt-0 text-muted-foreground">
 				<Clock className="size-3.5" aria-hidden="true" />
 				{fill(t.card.dataAt, { time: `${formatHour(dataTime, location.timeZone, locale)} ${timeZoneLabel(location.timeZone, new Date(dataTime))}` })}
-				{busy && <span className="ml-auto">{t.common.refreshing}</span>}
+				<span className="ml-auto flex items-center gap-2">
+					{busy && t.common.refreshing}
+					<ShareStory
+						placement="card"
+						location={location}
+						place={location.note}
+						current={data}
+						future={state.forecast.status === 'success' ? state.forecast.data : NO_HOURS}
+						station={station}
+					/>
+				</span>
 			</CardFooter>
 		</Card>
 	);

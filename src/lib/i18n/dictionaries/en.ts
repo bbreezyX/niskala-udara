@@ -285,6 +285,14 @@ export const en: Dictionary = {
 		forecastMissing: 'Forecast Not Available Yet',
 		dataAt: 'Data {time}'
 	},
+	share: {
+		preparing: 'Preparing…',
+		failed: 'Failed, Try Again',
+		retap: 'Tap Again',
+		shareLabel: 'Share the air quality in {name} as a story image',
+		downloadLabel: 'Download image of the air quality in {name} for a story',
+		retapLabel: 'Tap again to share the image of {name}'
+	},
 	chart: {
 		summary: '{label}. Low {min}, high {max}.',
 		now: 'Now',
